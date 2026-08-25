@@ -1,0 +1,60 @@
+hardened-containers
+Copyright 2026 PaaSup
+
+This product includes software developed by PaaSup.
+
+
+Scope of the license
+--------------------
+
+The LICENSE in this repository (Apache License 2.0) applies to **the works this
+repository contains** — the build definitions (Dockerfiles), the build, scan, and gate
+scripts, and the documentation.
+
+**It does not apply to the container images those builds produce.** The builds here take
+upstream open-source projects and recompile or repackage them. Third-party software
+included in a resulting image remains under its own license, and this repository's
+license does not change that.
+
+The authoritative record of what a given image actually contains is **its SBOM**, which is
+committed to this repository at `sboms/<image>.cdx.json` and also attached to the published
+digest as an attestation. Check the components and their licenses there before
+redistributing an image or using it commercially.
+
+The upstream projects built here and their principal licenses are listed below. This
+table is **a convenience summary and is not sufficient as a basis for a legal
+determination** — each image contains many transitive dependencies not listed here.
+
+| Image | Upstream | License |
+|---|---|---|
+| adc | api7/adc | Apache-2.0 |
+| apisix | Apache APISIX | Apache-2.0 |
+| apisix-ingress-controller | Apache APISIX Ingress Controller | Apache-2.0 |
+| argocd | Argo CD (CNCF) | Apache-2.0 |
+| cloudnative-pg | CloudNativePG (CNCF) | Apache-2.0 |
+| cnpg-postgresql | PostgreSQL + PGDG packages | PostgreSQL License and others |
+| etcd | etcd (CNCF) | Apache-2.0 |
+| keycloak | Keycloak (CNCF) | Apache-2.0 |
+
+Every image's final runtime base is a SUSE Base Container Image (BCI). BCI and the SLE
+packages within it are subject to SUSE's terms of use and the licenses of the individual
+packages. The apisix image additionally builds OpenSSL, OpenResty, zlib, and PCRE from
+source.
+
+
+Trademark notice
+----------------
+
+The images this repository produces are **unofficial rebuilds** of their upstream
+projects. They are not affiliated with, sponsored by, or endorsed by any upstream
+project, foundation, or company.
+
+Apache, Apache APISIX, and APISIX are trademarks or registered trademarks of the Apache
+Software Foundation. Keycloak, Argo, Argo CD, etcd, and CloudNativePG are trademarks of
+their respective owners. PostgreSQL is a registered trademark of the PostgreSQL Community
+Association of Canada. SUSE and SLE are trademarks of SUSE LLC.
+
+Using an upstream project's name in an image name is **nominative use, to identify what
+the image is a rebuild of**, and does not imply the upstream's approval. If you fork this
+repository and publish images to your own registry, it is your responsibility to review
+those projects' trademark policies.

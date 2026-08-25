@@ -1,0 +1,144 @@
+name: rescan-published-images
+
+# Checks daily whether already-published images are still clean — it does not build. It pulls
+# the current tag from published.json with scripts/gate/rescan-published.sh and re-runs only
+# SBOM, scan, and gate (reusing scan-image.sh and image-gate.py exactly as build-image.yml
+# does — no new gate logic).
+#
+# When an image fails the gate (drift: an image that was clean yesterday is now blocked by a
+# new CVE), this workflow calls build-image.yml through workflow_dispatch for that image alone
+# and lets it do the actual rebuild and push — the rebuild logic is never duplicated here.
+# There is always one orchestrator (build-hardened-image.sh) and one CI entry point that calls
+# it (build-image.yml). This workflow decides only "when should that entry point be called",
+# automatically, every day.
+#
+#   schedule (daily)        Targets every image. Triggers build-image.yml only for drifted ones.
+#   workflow_dispatch       Leave image empty for all of them, or name one to rescan just that.
+#                           With push=false, drift is detected but build-image.yml is not
+#                           called (for when you only want to see the rescan result).
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: 'Image directory name to rescan (empty = every image)'
+        required: false
+        default: ''
+      push:
+        description: 'Whether to actually call build-image.yml when drift is found'
+        required: false
+        default: 'true'
+  schedule:
+    # 03:00 KST (18:00 UTC) — a low-traffic window. Adjust if needed.
+    - cron: '0 18 * * *'
+
+permissions:
+  contents: read
+
+env:
+  # The same values as build-image.yml. They live in two places because there is no way to
+  # share env between workflows — update both when changing them.
+  TRIVY_VERSION: '0.74.0'
+  TRIVY_SHA256: '2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a'
+
+jobs:
+  # --- Determine the target images ----------------------------------------------
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      images: ${{ steps.list.outputs.images }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compute the target image list
+        id: list
+        run: |
+          set -euo pipefail
+          img="${{ github.event.inputs.image }}"
+          if [ -n "$img" ]; then
+            [ -d "images/$img" ] || { echo "::error::no such image directory: images/$img"; exit 1; }
+            json="[\"$img\"]"
+          else
+            json="$(python3 -c 'import json,os; print(json.dumps(sorted(os.listdir("images"))))')"
+          fi
+          echo "images=$json" >> "$GITHUB_OUTPUT"
+          echo "target images: $json"
+
+  rescan:
+    needs: discover
+    if: needs.discover.outputs.images != '[]' && needs.discover.outputs.images != ''
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJson(needs.discover.outputs.images) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      actions: write   # to call build-image.yml via workflow_dispatch when drift is found
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preflight — check tools
+        run: |
+          set -e
+          for t in docker python3 bash gh; do
+            command -v "$t" >/dev/null || { echo "::error::$t not present on the runner"; exit 1; }
+          done
+
+      - name: Install trivy (pinned version + checksum verification)
+        run: |
+          set -euo pipefail
+          tar="trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          curl -fsSL -o "$tar" \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/${tar}"
+          echo "${TRIVY_SHA256}  ${tar}" | sha256sum -c -
+          sudo tar -xzf "$tar" -C /usr/local/bin trivy
+          rm -f "$tar"
+          trivy --version | head -1
+
+      - name: Rescan (pull + SBOM + scan + gate, no build)
+        id: rescan
+        run: |
+          set +e
+          OUT="$GITHUB_WORKSPACE/rescan-out"
+          mkdir -p "$OUT"
+          bash scripts/gate/rescan-published.sh "${{ matrix.image }}" "$OUT"
+          rc=$?
+          set -e
+          if [ "$rc" = "0" ]; then
+            echo "drift=false" >> "$GITHUB_OUTPUT"
+            echo "   ${{ matrix.image }}: clean"
+          else
+            echo "drift=true" >> "$GITHUB_OUTPUT"
+            echo "   ${{ matrix.image }}: drift detected (rc=$rc)"
+          fi
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.image }}-rescan
+          path: |
+            rescan-out/cve-gate.md
+            rescan-out/cve-gate.json
+            rescan-out/sbom
+          if-no-files-found: warn
+
+      - name: Job Summary
+        if: always()
+        run: |
+          if [ -f rescan-out/cve-gate.md ]; then
+            { echo "## ${{ matrix.image }} (rescan)"; cat rescan-out/cve-gate.md; echo; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # Call the rebuild workflow only when there is drift and push was not disabled.
+      # gh workflow run authenticates with this job's GITHUB_TOKEN (actions: write).
+      - name: Drift found — trigger a build-image.yml rebuild
+        if: steps.rescan.outputs.drift == 'true' && github.event.inputs.push != 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "::warning::${{ matrix.image }} drift detected — calling build-image.yml to rebuild"
+          gh workflow run build-image.yml --repo "${{ github.repository }}" \
+            -f image="${{ matrix.image }}" -f push=true

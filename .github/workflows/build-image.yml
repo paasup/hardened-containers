@@ -1,0 +1,499 @@
+name: self-build-image
+
+# Automates building, verifying, scanning, gating, and publishing the self-built images
+# (images/<image>, run by scripts/build/build-hardened-image.sh). The images/ directory is the
+# single source of truth for the target list. Procedure: docs/image-authoring/
+#
+# published.json is updated and committed only when the gate passed AND the registry push
+# actually happened — it records which image passed the gate and was really pushed, at which
+# tag and digest.
+#
+# Two triggers run the same build steps (build → verify.sh → SBOM → scan-image.sh →
+# image-gate.py). They differ only in how the target images are chosen and whether push and the
+# published.json update happen.
+#
+#   push (images/**, scripts/**)  Detects changed images/<image>/ from the diff and verifies
+#                                  only those (no push to a registry). A commit that changes
+#                                  the orchestrator itself targets a representative subset.
+#   workflow_dispatch             The `image` input names the target. An actual registry push
+#                                  and published.json update happen only through this trigger,
+#                                  run manually from the default branch — with push=false it
+#                                  only verifies.
+#
+# WHY `push` AND NOT `pull_request`
+#   verify.sh runs on the host under bash, by design (some final images have no shell). On a
+#   public repository a `pull_request` trigger would therefore let any fork PR execute
+#   arbitrary commands on this repository's runners. A `push` event only fires for commits
+#   that are already in this repository, and pushing a branch here requires write access — so
+#   untrusted code cannot reach these runners at all. That is a structural property, not a
+#   condition that could be mis-written or later relaxed.
+#
+#   Contributors are not blocked by this: the workflow file exists in their fork too, so a
+#   push to their branch runs this entire pipeline on their own runners. See CONTRIBUTING.md.
+#   Pull requests still get static checks from pr-checks.yml.
+#
+# Checking daily whether already-pushed images are still clean is not this workflow's job — the
+# separate rescan.yml workflow does that, and when it finds drift it calls this workflow via
+# workflow_dispatch to handle the rebuild. There is always one orchestrator
+# (build-hardened-image.sh) and one CI entry point that calls it: this workflow. Rescanning is
+# split into its own workflow without duplicating any rebuild logic.
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: 'Image directory name to build (images/<image>/)'
+        required: true
+      base_os:
+        description: 'Build variant (images/<image>/<base_os>.build.env). Empty = DEFAULT_BASE_OS from image.env'
+        required: false
+        default: ''
+      push:
+        description: 'Whether to push to the registry and update published.json (only honoured from the default branch)'
+        required: false
+        default: 'true'
+  push:
+    # Every branch, deliberately: this is what gives a fork contributor automatic CI on their
+    # own branches. Restricting to main would remove that. Naming `branches` also excludes tag
+    # pushes, which a `paths` filter alone would not.
+    branches: ['**']
+    paths:
+      - 'images/**'
+      - 'scripts/**'
+
+permissions:
+  contents: read
+
+# Supersede in-flight verification runs for the same ref. Never cancel a publish run: a
+# workflow_dispatch may be mid-push, and an interrupted push leaves the registry and
+# published.json disagreeing.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
+
+env:
+  # The registry to push to. **Set this as a repository variable (Settings → Variables)** —
+  # hardcoding a default would make a fork attempt to push to someone else's registry. When it
+  # is unset, the "Decide whether to publish" step below turns push off and only verifies.
+  REGISTRY_HOST: ${{ vars.REGISTRY_HOST }}
+
+  # trivy is installed at a pinned version with its checksum verified. Piping upstream's
+  # install.sh into a shell would execute a moving script from the main branch on every run —
+  # and if the scanner itself becomes a supply-chain hole, every verdict in this repository is
+  # meaningless.
+  # To update: see trivy_<ver>_checksums.txt at https://github.com/aquasecurity/trivy/releases
+  TRIVY_VERSION: '0.74.0'
+  TRIVY_SHA256: '2ae6fe3ee734b7fdf11335663e18c75ea12dccc76062f09f164a3b0f8be4371a'
+
+  # When the orchestrator itself changes, building all eight images would cost up to eight
+  # hours of runner time per push. This subset covers both image shapes and all three base
+  # variants, which is what a change to scripts/** can plausibly break:
+  #   etcd            source-compiled, bci-micro
+  #   cnpg-postgresql OS-package reinstall, bci-base
+  #   keycloak        scratch + micro rootfs seed
+  # The full sweep stays available through workflow_dispatch. The cap is always logged — a
+  # silent subset would read as "everything was verified".
+  ORCHESTRATOR_SUBSET: 'etcd cnpg-postgresql keycloak'
+
+jobs:
+  # --- Determine the target images ----------------------------------------------
+  # workflow_dispatch: the single inputs.image. push: every directory under images/<image>/
+  # touched by this push (several changed images each run as a matrix entry).
+  # A push touching scripts/** changes the orchestrator itself, so it targets the
+  # representative subset above — that is the only way such a change gets CI coverage at all
+  # (a gap in an earlier version, which filtered on images/** alone).
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      images: ${{ steps.list.outputs.images }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Compute the target image list
+        id: list
+        run: |
+          set -euo pipefail
+
+          to_json() {   # stdin: one image name per line
+            python3 -c 'import json,sys; print(json.dumps(sorted({l.strip() for l in sys.stdin if l.strip()})))'
+          }
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            img="${{ github.event.inputs.image }}"
+            [ -d "images/$img" ] || { echo "::error::no such image directory: images/$img"; exit 1; }
+            json="[\"$img\"]"
+          else
+            before="${{ github.event.before }}"
+            # A brand-new branch has an all-zero `before` and no diff base. Rather than
+            # building everything, fall back to the representative subset.
+            if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ] \
+               || ! git cat-file -e "$before^{commit}" 2>/dev/null; then
+              echo "::notice::new branch (no diff base) — limiting to the representative subset: $ORCHESTRATOR_SUBSET"
+              json="$(printf '%s\n' $ORCHESTRATOR_SUBSET | to_json)"
+            else
+              scripts_changed="$(git diff --name-only "$before" "${{ github.sha }}" -- scripts/)"
+              if [ -n "$scripts_changed" ]; then
+                echo "::notice::scripts/** changed — limiting to the representative subset instead of all $(ls images | wc -l | tr -d ' ') images: $ORCHESTRATOR_SUBSET"
+                echo "   (run workflow_dispatch per image for a full sweep)"
+                json="$(printf '%s\n' $ORCHESTRATOR_SUBSET | to_json)"
+              else
+                changed="$(git diff --name-only "$before" "${{ github.sha }}" -- images/ | awk -F/ 'NF>1 {print $2}')"
+                if [ -z "$changed" ]; then
+                  json="[]"
+                else
+                  json="$(printf '%s\n' "$changed" | to_json)"
+                fi
+              fi
+            fi
+          fi
+          echo "images=$json" >> "$GITHUB_OUTPUT"
+          echo "target images: $json"
+
+  build:
+    needs: discover
+    if: needs.discover.outputs.images != '[]' && needs.discover.outputs.images != ''
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJson(needs.discover.outputs.images) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    # Least privilege: this job runs the repository's own code (Dockerfiles, verify.sh), so it
+    # gets nothing beyond read. Committing to the repository is done by the separate `record`
+    # job below, which runs no repository code. There is no `id-token: write` here — nothing in
+    # this job needs an OIDC token, and granting one would let repository code mint an identity
+    # for this repository.
+    permissions:
+      contents: read
+    env:
+      IMAGE_DIR: images/${{ matrix.image }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Preflight — check tools
+        run: |
+          set -e
+          for t in docker python3 bash; do
+            command -v "$t" >/dev/null || { echo "::error::$t not present on the runner"; exit 1; }
+          done
+          docker version
+
+      - name: Install trivy (pinned version + checksum verification)
+        run: |
+          set -euo pipefail
+          tar="trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          curl -fsSL -o "$tar" \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/${tar}"
+          echo "${TRIVY_SHA256}  ${tar}" | sha256sum -c -
+          sudo tar -xzf "$tar" -C /usr/local/bin trivy
+          rm -f "$tar"
+          trivy --version | head -1
+
+      # The image directory declares only its default build variant (image.env). This
+      # repository holds no information about where an image is deployed (which chart, which
+      # field).
+      - name: Load image metadata (image.env)
+        id: meta
+        run: |
+          set -euo pipefail
+          ENV_FILE="$IMAGE_DIR/image.env"
+          [ -f "$ENV_FILE" ] || { echo "::error::no image.env: $ENV_FILE"; exit 1; }
+          # shellcheck disable=SC1090
+          . "$ENV_FILE"
+          : "${DEFAULT_BASE_OS:?image.env has no DEFAULT_BASE_OS}"
+          BASE_OS="${{ github.event.inputs.base_os }}"
+          BASE_OS="${BASE_OS:-$DEFAULT_BASE_OS}"
+          echo "base_os=$BASE_OS" >> "$GITHUB_OUTPUT"
+          echo "   image=${{ matrix.image }}  base_os=$BASE_OS"
+
+      # Publishing can only be enabled from workflow_dispatch, and only from the default
+      # branch. A push event never passes REGISTRY, so build-hardened-image.sh leaves the tag
+      # as localhost/... and pushing is impossible. The catch-all is false so that adding
+      # triggers later cannot cause an accidental push.
+      #
+      # The default-branch condition matters: dispatch lets a person choose any ref, so without
+      # it someone with write access could push a branch with a modified build script, dispatch
+      # from it, and publish an arbitrary image to the production registry — signed with this
+      # repository's OIDC identity. The `record` job's environment protection enforces the same
+      # rule at the GitHub level, where an `if` cannot be edited away.
+      #
+      # If REGISTRY_HOST (a repository variable) is empty, publishing cannot be enabled — the
+      # safeguard that makes a fork running this workflow unconfigured verify and stop.
+      - name: Decide whether to publish
+        id: publish
+        run: |
+          case "${{ github.event_name }}" in
+            workflow_dispatch)
+              if [ "${{ github.event.inputs.push }}" = "false" ]; then
+                echo "enabled=false" >> "$GITHUB_OUTPUT"
+              elif [ "${{ github.ref }}" != "refs/heads/${{ github.event.repository.default_branch }}" ]; then
+                echo "::warning::publishing is only allowed from the default branch (this is ${{ github.ref }}) — verifying only"
+                echo "enabled=false" >> "$GITHUB_OUTPUT"
+              elif [ -z "${REGISTRY_HOST:-}" ]; then
+                echo "::warning::the REGISTRY_HOST repository variable is unset — verifying only, no push"
+                echo "enabled=false" >> "$GITHUB_OUTPUT"
+              else
+                echo "enabled=true" >> "$GITHUB_OUTPUT"
+              fi ;;
+            *) echo "enabled=false" >> "$GITHUB_OUTPUT" ;;
+          esac
+
+      # The registry host is derived from REGISTRY_HOST rather than hardcoded, so a fork can
+      # publish to ghcr.io, a private registry, or Docker Hub without editing this workflow.
+      # ghcr.io needs no extra secret — the built-in GITHUB_TOKEN authenticates it.
+      - name: Registry login
+        if: steps.publish.outputs.enabled == 'true'
+        env:
+          REGISTRY_USER: ${{ secrets.DOCKERHUB_USER }}
+          REGISTRY_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          host="${REGISTRY_HOST%%/*}"
+          if [ "$host" = "ghcr.io" ]; then
+            echo "${{ github.token }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+          else
+            [ -n "$REGISTRY_USER" ] || { echo "::error::the DOCKERHUB_USER secret is not set (needed for $host)"; exit 1; }
+            echo "$REGISTRY_TOKEN" | docker login "$host" -u "$REGISTRY_USER" --password-stdin
+          fi
+          echo "   logged in to $host"
+
+      - name: Build → verify → SBOM → scan → gate
+        id: build
+        env:
+          IMAGE: ${{ matrix.image }}
+          BASE_OS: ${{ steps.meta.outputs.base_os }}
+        run: |
+          set -uo pipefail
+          OUT="$GITHUB_WORKSPACE/build-out"
+          mkdir -p "$OUT"
+          # A GitHub Actions run: step is bash -e by default. To capture the build script's
+          # failure in $rc properly, -e is turned off just for that call.
+          set +e
+          if [ "${{ steps.publish.outputs.enabled }}" = "true" ]; then
+            REGISTRY="$REGISTRY_HOST" bash scripts/build/build-hardened-image.sh "$OUT" 2>&1 | tee "$OUT/wrapper.log"
+          else
+            bash scripts/build/build-hardened-image.sh "$OUT" 2>&1 | tee "$OUT/wrapper.log"   # no push — verify only
+          fi
+          rc="${PIPESTATUS[0]}"
+          set -e
+          echo "rc=$rc" >> "$GITHUB_OUTPUT"
+          exit "$rc"
+
+      # The publication record is handed to the `record` job as a file rather than as a job
+      # output: outputs from a matrix job are overwritten by each matrix entry, so only the
+      # last image would survive.
+      - name: Record what was published
+        if: >-
+          steps.publish.outputs.enabled == 'true' &&
+          steps.build.outputs.rc == '0'
+        run: |
+          set -euo pipefail
+          OUT="$GITHUB_WORKSPACE/build-out"
+          tag="$(grep -h '^   tag=' "$OUT/wrapper.log" | tail -1 | cut -d= -f2-)"
+          digest="$(cat "$OUT/.digest")"
+          [ -n "$tag" ] && [ -n "$digest" ] || {
+            echo "::error::the build reported success but produced no tag/digest"; exit 1; }
+          mkdir -p "$GITHUB_WORKSPACE/publish-record"
+          python3 - "${{ matrix.image }}" "$tag" "$digest" > "$GITHUB_WORKSPACE/publish-record/${{ matrix.image }}.json" <<'PY'
+          import json, sys
+          image, tag_ref, digest = sys.argv[1:4]
+          print(json.dumps({"image": image, "ref": tag_ref,
+                            "tag": tag_ref.rsplit(":", 1)[-1], "digest": digest}))
+          PY
+
+          # The SBOM travels with the record. Actions artifacts expire (90 days by default),
+          # and NOTICE points at the SBOM as the authoritative statement of what an image
+          # contains — so it has to outlive the run that produced it. The `record` job commits
+          # it to sboms/<image>.cdx.json.
+          sbom="$(ls "$OUT"/sbom/*.cdx.json | head -1)"
+          [ -n "$sbom" ] || { echo "::error::no SBOM was produced"; exit 1; }
+          cp "$sbom" "$GITHUB_WORKSPACE/publish-record/${{ matrix.image }}.cdx.json"
+
+      - name: Upload publication record
+        if: >-
+          steps.publish.outputs.enabled == 'true' &&
+          steps.build.outputs.rc == '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: publish-record-${{ matrix.image }}
+          path: |
+            publish-record/${{ matrix.image }}.json
+            publish-record/${{ matrix.image }}.cdx.json
+          if-no-files-found: error
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.image }}-build
+          path: |
+            build-out/build.log
+            build-out/verify.log
+            build-out/push.log
+            build-out/cve-gate.md
+            build-out/cve-gate.json
+            build-out/sbom
+          if-no-files-found: warn
+
+      - name: Job Summary
+        if: always()
+        run: |
+          if [ -f build-out/cve-gate.md ]; then
+            { echo "## ${{ matrix.image }}"; cat build-out/cve-gate.md; echo; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  # --- Attest what was published ------------------------------------------------
+  # GitHub Artifact Attestations: proves this digest was produced by this repository's
+  # workflow. Consumers verify with a single command and no key material:
+  #   gh attestation verify oci://<image>@<digest> --repo <owner>/<repo>
+  #
+  # This is a separate job so the OIDC token never coexists with running this repository's own
+  # Dockerfiles and verify.sh. It executes no repository code — it reads the digest from the
+  # artifact the build job uploaded and calls the action. The build job keeps `contents: read`
+  # and no token at all.
+  #
+  # push-to-registry is false: the attestation lives in GitHub, so this job needs no registry
+  # credentials, and it does not depend on the registry supporting OCI referrers.
+  attest:
+    needs: [discover, build]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.push != 'false'
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJson(needs.discover.outputs.images) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download publication record
+        uses: actions/download-artifact@v4
+        with:
+          name: publish-record-${{ matrix.image }}
+          path: publish-record
+
+      - name: Read the published digest
+        id: rec
+        run: |
+          set -euo pipefail
+          rec="publish-record/${{ matrix.image }}.json"
+          python3 - "$rec" >> "$GITHUB_OUTPUT" <<'PY'
+          import json, sys
+          r = json.load(open(sys.argv[1]))
+          # subject-name is the repository path without the tag; the digest identifies the image.
+          print(f"name={r['ref'].rsplit(':', 1)[0]}")
+          print(f"digest={r['digest']}")
+          PY
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-name: ${{ steps.rec.outputs.name }}
+          subject-digest: ${{ steps.rec.outputs.digest }}
+          push-to-registry: false
+
+      - name: Attest the SBOM
+        uses: actions/attest-sbom@v2
+        with:
+          subject-name: ${{ steps.rec.outputs.name }}
+          subject-digest: ${{ steps.rec.outputs.digest }}
+          sbom-path: publish-record/${{ matrix.image }}.cdx.json
+          push-to-registry: false
+
+  # --- Update the publication record --------------------------------------------
+  # A separate job so that `contents: write` never coexists with running this repository's own
+  # Dockerfiles and verify.sh. This job checks out the repository but executes none of it: it
+  # only reads the records the build job uploaded and commits published.json plus the SBOMs.
+  #
+  # The SBOM is committed rather than left as an Actions artifact because artifacts expire
+  # (90 days by default) while NOTICE points at the SBOM as the authoritative statement of
+  # what an image contains. Committed, it is permanent, diffable, and needs no external
+  # service to retrieve.
+  #
+  # `environment: production` is what actually enforces the default-branch rule — configure
+  # that environment with "Deployment branches: selected → <default branch>" and put the
+  # registry secrets there. Unlike an `if:`, that cannot be edited away in a pull request.
+  record:
+    needs: [discover, build]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.push != 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download publication records
+        uses: actions/download-artifact@v4
+        with:
+          pattern: publish-record-*
+          path: publish-record
+          merge-multiple: true
+
+      - name: Commit published.json and the SBOMs
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          records=(publish-record/*.json)
+          # *.cdx.json also matches *.json, so filter the SBOMs back out.
+          records=($(printf '%s\n' "${records[@]}" | grep -v '\.cdx\.json$' || true))
+          if [ ${#records[@]} -eq 0 ]; then
+            echo "no publication records — nothing was pushed, so published.json is unchanged"
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Rebase-and-retry: another run (or another workflow) may have committed in the
+          # meantime. Entries are keyed per image, so re-applying ours onto the latest remote
+          # merges safely.
+          for attempt in $(seq 1 12); do
+            git fetch origin "${GITHUB_REF_NAME}"
+            git reset --hard "origin/${GITHUB_REF_NAME}"
+
+            mkdir -p sboms
+            for rec in "${records[@]}"; do
+              img="$(basename "$rec" .json)"
+              cp "publish-record/${img}.cdx.json" "sboms/${img}.cdx.json"
+            done
+
+            python3 - "${records[@]}" <<'PY'
+          import json, sys, pathlib
+          path = pathlib.Path("published.json")
+          try:
+              doc = json.loads(path.read_text())
+          except FileNotFoundError:
+              doc = {"schemaVersion": 1, "images": {}}
+          images = doc.setdefault("images", {})
+          for p in sys.argv[1:]:
+              r = json.loads(pathlib.Path(p).read_text())
+              images[r["image"]] = {
+                  "ref": r["ref"], "tag": r["tag"], "digest": r["digest"], "gate": "pass",
+              }
+              print(f"   {r['image']} -> {r['tag']} @ {r['digest']}")
+          path.write_text(json.dumps(doc, indent=2, sort_keys=True) + "\n")
+          PY
+
+            git add published.json sboms/
+            if git diff --cached --quiet; then
+              echo "published.json unchanged"
+              exit 0
+            fi
+            git commit -m "update publication record and SBOMs" \
+              -m "Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+            if git push origin "HEAD:${GITHUB_REF_NAME}"; then
+              echo "publication record updated (attempt $attempt)"
+              exit 0
+            fi
+            echo "::notice::published.json push contention — retry $attempt"
+            # Linear backoff with a cap. Growing without limit would make the last job sleep needlessly long.
+            sleep $(( attempt < 6 ? attempt * 3 : 20 ))
+          done
+          echo "::error::failed to update published.json — contention persisted through the retry limit"
+          exit 1

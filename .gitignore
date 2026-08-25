@@ -1,0 +1,18 @@
+__pycache__/
+*.pyc
+
+# Build and scan outputs (never commit)
+/sbom-out/
+sbom/
+*.cdx.json
+trivy-reports/
+trivy-run.log
+image.tar
+push.log
+
+# ...except the SBOMs of published images, which are committed on purpose so they
+# outlive the build that produced them (Actions artifacts expire; NOTICE points here).
+!sboms/*.cdx.json
+
+# Personal local settings (permission allowlists and the like) — not shared
+.claude/settings.local.json

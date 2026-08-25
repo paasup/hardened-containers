@@ -1,0 +1,57 @@
+name: pr-checks
+
+# Static checks on a pull request — reads files, builds nothing.
+#
+# The heavy build (build-image.yml) is triggered by `push`, not `pull_request`, precisely so
+# that a fork's code never executes on this repository's runners: a fork PR's commits live in
+# the fork, so a `push` event here can never carry them. See "(a)" in the CI documentation.
+#
+# The cost of that is a pull request page with no checks on it at all. This workflow restores
+# a signal without reintroducing the risk: it runs scripts/lint/repo-checks.sh, which only
+# reads files — no docker, no registry, no secrets, read-only token, and a five-minute cap.
+# This is the one place a fork's contents reach this repository's runners, and the worst a
+# malicious PR can do here is waste about a minute of compute.
+#
+# Contributors get the full pipeline automatically in their own fork (a `push` there triggers
+# build-image.yml under their account). See CONTRIBUTING.md.
+
+on:
+  pull_request:
+    branches: [main]
+
+# Read-only. This job must never gain write access or see a secret.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      # Only needed so the workflow YAML itself can be parsed; repo-checks.sh skips that
+      # check gracefully when pyyaml is absent (as it usually is locally).
+      - name: Install pyyaml
+        run: pip install --quiet pyyaml
+
+      - name: Static repository checks
+        run: bash scripts/lint/repo-checks.sh
+
+      - name: Job Summary
+        if: always()
+        run: |
+          {
+            echo "## Static checks"
+            echo
+            echo "These verify the repository's own invariants — path references, the"
+            echo "supply-chain rules, the build.env contract, and syntax. They do **not**"
+            echo "build any image."
+            echo
+            echo "The full build runs automatically in your fork when you push."
+            echo "See [CONTRIBUTING.md](../blob/main/CONTRIBUTING.md)."
+          } >> "$GITHUB_STEP_SUMMARY"
