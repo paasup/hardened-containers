@@ -1,10 +1,10 @@
 {
   "images": {
     "adc": {
-      "digest": "",
+      "digest": "sha256:010a5655fb9aabe97d002b9e1761759803147a5e4e0f6bcf404a2873e3a1de6d",
       "gate": "pass",
-      "ref": "docker.io/paasup/adc:0.29.0-security-hardened-20260813",
-      "tag": "0.29.0-security-hardened-20260813"
+      "ref": "docker.io/paasup/adc:0.29.0-security-hardened-20260825",
+      "tag": "0.29.0-security-hardened-20260825"
     },
     "apisix": {
       "digest": "",
