@@ -19,10 +19,10 @@
       "tag": "2.1.0-security-hardened-20260825"
     },
     "argocd": {
-      "digest": "",
+      "digest": "sha256:1917dfe20acb450bfd9f042faf620b32199115a0fd324bd02d6798ca11835482",
       "gate": "pass",
-      "ref": "docker.io/paasup/argocd:3.5.1-security-hardened-20260819",
-      "tag": "3.5.1-security-hardened-20260819"
+      "ref": "docker.io/paasup/argocd:3.5.1-security-hardened-20260825",
+      "tag": "3.5.1-security-hardened-20260825"
     },
     "cloudnative-pg": {
       "digest": "sha256:25111a767a24babe28a06477548720c7ac0c08e92d713a89f00c36d626cfae91",
