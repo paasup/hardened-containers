@@ -31,10 +31,10 @@
       "tag": "1.30.0-security-hardened-20260825"
     },
     "cnpg-postgresql": {
-      "digest": "",
+      "digest": "sha256:4003557fcdcec8126313df4eef0a2145825230d8e3cae57c584b0e69d6089e02",
       "gate": "pass",
-      "ref": "docker.io/paasup/cnpg-postgresql:18.4-bci15.7-hardened-20260820",
-      "tag": "18.4-bci15.7-hardened-20260820"
+      "ref": "docker.io/paasup/cnpg-postgresql:18.4-bci15.7-hardened-20260825",
+      "tag": "18.4-bci15.7-hardened-20260825"
     },
     "etcd": {
       "digest": "",
