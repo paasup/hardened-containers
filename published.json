@@ -13,10 +13,10 @@
       "tag": "3.17.0-security-hardened-20260825"
     },
     "apisix-ingress-controller": {
-      "digest": "",
+      "digest": "sha256:8aba2bc9d942c7ba48d805a37fc9215663afad683ff2404d4ae8d00476af0dae",
       "gate": "pass",
-      "ref": "docker.io/paasup/apisix-ingress-controller:2.1.0-security-hardened-20260820",
-      "tag": "2.1.0-security-hardened-20260820"
+      "ref": "docker.io/paasup/apisix-ingress-controller:2.1.0-security-hardened-20260825",
+      "tag": "2.1.0-security-hardened-20260825"
     },
     "argocd": {
       "digest": "",
