@@ -15,10 +15,14 @@ name: self-build-image
 #   push (images/**, scripts/**)  Detects changed images/<image>/ from the diff and verifies
 #                                  only those (no push to a registry). A commit that changes
 #                                  the orchestrator itself targets a representative subset.
-#   workflow_dispatch             The `image` input names the target. An actual registry push
-#                                  and published.json update happen only through this trigger,
-#                                  run manually from the default branch — with push=false it
-#                                  only verifies.
+#   workflow_dispatch             The `image` input names the target(s) — one name, several
+#                                  space-separated names, or `all`. Every target runs as a
+#                                  matrix inside this one run, the same way `push` does, so a
+#                                  multi-image publish holds a single concurrency slot instead
+#                                  of contending across several separate dispatches. An actual
+#                                  registry push and published.json update happen only through
+#                                  this trigger, run manually from the default branch — with
+#                                  push=false it only verifies.
 #
 # WHY `push` AND NOT `pull_request`
 #   verify.sh runs on the host under bash, by design (some final images have no shell). On a
@@ -42,10 +46,10 @@ on:
   workflow_dispatch:
     inputs:
       image:
-        description: 'Image directory name to build (images/<image>/)'
+        description: 'Image directory name(s) to build (images/<image>/) — space-separated for several, or "all" for every image'
         required: true
       base_os:
-        description: 'Build variant (images/<image>/<base_os>.build.env). Empty = DEFAULT_BASE_OS from image.env'
+        description: 'Build variant (images/<image>/<base_os>.build.env). Empty = DEFAULT_BASE_OS from image.env. Leave empty when building more than one image — each uses its own default.'
         required: false
         default: ''
       push:
@@ -97,8 +101,12 @@ env:
 
 jobs:
   # --- Determine the target images ----------------------------------------------
-  # workflow_dispatch: the single inputs.image. push: every directory under images/<image>/
-  # touched by this push (several changed images each run as a matrix entry).
+  # workflow_dispatch: inputs.image — one name, several space-separated names, or `all`. push:
+  # every directory under images/<image>/ touched by this push (several changed images each run
+  # as a matrix entry). Either way, every target becomes one matrix entry in this same run, so
+  # a multi-image workflow_dispatch holds a single concurrency slot instead of several separate
+  # dispatches contending for the same one (each dispatch is its own run, and this workflow's
+  # concurrency group is per-ref, not per-image).
   # A push touching scripts/** changes the orchestrator itself, so it targets the
   # representative subset above — that is the only way such a change gets CI coverage at all
   # (a gap in an earlier version, which filtered on images/** alone).
@@ -122,8 +130,14 @@ jobs:
 
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             img="${{ github.event.inputs.image }}"
-            [ -d "images/$img" ] || { echo "::error::no such image directory: images/$img"; exit 1; }
-            json="[\"$img\"]"
+            if [ "$img" = "all" ]; then
+              json="$(ls images | to_json)"
+            else
+              for name in $img; do
+                [ -d "images/$name" ] || { echo "::error::no such image directory: images/$name"; exit 1; }
+              done
+              json="$(printf '%s\n' $img | to_json)"
+            fi
           else
             before="${{ github.event.before }}"
             # A brand-new branch has an all-zero `before` and no diff base. Rather than
