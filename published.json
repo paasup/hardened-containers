@@ -37,10 +37,10 @@
       "tag": "18.4-bci15.7-hardened-20260825"
     },
     "etcd": {
-      "digest": "",
+      "digest": "sha256:a181251bdf26474b69d225427a9e6a26ff589794507e2efe63ed54ab79f55ad3",
       "gate": "pass",
-      "ref": "docker.io/paasup/etcd:3.7.1-security-hardened-20260820",
-      "tag": "3.7.1-security-hardened-20260820"
+      "ref": "docker.io/paasup/etcd:3.7.1-security-hardened-20260825",
+      "tag": "3.7.1-security-hardened-20260825"
     },
     "keycloak": {
       "digest": "sha256:28135872ee3753757ca4a78530471091edc600a4a547464367ca1b9bfe850546",
