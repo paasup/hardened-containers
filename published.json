@@ -25,10 +25,10 @@
       "tag": "3.5.1-security-hardened-20260819"
     },
     "cloudnative-pg": {
-      "digest": "",
+      "digest": "sha256:25111a767a24babe28a06477548720c7ac0c08e92d713a89f00c36d626cfae91",
       "gate": "pass",
-      "ref": "docker.io/paasup/cloudnative-pg:1.30.0-security-hardened-20260820",
-      "tag": "1.30.0-security-hardened-20260820"
+      "ref": "docker.io/paasup/cloudnative-pg:1.30.0-security-hardened-20260825",
+      "tag": "1.30.0-security-hardened-20260825"
     },
     "cnpg-postgresql": {
       "digest": "",
