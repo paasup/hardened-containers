@@ -151,7 +151,8 @@ orchestrator.
 - [SECURITY.md](SECURITY.md) — what is and is not guaranteed, how to report a vulnerability
 
 Documentation is English-first, with Korean kept alongside for READMEs
-([README.ko.md](README.ko.md), `images/<image>/README.ko.md`).
+([README.ko.md](README.ko.md), `images/<image>/README.ko.md`) and for
+[docs/architecture.md](docs/architecture.md) ([docs/architecture.ko.md](docs/architecture.ko.md)).
 
 ## License
 

@@ -120,5 +120,9 @@ do next", move it to one of the three above and delete it.
 ## Documentation language
 
 Documentation is English. READMEs are bilingual: `README.md` (English) alongside
-`README.ko.md` (Korean), for the repository root and for each image. **Korean is the
-source of truth** — edit `README.ko.md` first, then carry the change into English.
+`README.ko.md` (Korean), for the repository root and for each image.
+[docs/architecture.md](docs/architecture.md) is bilingual the same way
+(`docs/architecture.ko.md`) — it is the one `docs/**` document meant primarily for a human
+to read end to end rather than as an operational reference, so it gets the same treatment.
+The rest of `docs/**` stays English-only. **Korean is the source of truth** for every
+bilingual pair — edit the `.ko.md` file first, then carry the change into English.

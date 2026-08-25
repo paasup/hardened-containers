@@ -1,5 +1,7 @@
 # Architecture and build pipeline
 
+English · [한국어](architecture.ko.md)
+
 The purpose of this repository is to produce **zero-CVE container images**, gate them
 strictly, and publish them for production use. This is not "use the upstream image, and
 build our own only when that fails". A tightly controlled **deterministic hardening

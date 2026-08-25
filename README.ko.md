@@ -111,7 +111,7 @@ gh attestation verify "oci://${REF%:*}@${DIG}" --repo paasup/hardened-containers
   - [scanner-caveats.md](docs/image-authoring/scanner-caveats.md) — 스캐너 결과·태그 신뢰 주의사항
   - [ci.md](docs/image-authoring/ci.md) — CI(`build-image.yml`·`rescan.yml`) 동작, 서명·증명
   - [readme-template.md](docs/image-authoring/readme-template.md) — 이미지 README.md 작성 템플릿
-- [docs/architecture.md](docs/architecture.md) — 전체 파이프라인 흐름
+- [docs/architecture.md](docs/architecture.ko.md) — 전체 파이프라인 흐름
 - [docs/decisions/](docs/decisions/) — 이미지별 자체 빌드 결정 근거(ADR)
 - [CONTRIBUTING.md](CONTRIBUTING.md) — 이 레포의 CI 동작(포크에서 전체 빌드가 돈다), PR 전에 돌릴 것
 - [SECURITY.md](SECURITY.md) — 보장 범위, 취약점 신고
