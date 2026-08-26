@@ -172,6 +172,7 @@ def evaluate(img, exceptions):
     blocking = []      # items blocking the gate (per unique CVE)
     excepted = []      # items covered by an approved exception
     underrated = []    # items the vendor rated below NVD (where NVD >= HIGH)
+    non_blocking = []  # effective MEDIUM/LOW — tracked for visibility, never gates
 
     # Collapse to unique CVEs. Counting the same CVE once per package it was split across
     # would overstate the real risk.
@@ -201,6 +202,8 @@ def evaluate(img, exceptions):
             underrated.append(cve)
 
         if RANK.get(effective, 0) < RANK["HIGH"]:
+            if effective in ("MEDIUM", "LOW"):
+                non_blocking.append(cve)
             continue
 
         exc = next((e for e in exceptions if exception_applies(e, cve["id"], img["image"])), None)
@@ -236,11 +239,12 @@ def evaluate(img, exceptions):
         "blocking": sorted(blocking, key=lambda c: (-RANK.get(c["effective_sev"], 0), c["id"])),
         "excepted": sorted(excepted, key=lambda c: c["id"]),
         "underrated": sorted(underrated, key=lambda c: -(c["nvd_score"] or 0)),
+        "non_blocking": sorted(non_blocking, key=lambda c: (-RANK.get(c["effective_sev"], 0), c["id"])),
         "no_data": no_data,
         "counts": {
             "vendor": {s: sum(1 for c in by_cve.values() if c["vendor_sev"] == s) for s in ("CRITICAL", "HIGH")},
             "nvd": {s: sum(1 for c in by_cve.values() if c["nvd_sev"] == s) for s in ("CRITICAL", "HIGH")},
-            "effective": {s: sum(1 for c in by_cve.values() if c["effective_sev"] == s) for s in ("CRITICAL", "HIGH")},
+            "effective": {s: sum(1 for c in by_cve.values() if c["effective_sev"] == s) for s in ("CRITICAL", "HIGH", "MEDIUM", "LOW")},
         },
     }
 
@@ -255,7 +259,8 @@ SUMMARY_LEGEND = (
     "**Downgraded** is the number of CVEs the vendor rated below NVD — a non-zero value "
     "means there are findings that \"look safe by vendor rating but carry risk closer to "
     "the NVD rating\", and it is worth confirming that the base OS swap did more than "
-    "just lower the number."
+    "just lower the number. **Medium/Low** is tracked for visibility only — it never "
+    "blocks the gate; see the non-blocking findings table below for the CVE list."
 )
 
 
@@ -271,14 +276,16 @@ def render_md(r, expired_exceptions):
     PROBE_LABEL = {"ok": "✅ ok", "none": "❌ none", "n/a": "– n/a"}
     src = PROBE_LABEL.get(r.get("coverage_probe"), "? not measured")
     under = len(r["underrated"])
-    A("| Image | OS | Coverage | EOSL | Effective C/H | Blocking | Excepted | Downgraded |")
-    A("|---|---|---|---|---:|---:|---:|---:|")
+    non_block = len(r["non_blocking"])
+    A("| Image | OS | Coverage | EOSL | Effective C/H | Blocking | Excepted | Downgraded | Medium/Low |")
+    A("|---|---|---|---|---:|---:|---:|---:|---:|")
     A(
         f"| `{r['image']}` | {r['os']} | {src} | "
         f"{'⚠️ EOL' if r['eosl'] else '-'} | "
         f"**{c['effective']['CRITICAL']}/{c['effective']['HIGH']}** | "
         f"{len(r['blocking'])} | {len(r['excepted'])} | "
-        f"{('⚠️ ' + str(under)) if under else '-'} |"
+        f"{('⚠️ ' + str(under)) if under else '-'} | "
+        f"{c['effective']['MEDIUM']}/{c['effective']['LOW']} |"
     )
     A("")
     A(SUMMARY_LEGEND)
@@ -331,6 +338,25 @@ def render_md(r, expired_exceptions):
         for c in r["underrated"]:
             pkgs = ", ".join(sorted(c["pkgs"])[:3]) + ("…" if len(c["pkgs"]) > 3 else "")
             A(f"| {c['id']} | {c['nvd_sev']} ({c['nvd_score']}) | {c['vendor_sev']} | {pkgs} |")
+        A("")
+
+    if r["non_blocking"]:
+        A(f"### ℹ️ Non-blocking findings (Medium/Low) — `{r['image']}`")
+        A("")
+        A("Do not gate the build. Listed so a rebuild that fails to clear one of these can "
+          "be recognized as needing a fix rather than assumed already-passing.")
+        A("")
+        A("| CVE | Effective | Vendor | NVD | Package | Status | Fixed version |")
+        A("|---|---|---|---|---|---|---|")
+        for c in r["non_blocking"]:
+            pkgs = ", ".join(sorted(c["pkgs"])[:3]) + ("…" if len(c["pkgs"]) > 3 else "")
+            nvd = c["nvd_sev"] or "-"
+            if c["nvd_score"]:
+                nvd = f"{nvd} ({c['nvd_score']})"
+            status = "/".join(sorted(c["status"])) or "-"
+            fixed = "/".join(sorted(c["fixed"])) or "(none)"
+            A(f"| {c['id']} | {c['effective_sev']} | {c['vendor_sev']} | {nvd} | "
+              f"{pkgs} | {status} | {fixed} |")
         A("")
 
     if r["excepted"]:
@@ -393,12 +419,14 @@ def main():
         print(f"::error::{r['image']}: {c['id']} {c['effective_sev']} "
               f"(vendor {c['vendor_sev']} / NVD {c['nvd_sev'] or '-'})", file=sys.stderr)
 
+    non_block_note = f" ({len(r['non_blocking'])} non-blocking medium/low, see summary)" if r["non_blocking"] else ""
     failed = bool(r["blocking"] or r["no_data"])
     if failed:
         print(f"\ngate failed — {len(r['blocking'])} blocking"
-              + (", data coverage problem" if r["no_data"] else ""), file=sys.stderr)
+              + (", data coverage problem" if r["no_data"] else "")
+              + non_block_note, file=sys.stderr)
         return 0 if args.warn_only else 1
-    print("\ngate passed — zero effective CRITICAL/HIGH", file=sys.stderr)
+    print(f"\ngate passed — zero effective CRITICAL/HIGH{non_block_note}", file=sys.stderr)
     return 0
 
 
