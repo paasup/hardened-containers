@@ -18,6 +18,26 @@ raising a pin, ask whether **a newer upstream tag or a base OS swap already reso
 problem**. Each self-built image's `README.md` states why it is self-built — check first
 whether that reason still holds.
 
+## 1b. Is the line still supported at all?
+
+Before asking whether a pin is behind, ask whether the line it sits on is still one
+upstream patches — a pin can be perfectly current within a line that nobody maintains any
+more. Run:
+
+```sh
+python3 scripts/build/check-support-line.py --image <image>
+```
+
+Exit `2` means the line is end-of-life: **no amount of pin-raising within that line helps,
+and neither does rebuilding.** The only remedy is moving to a maintained line, which is
+usually a version bump with breaking changes, so treat it as its own piece of work rather
+than folding it into a pin refresh. Exit `1` means the line is fine and only the pin is
+behind — that is the ordinary case this skill handles.
+
+`SUPPORT_SOURCE=manual` images are skipped by the script; for those, read the
+`SUPPORT_REF` URL in `image.env` yourself. Rules and field meanings are in
+[docs/image-authoring/support-policy.md](../../../docs/image-authoring/support-policy.md).
+
 ## 2. Enumerate the pins
 
 Pin names differ per image, so do not hardcode them. Read `DEFAULT_BASE_OS` from the

@@ -35,3 +35,22 @@
 - **아직 발행된 이미지에 서명·attestation 이 없다.** 서명·SBOM·게이트 판정 증명을 붙이는
   경로는 들어갔지만(`build-hardened-image.sh` 푸시 블록), `published.json` 에 적힌 현재
   태그들은 그 경로가 생기기 전에 push 된 것이다. 다음 발행 빌드부터 붙는다.
+
+- **`apisix` 가 EOL 라인(3.17)에 앉아 있다 — 3.18 로 올려야 한다.** 2026-08-20 에 3.18.0
+  이 나오면서 3.17 이 같은 날 EOL 됐다(APISIX 는 최신 마이너 하나만 유지). 게이트는 PASS
+  이지만 이제 이 라인에는 보안 패치가 오지 않으므로 **리빌드로는 해소되지 않는다.**
+  일간 rescan 의 support-line 스텝이 매일 이 job 을 실패시킨다.
+  3.18.0 은 breaking change 를 동반하므로 단순 핀 교체가 아니다:
+  - 플러그인의 요청/응답 body 버퍼 기본 상한 64MiB 신설 (초과 시 거부 또는 절단)
+  - `openid-connect` 가 신뢰 issuer 미확정 시 토큰 거부, `audience` 클레임 필수화,
+    authorization-code 세션에서 `required_scopes` 강제
+  - `Apisix-Plugins` 응답 헤더가 중복 제거 목록에서 `plugin-name#phase` 순서 목록으로 변경
+  번들 컴포넌트 핀 약 14개(OpenResty·OpenSSL·PCRE 등)도 함께 재조사하고, breaking change
+  마다 `verify.sh` 케이스를 추가한 뒤 `images/apisix/README.md` 를 갱신한다. ADR 은 불필요
+  하다 — "라인이 EOL 이라 올렸다"는 단방향 조치라 커밋 메시지가 기록이다.
+
+- **`cnpg-postgresql` 이 18.4 로, 유지보수 라인 안에서 18.6 보다 뒤진다.** 라인 자체는
+  2030-11-14 까지 유지되므로 급하지 않다(support-line 검사에서 notice, 실패 아님). 올릴
+  때 메이저가 `APP_VERSION`·`PG_VERSION`(EVR)·`EXTENSIONS` 세 곳에 중복돼 있는 것을 함께
+  정리한다 — 이는 PG 17 병행 발행의 선행 조건이기도 하다
+  ([support-policy.md](docs/image-authoring/support-policy.md) 참고).

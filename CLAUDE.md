@@ -9,7 +9,8 @@ their CVEs removed. Images are pushed to the registry named by the repository va
 **"Latest" means the newest release on an upstream line that still receives security
 patches**, which differs per application — PostgreSQL maintains five majors at once,
 APISIX only its newest minor. Each image declares the line it tracks in
-`images/<image>/image.env`.
+`images/<image>/image.env` —
+see [docs/image-authoring/support-policy.md](docs/image-authoring/support-policy.md).
 
 **It works on its own, with no external dependencies.** Clone it, have `docker` and
 `trivy`, and everything from build to gate verdict completes inside this repository.
@@ -29,7 +30,8 @@ hardened-containers/
 ├── scripts/
 │   ├── build/
 │   │   ├── build-hardened-image.sh   # the one orchestrator — build→verify→SBOM→scan→gate→push
-│   │   └── suggest-go-upgrades.py    # suggests Go module/toolchain pins, applies with --apply
+│   │   ├── suggest-go-upgrades.py    # suggests Go module/toolchain pins, applies with --apply
+│   │   └── check-support-line.py     # is our pin still on a line upstream patches?
 │   ├── lint/
 │   │   └── repo-checks.sh            # static repository checks — runs locally and on every PR
 │   └── gate/
@@ -44,6 +46,7 @@ hardened-containers/
 │   │   ├── builder-languages.md # per-language builder rules + Go module CVEs
 │   │   ├── scanner-caveats.md   # why scanner output and tags cannot be trusted directly
 │   │   ├── ci.md                # CI behaviour, signing and attestation
+│   │   ├── support-policy.md    # what "latest" means per app — upstream line + EOL check
 │   │   └── readme-template.md   # template for per-image README.md
 │   ├── architecture.md          # the pipeline end to end
 │   └── decisions/               # ADRs — why each image is built here

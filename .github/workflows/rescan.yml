@@ -142,3 +142,27 @@ jobs:
           echo "::warning::${{ matrix.image }} drift detected — calling build-image.yml to rebuild"
           gh workflow run build-image.yml --repo "${{ github.repository }}" \
             -f image="${{ matrix.image }}" -f push=true
+
+      # Is the pin still on a line upstream patches? The gate cannot answer this — an
+      # image on an end-of-life line passes cleanly until the first CVE nobody will fix.
+      #
+      # Deliberately the LAST step, and deliberately not wired into `drift`:
+      #   - last, so failing here cannot skip the rebuild call above. An image can be both
+      #     on a dead line and carrying CVE drift, and the rebuild must still fire.
+      #   - separate from `drift`, because rebuilding cannot move a pin onto a supported
+      #     line. Feeding it into that path would rebuild the same EOL pin every day.
+      # Only a person raising APP_VERSION resolves this, so the signal is a failed job.
+      # See docs/image-authoring/support-policy.md.
+      - name: Upstream support line (fails when the line is end-of-life)
+        if: always()
+        run: |
+          set +e
+          python3 scripts/build/check-support-line.py \
+            --image "${{ matrix.image }}" --format github | tee support-line.md
+          rc="${PIPESTATUS[0]}"
+          set -e
+          { echo "### ${{ matrix.image }} — upstream support line"; cat support-line.md; echo; } \
+            >> "$GITHUB_STEP_SUMMARY"
+          # 1 = behind within a maintained line: a notice, not a failure.
+          [ "$rc" = "1" ] && exit 0
+          exit "$rc"

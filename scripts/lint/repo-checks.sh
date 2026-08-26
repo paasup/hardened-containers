@@ -213,6 +213,61 @@ sys.exit(1 if bad else 0)
 PY
 [ "$syntax_bad" = "0" ] && ok "bash, python, and json all parse"
 
+# --- 8. image.env declares an upstream support line --------------------------
+# Whether our pin still sits on a line upstream patches needs the network, so the live
+# lookup is check-support-line.py (run by rescan.yml). What is checkable offline is that
+# the declaration exists and agrees with APP_VERSION — the real mistake being caught is
+# raising APP_VERSION and forgetting SUPPORT_LINE, which would leave the live check
+# silently measuring the wrong line. See docs/image-authoring/support-policy.md.
+section "image.env support line"
+python3 - <<'PY' || FAILED=1
+import re, pathlib, sys
+
+def read_env(p):
+    kv = {}
+    for line in p.read_text(encoding="utf-8").split("\n"):
+        s = line.strip()
+        if not s or s.startswith("#") or "=" not in s:
+            continue
+        k, v = s.split("=", 1)
+        if re.fullmatch(r"[A-Z_][A-Z0-9_]*", k):
+            kv[k] = v.strip().strip('"').strip("'")
+    return kv
+
+bad = []
+for p in sorted(pathlib.Path("images").glob("*/image.env")):
+    kv = read_env(p)
+    src = kv.get("SUPPORT_SOURCE")
+    if not src:
+        bad.append(f"{p}: missing SUPPORT_SOURCE (want endoflife.date or manual)")
+        continue
+    if src == "endoflife.date":
+        for key in ("SUPPORT_PRODUCT", "SUPPORT_LINE"):
+            if not kv.get(key):
+                bad.append(f"{p}: SUPPORT_SOURCE=endoflife.date requires {key}")
+    elif src == "manual":
+        if not kv.get("SUPPORT_REF"):
+            bad.append(f"{p}: SUPPORT_SOURCE=manual requires SUPPORT_REF (the source a person reads)")
+    else:
+        bad.append(f"{p}: SUPPORT_SOURCE={src} is not one of endoflife.date, manual")
+
+    # A declared line must be the dotted prefix of the default variant's APP_VERSION:
+    # line 18 covers 18.4, line 3.5 covers 3.5.1. Anything else means the two drifted.
+    line = kv.get("SUPPORT_LINE")
+    variant = kv.get("DEFAULT_BASE_OS")
+    if line and variant:
+        bench = p.parent / f"{variant}.build.env"
+        if bench.exists():
+            app = read_env(bench).get("APP_VERSION")
+            if app and app != line and not app.startswith(line + "."):
+                bad.append(f"{p}: SUPPORT_LINE={line} does not match APP_VERSION={app} in {bench.name}")
+for b in bad:
+    print(f"   FAIL — {b}")
+if not bad:
+    print("   OK — every image.env declares a support line consistent with APP_VERSION")
+sys.exit(1 if bad else 0)
+PY
+
 # --- summary -----------------------------------------------------------------
 echo
 if [ "$FAILED" = "0" ]; then

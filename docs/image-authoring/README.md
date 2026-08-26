@@ -18,6 +18,7 @@ adding or changing an image.
 | [builder-languages.md](builder-languages.md) | Builder-stage rules per language (Go · Node · JVM · C/Lua), handling Go module CVEs, pin drift |
 | [scanner-caveats.md](scanner-caveats.md) | Why trivy output cannot be taken at face value, and how to confirm an image tag's actual base OS |
 | [ci.md](ci.md) | Why the build is triggered by `push`, how `build-image.yml`, `pr-checks.yml`, and `rescan.yml` behave, signing and attestation, the publication record (`published.json`) |
+| [support-policy.md](support-policy.md) | What "latest" means per application — declaring the upstream line an image sits on, the daily end-of-life check, and publishing more than one line |
 | [readme-template.md](readme-template.md) | Template for per-image `README.md` |
 
 ## Comment rules — mechanism in code, rationale in docs
