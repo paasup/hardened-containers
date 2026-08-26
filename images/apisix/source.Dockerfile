@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# apisix — a self-build that recompiles upstream apache/apisix:3.17.0-debian (the
+# apisix — a self-build that recompiles upstream apache/apisix:3.18.0-debian (the
 # APISIX-Runtime custom nginx plus the APISIX application) from source on SUSE BCI. Three
 # stages: runtime (OpenSSL/zlib/pcre plus the custom nginx modules) → apisix-app (installing
 # APISIX itself with luarocks) → final (moving only the artifacts onto bci-base). Why we build
@@ -15,13 +15,14 @@ ARG RUNTIME_BASE=registry.suse.com/bci/bci-base:15.7
 FROM ${BUILDER_BASE} AS runtime
 ARG OPENRESTY_VERSION=1.29.2.4
 ARG OPENSSL_VERSION=3.4.1
-ARG APISIX_NGINX_MODULE_VER=1.19.5
+ARG APISIX_NGINX_MODULE_VER=1.19.9
 ARG WASM_NGINX_MODULE_VER=0.7.0
 ARG LUA_VAR_NGINX_MODULE_VER=v0.5.3
 ARG LUA_RESTY_EVENTS_VER=0.2.0
 ARG NGX_MULTI_UPSTREAM_MODULE_VER=1.3.3
 ARG MOD_DUBBO_VER=1.0.2
-ARG APISIX_RUNTIME_VER=1.3.6
+ARG NGX_HTTP_FFI_CLIENT_VER=v0.1.3
+ARG APISIX_RUNTIME_VER=1.3.16
 
 ENV OR_PREFIX=/usr/local/openresty
 
@@ -96,7 +97,8 @@ RUN git clone --depth=1 -b "${LUA_RESTY_EVENTS_VER}" https://github.com/Kong/lua
  && git clone --depth=1 -b "${MOD_DUBBO_VER}" https://github.com/api7/mod_dubbo.git "mod_dubbo-${MOD_DUBBO_VER}" \
  && git clone --depth=1 -b "${APISIX_NGINX_MODULE_VER}" -- https://github.com/api7/apisix-nginx-module.git "apisix-nginx-module-${APISIX_NGINX_MODULE_VER}" \
  && git clone --depth=1 -b "${WASM_NGINX_MODULE_VER}" https://github.com/api7/wasm-nginx-module.git "wasm-nginx-module-${WASM_NGINX_MODULE_VER}" \
- && git clone --depth=1 -b "${LUA_VAR_NGINX_MODULE_VER}" https://github.com/api7/lua-var-nginx-module "lua-var-nginx-module-${LUA_VAR_NGINX_MODULE_VER}"
+ && git clone --depth=1 -b "${LUA_VAR_NGINX_MODULE_VER}" https://github.com/api7/lua-var-nginx-module "lua-var-nginx-module-${LUA_VAR_NGINX_MODULE_VER}" \
+ && git clone --depth=1 -b "${NGX_HTTP_FFI_CLIENT_VER}" https://github.com/api7/ngx_http_ffi_client.git "ngx_http_ffi_client-${NGX_HTTP_FFI_CLIENT_VER}"
 
 RUN cd "ngx_multi_upstream_module-${NGX_MULTI_UPSTREAM_MODULE_VER}" && ./patch.sh "../openresty-${OPENRESTY_VERSION}" && cd .. \
  && cd "apisix-nginx-module-${APISIX_NGINX_MODULE_VER}/patch" && ./patch.sh "../../openresty-${OPENRESTY_VERSION}" && cd ../.. \
@@ -128,6 +130,7 @@ RUN cd "openresty-${OPENRESTY_VERSION}" \
       --add-module="../wasm-nginx-module-${WASM_NGINX_MODULE_VER}" \
       --add-module="../lua-var-nginx-module-${LUA_VAR_NGINX_MODULE_VER}" \
       --add-module="../lua-resty-events-${LUA_RESTY_EVENTS_VER}" \
+      --add-module="../ngx_http_ffi_client-${NGX_HTTP_FFI_CLIENT_VER}" \
       --with-poll_module --with-pcre-jit \
       --without-http_rds_json_module --without-http_rds_csv_module --without-lua_rds_parser \
       --with-stream --with-stream_ssl_module --with-stream_ssl_preread_module \
@@ -156,7 +159,7 @@ RUN cd "apisix-nginx-module-${APISIX_NGINX_MODULE_VER}" && OPENRESTY_PREFIX="${O
 # 2) apisix — install APISIX itself (the Lua application)
 # =============================================================================
 FROM runtime AS apisix-app
-ARG APISIX_VERSION=3.17.0
+ARG APISIX_VERSION=3.18.0
 
 ENV PATH=$PATH:${OR_PREFIX}/luajit/bin:${OR_PREFIX}/nginx/sbin:${OR_PREFIX}/bin
 
@@ -180,7 +183,7 @@ RUN wget https://raw.githubusercontent.com/apache/apisix/${APISIX_VERSION}/utils
 WORKDIR /apisix
 RUN git clone --depth=1 -b "${APISIX_VERSION}" https://github.com/apache/apisix.git .
 
-# apisix-master-0.rockspec sits at the repository root (as of tag 3.17.0).
+# apisix-master-0.rockspec sits at the repository root (re-confirmed at tag 3.18.0).
 # `luarocks make` does not use the rockspec's source.url (a remote tarball); it builds the
 # current directory — so a git clone is sufficient, and there is no need to sed-patch
 # source.url to a local path the way the apiseven build does.

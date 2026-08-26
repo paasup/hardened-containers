@@ -6,15 +6,16 @@
 
 The apisix image (APISIX-Runtime plus the APISIX application) is built here. The build
 definition is [images/apisix/](../../images/apisix/) — the APISIX-Runtime custom nginx
-defined by upstream's build scripts (`api7/apisix-build-tools`, tag
-`apisix-runtime/1.3.6`) is reproduced from source on SUSE BCI (OpenSSL, zlib, PCRE, plus
-six custom modules), and the APISIX application is installed on top with `luarocks`. The
+defined by upstream's build scripts (`api7/apisix-build-tools`, at the
+`apisix-runtime/<ver>` tag the APISIX release declares in its own `.requirements`) is
+reproduced from source on SUSE BCI (OpenSSL, zlib, PCRE, plus the custom nginx modules
+that tag specifies), and the APISIX application is installed on top with `luarocks`. The
 final runtime base is SUSE BCI (`bci-base`) — `bci-micro` is not used because of
 dynamically linked shared library dependencies (libxml2, libxslt, openldap2).
 
 ## Context
 
-Upstream `apache/apisix:3.17.0-debian` carried gate-blocking CVEs even while on the
+Upstream `apache/apisix:3.18.0-debian` carried gate-blocking CVEs even while on the
 latest upstream tag (the evidence at the time: Debian base OS packages — libc, perl,
 pcre, and others; the gate re-measures current state on every run). Moving to a newer
 tag does not resolve them.
@@ -76,9 +77,15 @@ Nothing but a self-build could respond immediately.
 
 ## Conditions for revisiting
 
-- **If `apache/apisix` ships a new release (3.17.1 or later) that resolves these CVEs**
-  — moving to a newer tag becomes possible again and always takes priority over
-  self-building.
+- **If `apache/apisix` ships a new release that resolves these CVEs** — moving to a newer
+  tag becomes possible again and always takes priority over self-building. This was
+  re-measured when the pin moved to 3.18.0 and the upstream image still gated on Debian
+  base OS CVEs, so the decision stands; the counts are in that commit message rather than
+  frozen here.
+- **Every new APISIX minor forces a re-evaluation anyway** — APISIX maintains only its
+  newest minor, so the previous one reaches end-of-life the same day the new one ships.
+  This image cannot sit still even with a clean gate, which raises the cost of keeping the
+  self-build relative to images on longer-lived lines.
 - **If SUSE publishes APISIX-Runtime-compatible prebuilt packages** — source compilation
   could be simplified to a package install.
 - **If the dynamic-link dependencies (libxml2, libxslt, openldap2) can be removed** —

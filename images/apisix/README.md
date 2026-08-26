@@ -16,14 +16,14 @@ build framework generally are owned by
 
 ## Why we build this ourselves
 
-Upstream `apache/apisix:3.17.0-debian` carries blocking CVEs even while on the latest
+Upstream `apache/apisix:3.18.0-debian` carries blocking CVEs even while on the latest
 upstream tag — so moving to a newer tag does not resolve them. Those CVEs are all in
 Debian base OS packages (libc, perl, pcre, and so on), meaning they are fixed by replacing
 the base OS wholesale, not by changing application code.
 
 ## What differs from upstream — and why this image does not exist for SUSE
 
-Upstream (`apache/apisix:3.17.0-debian`) is not vanilla OpenResty but a custom-compiled
+Upstream (`apache/apisix:3.18.0-debian`) is not vanilla OpenResty but a custom-compiled
 nginx called **"APISIX-Runtime"** — it builds OpenSSL 3.4.1, zlib, and PCRE in directly
 and adds `apisix-nginx-module`, `wasm-nginx-module` (WASM, wasmtime),
 `lua-var-nginx-module`, `lua-resty-events`, `mod_dubbo`, and
@@ -40,7 +40,7 @@ below). The apiseven pipeline that ships this combination
 | Rust toolchain installed from SLE_BCI packages (`rust`, `cargo`) | Upstream pipes the rustup bootstrap script into a shell, which executes an unverified remote script on every build — replaced with distribution packages (design rule 7). |
 | cpanm bootstrap removed | Upstream installs `IPC::Cmd` (required by OpenSSL's Configure) via cpanm, but SLE_BCI's stock perl already has it (5.26.1 / IPC::Cmd 0.96 — a core module). This removes an unnecessary remote execution. |
 | Source tarball integrity verification added | zlib, PCRE, OpenSSL, OpenResty, lua-resty-limit-traffic, and the luarocks install script are verified by SHA256 (the `*_SHA256` values in `source.build.env`). This is the only image that fetches tarballs, so it has no equivalent of a git commit SHA guarantee. |
-| Application code and module versions | 100% identical to upstream (the minimal-diff principle) — apiseven's official build scripts (`api7/apisix-build-tools`, tag `apisix-runtime/1.3.6`) are reproduced as-is. |
+| Application code and module versions | 100% identical to upstream (the minimal-diff principle) — apiseven's official build scripts (`api7/apisix-build-tools`, tag `apisix-runtime/1.3.16`) are reproduced as-is. |
 
 ## Three stages
 
@@ -84,12 +84,18 @@ below). The apiseven pipeline that ships this combination
 
 | Item | Value |
 | --- | --- |
-| APISIX source | `https://github.com/apache/apisix.git` (tag `3.17.0`) |
+| APISIX source | `https://github.com/apache/apisix.git` (tag `3.18.0`) |
 | OpenResty | `1.29.2.4` |
 | OpenSSL | `3.4.1` |
 | zlib / PCRE | `1.3.1` / `8.45` |
-| Custom modules | `apisix-nginx-module 1.19.5`, `wasm-nginx-module 0.7.0`, `lua-var-nginx-module v0.5.3`, `lua-resty-events 0.2.0`, `ngx_multi_upstream_module 1.3.3`, `mod_dubbo 1.0.2` |
-| APISIX_RUNTIME_VER | `1.3.6` (the apiseven build script version tag) |
+| Custom modules | `apisix-nginx-module 1.19.9`, `wasm-nginx-module 0.7.0`, `lua-var-nginx-module v0.5.3`, `lua-resty-events 0.2.0`, `ngx_multi_upstream_module 1.3.3`, `mod_dubbo 1.0.2`, `ngx_http_ffi_client v0.1.3` |
+| APISIX_RUNTIME_VER | `1.3.16` (the apiseven build script version tag) |
+
+The module set is not ours to choose. APISIX declares the runtime it needs in
+`.requirements` (`APISIX_RUNTIME=1.3.16` at tag `3.18.0`), and `api7/apisix-build-tools`
+at that tag fixes the module versions — read both when raising `APISIX_VERSION`.
+`ngx_http_ffi_client` is not optional: 3.18 makes the FFI HTTP client the default, and it
+lives in that module.
 | Final base | `registry.suse.com/bci/bci-base:15.7` |
 
 All of these live in `source.build.env` and are **not tracked automatically.** As with the
@@ -102,8 +108,17 @@ must change with it. How they are derived and cross-checked is documented in the
 in `source.build.env`.
 
 **Suggested review cadence**: whenever the gate reports a blocking CVE for this image
-again, or `apache/apisix` ships `3.17.1` or later — if that release already resolves the
+again, or `apache/apisix` ships a new minor — if that release already resolves the
 CVEs above, moving to it always takes priority over keeping this self-build.
+
+**This image has the shortest support window of any here.** APISIX maintains only its
+newest minor, so a new minor puts the previous one into end-of-life **the same day**, on a
+roughly two-month cadence — 3.17 went EOL on 2026-08-20, the day 3.18.0 shipped. So a
+blocking CVE is not the only trigger to move: when the line goes EOL the pin has to move
+even with a clean gate, and the daily rescan's support-line check makes that call
+automatically (see
+[support-policy.md](../../docs/image-authoring/support-policy.md)). An EOL line is not
+resolved by rebuilding.
 
 ## Building and verifying
 
@@ -146,6 +161,6 @@ There is only one base variant, so the filenames are fixed at `source.*`.
 ### Tags
 
 ```
-<registry>/apisix:3.17.0-security-hardened-20260811
+<registry>/apisix:3.18.0-security-hardened-20260826
                    └ app  ┘└ slug ┘└hardened┘└ build date ┘
 ```
