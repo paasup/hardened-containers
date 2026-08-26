@@ -21,6 +21,13 @@ the source, and refuses to publish anything that still carries them.
 - **Deterministic tags.** No rolling tags. Every published tag carries the app version
   and the build date, and every dependency pin is a committed value — the tag is a
   record of what we actually verified.
+- **"Latest" means still supported.** Not simply the newest tag, but the newest release
+  on an upstream line that is **still receiving security patches**. Which line that is
+  differs per project — PostgreSQL maintains five majors at once, APISIX maintains only
+  its newest minor. Each image declares the line it sits on in
+  `images/<image>/image.env`. A pin that has drifted onto an end-of-life line is a
+  defect of the same class as a CVE — but rebuilding cannot fix it; a person has to move
+  the pin.
 
 Eight images are currently built: `adc`, `apisix`, `apisix-ingress-controller`,
 `argocd`, `cloudnative-pg`, `cnpg-postgresql`, `etcd`, `keycloak`. The `images/`

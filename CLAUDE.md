@@ -6,6 +6,11 @@ A standalone repository that builds, verifies, and gates hardened container imag
 their CVEs removed. Images are pushed to the registry named by the repository variable
 `REGISTRY_HOST` (locally, the `REGISTRY` environment variable).
 
+**"Latest" means the newest release on an upstream line that still receives security
+patches**, which differs per application — PostgreSQL maintains five majors at once,
+APISIX only its newest minor. Each image declares the line it tracks in
+`images/<image>/image.env`.
+
 **It works on its own, with no external dependencies.** Clone it, have `docker` and
 `trivy`, and everything from build to gate verdict completes inside this repository.
 There is no code that checks out another repository, uses another repository's tokens,

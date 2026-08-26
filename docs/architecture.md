@@ -21,6 +21,15 @@ driven to zero.
   permanently removing distribution-specific OS vulnerabilities.
 * **Deterministic tagging.** Rolling tags such as `latest` are not permitted. Every
   published image gets an explicit `[version]-security-hardened-[build-date]` tag.
+* **We sit on a supported line.** "Latest" here means not the newest tag but the newest
+  release on an upstream line that is still receiving security patches. That differs per
+  project — PostgreSQL maintains five majors at once, while APISIX maintains only its
+  newest minor, so a new minor puts the previous one straight into end-of-life. Each
+  image declares the line it tracks in `images/<image>/image.env`, and the daily rescan
+  checks whether that line is still maintained. Unlike a CVE, an EOL line is not
+  resolved by rebuilding — that would just rebuild the same EOL pin every day — so this
+  check is kept out of the drift→rebuild path, and the only remedy is a person moving
+  the pin.
 * **Verified inputs.** Everything the build fetches is verified — git sources by commit
   SHA, tarballs by committed SHA256. TLS verification is never disabled and no
   unverified remote script is ever piped into a shell.
