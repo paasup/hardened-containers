@@ -117,7 +117,18 @@ RUN cd "openresty-${OPENRESTY_VERSION}" \
  && tar xzf "lua-resty-limit-traffic-${LIMIT_TRAFFIC_VER}.tar.gz" \
  && mv "lua-resty-limit-traffic-${LIMIT_TRAFFIC_VER}" "bundle/lua-resty-limit-traffic-${OR_LIMIT_TRAFFIC_VER}"
 
+# ngx_http_ffi_client compiles against lua-nginx-module's public API (ngx_http_lua_api.h) and
+# reaches it through OpenResty's bundled copy rather than a separate checkout. Without
+# NGX_HTTP_LUA_MODULE_DIR its config falls back to a hardcoded developer path and configure
+# fails, so the bundle directory is located explicitly — and its absence is a hard error
+# rather than a fallback, because a silent miss here would fail much later and less clearly.
 RUN cd "openresty-${OPENRESTY_VERSION}" \
+ && ngx_lua_bundle_dir="$(find bundle -maxdepth 1 -type d -name 'ngx_lua-*' | head -n 1)" \
+ && if [ -z "$ngx_lua_bundle_dir" ]; then \
+      echo "FAIL: no bundle/ngx_lua-* in openresty-${OPENRESTY_VERSION} — the bundle layout changed"; exit 1; \
+    fi \
+ && export NGX_HTTP_LUA_MODULE_DIR="$PWD/$ngx_lua_bundle_dir" \
+ && echo "ngx_http_ffi_client: NGX_HTTP_LUA_MODULE_DIR=$NGX_HTTP_LUA_MODULE_DIR" \
  && zlib_prefix="${OR_PREFIX}/zlib" pcre_prefix="${OR_PREFIX}/pcre" openssl_prefix="${OR_PREFIX}/openssl3" ; \
     ./configure --prefix="${OR_PREFIX}" \
       --with-cc-opt="-DAPISIX_RUNTIME_VER=${APISIX_RUNTIME_VER} -DNGX_LUA_ABORT_AT_PANIC -I${zlib_prefix}/include -I${pcre_prefix}/include -I${openssl_prefix}/include" \
