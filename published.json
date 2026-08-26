@@ -7,10 +7,10 @@
       "tag": "0.29.0-security-hardened-20260825"
     },
     "apisix": {
-      "digest": "sha256:02fb7f7df7f490fd0f61321fa99b984c56a8dd120f82bd6aa263a39d24b91006",
+      "digest": "sha256:439f4759e8e4c5cceaa41a424f43135b88009d4d5238eb1dd8e96af66838aeb1",
       "gate": "pass",
-      "ref": "docker.io/paasup/apisix:3.17.0-security-hardened-20260825",
-      "tag": "3.17.0-security-hardened-20260825"
+      "ref": "docker.io/paasup/apisix:3.18.0-security-hardened-20260826",
+      "tag": "3.18.0-security-hardened-20260826"
     },
     "apisix-ingress-controller": {
       "digest": "sha256:8aba2bc9d942c7ba48d805a37fc9215663afad683ff2404d4ae8d00476af0dae",
