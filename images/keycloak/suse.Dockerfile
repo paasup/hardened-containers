@@ -31,12 +31,8 @@ ARG KEYCLOAK_VERSION
 ARG RUNTIME_PACKAGES
 ARG NETTY_OLD
 ARG NETTY_VERSION
-ARG JACKSON_OLD
-ARG JACKSON_VERSION
-ARG PGJDBC_OLD
-ARG PGJDBC_VERSION
-ARG MICROMETER_OLD
-ARG MICROMETER_VERSION
+ARG OTEL_OLD
+ARG OTEL_VERSION
 
 # (a) Build the runtime rootfs. The rootfs uses the seed method (see "Adding packages on top
 # of bci-micro" in docs/image-authoring/base-os-policy.md) — creating a separate installroot

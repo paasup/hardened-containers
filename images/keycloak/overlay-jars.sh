@@ -33,18 +33,13 @@ M2="${M2_BASE:-https://repo1.maven.org/maven2}"
 [ -d "$LIB" ] || { echo "FAIL: $LIB is missing — check whether the distribution layout changed"; exit 1; }
 
 : "${NETTY_OLD:?}"      "${NETTY_VERSION:?}"
-: "${JACKSON_OLD:?}"    "${JACKSON_VERSION:?}"
-: "${PGJDBC_OLD:?}"     "${PGJDBC_VERSION:?}"
-: "${MICROMETER_OLD:?}" "${MICROMETER_VERSION:?}"
+: "${OTEL_OLD:?}"       "${OTEL_VERSION:?}"
 
 # groupId (filename prefix) | groupPath (Maven path) | artifact filter | OLD | NEW
 #   An artifact filter of '*' targets every jar with that groupId at the OLD version.
 SPECS=(
   "io.netty|io/netty|*|${NETTY_OLD}|${NETTY_VERSION}"
-  "com.fasterxml.jackson.core|com/fasterxml/jackson/core|jackson-core|${JACKSON_OLD}|${JACKSON_VERSION}"
-  "com.fasterxml.jackson.core|com/fasterxml/jackson/core|jackson-databind|${JACKSON_OLD}|${JACKSON_VERSION}"
-  "org.postgresql|org/postgresql|postgresql|${PGJDBC_OLD}|${PGJDBC_VERSION}"
-  "io.micrometer|io/micrometer|*|${MICROMETER_OLD}|${MICROMETER_VERSION}"
+  "io.opentelemetry|io/opentelemetry|opentelemetry-api|${OTEL_OLD}|${OTEL_VERSION}"
 )
 
 fetch() {   # $1 = url, $2 = output path

@@ -18,9 +18,7 @@ TAG="${TAG:?TAG environment variable is required}"
 PLATFORM="${PLATFORM:-linux/amd64}"
 KEYCLOAK_VERSION="${KEYCLOAK_VERSION:?must be passed from build.env}"
 NETTY_OLD="${NETTY_OLD:?}"     ; NETTY_VERSION="${NETTY_VERSION:?}"
-JACKSON_OLD="${JACKSON_OLD:?}" ; JACKSON_VERSION="${JACKSON_VERSION:?}"
-PGJDBC_OLD="${PGJDBC_OLD:?}"   ; PGJDBC_VERSION="${PGJDBC_VERSION:?}"
-MICROMETER_OLD="${MICROMETER_OLD:?}" ; MICROMETER_VERSION="${MICROMETER_VERSION:?}"
+OTEL_OLD="${OTEL_OLD:?}"       ; OTEL_VERSION="${OTEL_VERSION:?}"
 
 WORK="$(mktemp -d)"
 CID=""
@@ -120,10 +118,7 @@ PY
 
 check_jar "io.netty.netty-codec-http-${NETTY_OLD}.jar"                          "$NETTY_VERSION"
 check_jar "io.netty.netty-codec-${NETTY_OLD}.jar"                               "$NETTY_VERSION"
-check_jar "com.fasterxml.jackson.core.jackson-databind-${JACKSON_OLD}.jar"      "$JACKSON_VERSION"
-check_jar "com.fasterxml.jackson.core.jackson-core-${JACKSON_OLD}.jar"          "$JACKSON_VERSION"
-check_jar "org.postgresql.postgresql-${PGJDBC_OLD}.jar"                         "$PGJDBC_VERSION"
-check_jar "io.micrometer.micrometer-core-${MICROMETER_OLD}.jar"                 "$MICROMETER_VERSION"
+check_jar "io.opentelemetry.opentelemetry-api-${OTEL_OLD}.jar"                  "$OTEL_VERSION"
 
 docker rm -f "$CCID" >/dev/null 2>&1 || true
 CCID=""

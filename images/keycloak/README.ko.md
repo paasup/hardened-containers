@@ -26,10 +26,12 @@ CRITICAL 0)** 이다. 계층별로 성격이 전혀 다르다.
 | 번들 jar | 12 | netty ×6, jackson ×3, postgresql-jdbc, mssql-jdbc, keycloak-services | **아니다** |
 
 이 12건은 조치 방식이 셋으로 갈린다 — 전부 자체 빌드가 "고친" 것은 아니다: netty·
-jackson·postgresql-jdbc 는 아래 "업스트림과 다른 부분"의 jar 오버레이로 실제로
-교체한다. keycloak-services 5건은 버전을 26.7.1 로 올려 해소한다(아래 "그래도 버전은
-26.7.1 로 올린다" 참고). **mssql-jdbc 1건은 오버레이 대상이 아니다** — 실제로는 트리비
-오탐이라 `cve-exceptions.json` 의 예외로 위험을 수용했다(아래 "버전 관리" 참고).
+jackson·postgresql-jdbc 는 당시 아래 "업스트림과 다른 부분"의 jar 오버레이로 교체했다
+(jackson·postgresql-jdbc 는 이후 26.7.2 로 올리면서 오버레이 없이도 해소됐다 — 아래
+"그리고 26.7.2 로 올린다" 참고). keycloak-services 5건은 버전을 26.7.1 로 올려
+해소한다(아래 "그래도 버전은 26.7.1 로 올린다" 참고). **mssql-jdbc 1건은 오버레이
+대상이 아니다** — 실제로는 트리비 오탐이라 `cve-exceptions.json` 의 예외로 위험을
+수용했다(아래 "버전 관리" 참고).
 
 ### 상위 태그 교체를 먼저 검토한 결과 (image-authoring/README.md 체크리스트 1)
 
@@ -61,6 +63,37 @@ Security Advisory 실측). 스캔 시점 trivy DB 에 아직 없어 게이트에
 — `.Values.image.tag | default .Chart.AppVersion`), 우리는 `custom-values.yaml` 에서
 태그를 명시한다. appVersion 이 26.7.1 보다 낮은 것은 codecentric 차트의 릴리스 캐던스
 지연이지 차트 결함이 아니다.
+
+### 그리고 26.7.2 로 올린다
+
+MEDIUM 5건(jackson-databind ×3, netty-codec-http, opentelemetry-api)이 rescan 에서
+새로 잡혀 실측했다(모두 2026년 CVE — Keycloak 26.7.2 릴리스 시점 이후 공개).
+
+**Keycloak 26.7.2 자체가 CVE-2026-45292/59888/59889 를 "고쳤다"고 발표하지만, 실제
+jar 버전으로 확인하면 절반만 맞다.** Quarkus 를 `3.33.2.1` → `3.33.3.1` 로 올리면서:
+
+- **jackson-bom 이 `2.21.5` 로 올라 jackson-databind/jackson-core CVE 3건이 진짜로
+  해소된다** — 오버레이 없이도 base 에서 이미 수정 버전을 배포한다.
+- **postgresql-jdbc 도 `42.7.13` 으로 올라 있어**(기존 오버레이 목표였던 `42.7.12` 보다
+  높음) 오버레이가 필요 없어졌다.
+- **micrometer 도 `1.16.6` 으로 올라 있어**(기존 오버레이 목표와 정확히 일치) 오버레이가
+  필요 없어졌다.
+- **netty 는 그대로 `4.1.136.Final`** 이라 CVE-2026-59903(netty-codec-http 의 CORS
+  Vary 헤더 캐시 포이즈닝, 수정 버전 `4.1.137.Final`)은 26.7.2 로 올려도 안 풀린다 —
+  오버레이 목표를 `4.1.136.Final` → `4.1.137.Final` 로 다시 잡아야 한다.
+- **opentelemetry-api 는 아예 안 올라간다.** Keycloak 의 실제 수정(PR #50869,
+  `SizeLimitedBaggagePropagator`)은 의존성 버전을 올리는 게 아니라 baggage 파싱
+  크기를 애플리케이션 코드로 제한하는 우회 패치다 — jar 자체는 `1.57.0` 그대로 배포되고,
+  trivy 는 SBOM 의 jar 버전으로 판정하므로 CVE-2026-45292 는 계속 잡힌다. 그래서
+  `opentelemetry-api` 하나만 `1.57.0` → `1.62.0` 오버레이 대상으로 새로 추가했다
+  (sdk/context/exporter-\* 등 같은 그룹의 나머지 jar 는 CVE 가 없어 그대로 두었다 —
+  api 는 인터페이스 위주 모듈이라 netty/micrometer 처럼 "패밀리 버전 혼용 비지원"
+  규칙을 적용하지 않았다).
+
+그럼에도 26.7.2 로 올리는 이유는 jackson 외에도 Keycloak 자체 CVE 5건(세분화 관리자
+권한 우회, 그룹 계층 노출, vault 로 해석된 회전된 client secret 유출, 예측 가능한 계정
+연결 해시, reset-credentials 흐름 우회를 통한 미인증 계정 탈취)을 함께 없애기
+때문이다 — 이 CVE 들은 trivy DB 대상이 아니라 게이트에 잡히지 않지만 실제 위험이다.
 
 ## 유형과 베이스 OS
 
@@ -121,18 +154,17 @@ Security Advisory 실측). 스캔 시점 trivy DB 에 아직 없어 게이트에
 
    | 그룹 | 대상 | 버전 |
    | --- | --- | --- |
-   | `io.netty` | 패밀리 전체 17종 | `4.1.135.Final` → `4.1.136.Final` |
-   | `com.fasterxml.jackson.core` | `jackson-core`, `jackson-databind` | `2.21.2` → `2.21.4` |
-   | `org.postgresql` | `postgresql` | `42.7.11` → `42.7.12` |
-   | `io.micrometer` | 패밀리 전체 4종 | `1.16.3` → `1.16.6` |
+   | `io.netty` | 패밀리 전체 17종 | `4.1.136.Final` → `4.1.137.Final` |
+   | `io.opentelemetry` | `opentelemetry-api` 만 | `1.57.0` → `1.62.0` |
 
-   netty·micrometer 는 CVE 가 붙은 아티팩트만이 아니라 **패밀리 전체**를 함께 올린다 —
-   둘 다 아티팩트 간 버전 혼용이 비지원이다. jackson 은 2.21.x 안에서 호환이 보장되고
-   `jackson-annotations` 는 `2.21` 로 별도 버저닝돼 있어 CVE 있는 둘만 바꾼다.
+   netty 는 CVE 가 붙은 아티팩트만이 아니라 **패밀리 전체**를 함께 올린다 — 아티팩트 간
+   버전 혼용이 비지원이기 때문이다. opentelemetry-api 는 CVE 가 있는 그 아티팩트 하나만
+   올린다 — api 는 인터페이스 위주 모듈이라 sdk/context/exporter-\* 등 나머지 패밀리와
+   버전이 달라도 실제 기동(`verify.sh`)으로 확인된다.
 
-   netty·jackson·postgresql-jdbc 는 위 "왜 자체 빌드하나"의 원래 12건 집계에 있던
-   항목이다. **micrometer 는 이후 스캔에서 추가로 발견돼 오버레이 대상에 들어갔다** —
-   집계표를 다시 셀 때는 이 항목도 포함해서 맞춘다(아래 "버전 관리"의 집계 재검산 참고).
+   jackson-core/jackson-databind·postgresql-jdbc·micrometer 는 한때 여기서 오버레이
+   대상이었지만, Keycloak 26.7.2(Quarkus 3.33.3.1)가 이미 수정 버전을 배포해 제거됐다 —
+   자세한 내용은 위 "그리고 26.7.2 로 올린다" 참고.
 
    위장이 아니다 — trivy 는 jar 내부 `META-INF/maven/**/pom.properties`(없으면 sha1↔GAV
    인덱스)로 버전을 판정하므로 SBOM 에는 새 버전이 정확히 잡히고, 실제 내용도 새 버전이다.
@@ -166,6 +198,12 @@ Security Advisory 실측). 스캔 시점 trivy DB 에 아직 없어 게이트에
 
 집계표(위 "왜 자체 빌드하나")와 오버레이 대상(위 "업스트림과 다른 부분")의 합이 항상
 맞아야 한다 — 새 CVE 를 막을 때마다 양쪽을 함께 갱신한다.
+
+**jackson-databind/jackson-core·postgresql-jdbc·micrometer 도 이 오버레이 대상이
+아니다** — mssql-jdbc 처럼 트리비 오탐은 아니고, 실제로 Keycloak 26.7.2 가 이미
+수정 버전을 배포하기 때문이다(위 "그리고 26.7.2 로 올린다" 참고). `KEYCLOAK_VERSION`
+을 올릴 때마다 세 그룹 모두 재확인한다 — 다음 Quarkus BOM 이 다시 뒤처지면 오버레이를
+되살려야 한다.
 
 **권장 점검 주기**: 게이트가 이 이미지의 차단 CVE 를 다시 보고할 때, 또는 Keycloak 이
 Quarkus BOM 을 올린 릴리스를 낼 때 — **BOM 이 올라가 오버레이가 불필요해지면 해당
@@ -221,6 +259,6 @@ IMAGE=keycloak BASE_OS=suse REGISTRY=<나의-레지스트리> \
 ### 태그
 
 ```
-docker.io/paasup/keycloak:26.7.1-bci15.7-hardened-20260807
+docker.io/paasup/keycloak:26.7.2-bci15.7-hardened-20260826
                            └ app ┘└ 슬러그 ┘└ 하드닝 ┘└ 빌드일 ┘
 ```

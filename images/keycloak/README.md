@@ -29,11 +29,13 @@ effective HIGH, 0 CRITICAL)**. The layers differ completely in nature.
 | Bundled jars | 12 | netty ×6, jackson ×3, postgresql-jdbc, mssql-jdbc, keycloak-services | **No** |
 
 Those 12 split three ways in how they are addressed — the self-build did not "fix" all of
-them. netty, jackson, and postgresql-jdbc are genuinely replaced by the jar overlay
-described under "Differences from upstream" below. The 5 keycloak-services findings are
-resolved by moving to 26.7.1 (see "We still move to 26.7.1" below). **The one mssql-jdbc
-finding is not an overlay target** — it is actually a trivy false positive, and the risk
-is accepted through an exception in `cve-exceptions.json` (see "Version management").
+them. netty, jackson, and postgresql-jdbc were, at the time, genuinely replaced by the jar
+overlay described under "Differences from upstream" below (jackson and postgresql-jdbc
+later stopped needing the overlay once the image moved to 26.7.2 — see "Then we move to
+26.7.2" below). The 5 keycloak-services findings are resolved by moving to 26.7.1 (see "We
+still move to 26.7.1" below). **The one mssql-jdbc finding is not an overlay target** — it
+is actually a trivy false positive, and the risk is accepted through an exception in
+`cve-exceptions.json` (see "Version management").
 
 ### Result of evaluating a newer tag first (image-authoring/README.md checklist step 1)
 
@@ -66,6 +68,40 @@ The chart (`keycloakx`) **stays at 7.2.2, the latest.** The chart's
 (`templates/statefulset.yaml` — `.Values.image.tag | default .Chart.AppVersion`), and we
 specify the tag explicitly. Its appVersion trailing 26.7.1 is a release-cadence lag in the
 codecentric chart, not a chart defect.
+
+### Then we move to 26.7.2
+
+A rescan later measured 5 new MEDIUM findings (jackson-databind ×3, netty-codec-http,
+opentelemetry-api — all 2026 CVEs disclosed after the 26.7.2 release).
+
+**Keycloak 26.7.2's own release notes claim CVE-2026-45292/59888/59889 are "fixed", but
+checking the actual jar versions shows that is only half true.** Bumping Quarkus from
+`3.33.2.1` to `3.33.3.1`:
+
+- **genuinely fixes jackson-databind/jackson-core** — `jackson-bom` moves to `2.21.5`, so
+  the base distribution now ships the fixed version with no overlay needed.
+- **also already ships postgresql-jdbc at `42.7.13`** (past the overlay's old `42.7.12`
+  target), so that overlay is no longer needed either.
+- **also already ships micrometer at `1.16.6`** (exactly the overlay's old target), so
+  that overlay is no longer needed either.
+- **leaves netty unchanged at `4.1.136.Final`**, so CVE-2026-59903 (a CORS `Vary`-header
+  cache-poisoning issue in netty-codec-http, fixed in `4.1.137.Final`) is **not** resolved
+  by moving to 26.7.2 — the overlay target has to move from `4.1.136.Final` to
+  `4.1.137.Final`.
+- **does not touch opentelemetry-api at all.** Keycloak's actual fix (PR #50869,
+  `SizeLimitedBaggagePropagator`) is an application-level workaround that caps baggage
+  parsing size in code, not a dependency bump — the jar itself still ships at `1.57.0`,
+  and trivy judges by the jar version in the SBOM, so CVE-2026-45292 keeps getting
+  flagged. `opentelemetry-api` alone was added as a new overlay target, `1.57.0` →
+  `1.62.0` (the rest of the same group — sdk, context, exporter-\* — carries no CVE and
+  is left alone; `api` is mostly an interface module, so it is not held to the same
+  "family version mixing is unsupported" rule as netty/micrometer).
+
+Moving to 26.7.2 is still worth it beyond jackson, because it also removes 5 Keycloak-native
+CVEs (a fine-grained admin-permission bypass, a group-hierarchy disclosure, a leak of
+vault-resolved rotated client secrets, a predictable account-linking hash, and an
+unauthenticated account takeover via the reset-credentials flow) — none of those are in
+trivy's database, so the gate never caught them, but the risk is real.
 
 ## Shape and base OS
 
@@ -130,19 +166,19 @@ there are only three differences.
 
    | Group | Targets | Version |
    | --- | --- | --- |
-   | `io.netty` | the whole family, 17 artifacts | `4.1.135.Final` → `4.1.136.Final` |
-   | `com.fasterxml.jackson.core` | `jackson-core`, `jackson-databind` | `2.21.2` → `2.21.4` |
-   | `org.postgresql` | `postgresql` | `42.7.11` → `42.7.12` |
-   | `io.micrometer` | the whole family, 4 artifacts | `1.16.3` → `1.16.6` |
+   | `io.netty` | the whole family, 17 artifacts | `4.1.136.Final` → `4.1.137.Final` |
+   | `io.opentelemetry` | `opentelemetry-api` only | `1.57.0` → `1.62.0` |
 
-   For netty and micrometer the **whole family** is raised, not only the artifacts with a
-   CVE — both are unsupported when artifact versions are mixed. jackson guarantees
-   compatibility within 2.21.x and `jackson-annotations` is versioned separately at
-   `2.21`, so only the two with CVEs are changed.
+   For netty the **whole family** is raised, not only the artifacts with a CVE — mixing
+   versions across its artifacts is unsupported. opentelemetry-api raises only the one
+   artifact with the CVE — `api` is mostly an interface module, so running it ahead of the
+   rest of its group (sdk, context, exporter-\*) is confirmed safe by the real startup in
+   `verify.sh` rather than assumed unsafe by default.
 
-   netty, jackson, and postgresql-jdbc were part of the original 12-finding tally under
-   "Why we build this ourselves". **micrometer was found in a later scan and added to the
-   overlay** — include it when re-adding the tally (see "Version management" below).
+   jackson-core/jackson-databind, postgresql-jdbc, and micrometer were overlay targets
+   here at one point, but were removed once Keycloak 26.7.2 (Quarkus 3.33.3.1) started
+   shipping the fixed versions in the base distribution — see "Then we move to 26.7.2"
+   above.
 
    This is not disguise — trivy determines versions from `META-INF/maven/**/pom.properties`
    inside the jar (falling back to a sha1↔GAV index), so the SBOM reports the new version
@@ -182,6 +218,12 @@ a re-review.
 The tally (under "Why we build this ourselves") and the overlay targets (under
 "Differences from upstream") must always add up — update both whenever another CVE is
 blocked.
+
+**jackson-databind/jackson-core, postgresql-jdbc, and micrometer are also not overlay
+targets.** Unlike mssql-jdbc this is not a trivy false positive — Keycloak 26.7.2 genuinely
+ships the fixed versions already (see "Then we move to 26.7.2" above). Re-check all three
+groups on every `KEYCLOAK_VERSION` bump — if a future Quarkus BOM regresses one of them,
+its overlay needs to come back.
 
 **Suggested review cadence**: whenever the gate reports a blocking CVE for this image
 again, or when Keycloak ships a release with an updated Quarkus BOM — **once the BOM moves
@@ -243,6 +285,6 @@ There is only one base variant, so the filenames are fixed at `suse.*`.
 ### Tags
 
 ```
-<registry>/keycloak:26.7.1-bci15.7-hardened-20260807
+<registry>/keycloak:26.7.2-bci15.7-hardened-20260826
                      └ app ┘└ slug ┘└hardened┘└ build date ┘
 ```
