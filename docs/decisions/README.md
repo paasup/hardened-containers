@@ -17,6 +17,7 @@ ADR is for.
 | [0006](0006-apisix-ingress-controller-self-build.md) | Replace the apisix-ingress-controller image with a source-compiled self-build | Accepted |
 | [0007](0007-argocd-self-build.md) | Replace the argocd image with a source-compiled self-build | Accepted |
 | [0008](0008-keycloak-self-build.md) | Build the Keycloak image ourselves | Accepted |
+| [0009](0009-kyverno-self-build.md) | Replace the kyverno image family (7 images) with source-compiled self-builds | Accepted |
 
 ## When to write a new ADR
 

@@ -27,6 +27,13 @@
 
 ## 열린 항목
 
+- **kyverno 7개 이미지(`kyverno`·`kyverno-cli`·`kyvernopre`·`background-controller`·
+  `cleanup-controller`·`reports-controller`·`readiness-checker`) 자체 빌드 레시피가
+  로컬에서 전부 게이트 PASS·`CoverageProbe: ok`까지 확인됐고 아직 커밋·PR 전이다.**
+  근거는 [ADR 0009](docs/decisions/0009-kyverno-self-build.md). 다음 할 일: PR 열기 →
+  머지 → `workflow_dispatch(push=true)`로 실제 게시 → `published.json`에 7개 항목
+  반영 확인. 게시되면 dip-catalog 쪽에서 `catalog/image-map/`에 7개 매핑을 추가해
+  카탈로그 태그를 반영한다.
 - **`cnpg-postgresql` 이 18.4 로, 유지보수 라인 안에서 18.6 보다 뒤진다.** 라인 자체는
   2030-11-14 까지 유지되므로 급하지 않다(support-line 검사에서 notice, 실패 아님). 올릴
   때 메이저가 `APP_VERSION`·`PG_VERSION`(EVR)·`EXTENSIONS` 세 곳에 중복돼 있는 것을 함께
