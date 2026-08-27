@@ -27,6 +27,14 @@
 
 ## 열린 항목
 
+- **`infisical-secrets-operator` 자체 빌드 레시피가 로컬에서 게이트 PASS(0/0 effective
+  C/H)·`CoverageProbe: ok`까지 확인됐고 아직 커밋·PR 전이다.** 근거는
+  [ADR 0010](docs/decisions/0010-infisical-secrets-operator-self-build.md). 다음 할 일:
+  PR 열기 → 머지 → `workflow_dispatch(push=true)`로 실제 게시 → `published.json`에 반영
+  확인. 게시되면 dip-catalog 쪽에서 `catalog/image-map/infisical-secrets-operator.env`를
+  추가해 `secrets-operator` 차트(`manifests/helm/secrets-operator/0.11.8/`)의 태그를
+  반영한다. 배포 검증(실제 클러스터에 `infisical-standalone`과 함께 설치해
+  `InfisicalSecret` 동기화 확인)도 아직 별도로 하지 않았다.
 - **kyverno 7개 이미지(`kyverno`·`kyverno-cli`·`kyvernopre`·`background-controller`·
   `cleanup-controller`·`reports-controller`·`readiness-checker`) 자체 빌드 레시피가
   로컬에서 전부 게이트 PASS·`CoverageProbe: ok`까지 확인됐고 아직 커밋·PR 전이다.**
