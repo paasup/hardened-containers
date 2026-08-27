@@ -24,6 +24,18 @@
       "ref": "docker.io/paasup/argocd:3.5.1-security-hardened-20260825",
       "tag": "3.5.1-security-hardened-20260825"
     },
+    "background-controller": {
+      "digest": "sha256:e628168e1741546c6b928c93be904d1b8d32e7231d1dc267bc45dee2abe6ad89",
+      "gate": "pass",
+      "ref": "docker.io/paasup/background-controller:v1.19.0-security-hardened-20260827",
+      "tag": "v1.19.0-security-hardened-20260827"
+    },
+    "cleanup-controller": {
+      "digest": "sha256:c9dd458bd60bbaf65411256382e3bc09ccc81226e084a4b5fb0bb8e02509f649",
+      "gate": "pass",
+      "ref": "docker.io/paasup/cleanup-controller:v1.19.0-security-hardened-20260827",
+      "tag": "v1.19.0-security-hardened-20260827"
+    },
     "cloudnative-pg": {
       "digest": "sha256:25111a767a24babe28a06477548720c7ac0c08e92d713a89f00c36d626cfae91",
       "gate": "pass",
@@ -47,6 +59,36 @@
       "gate": "pass",
       "ref": "docker.io/paasup/keycloak:26.7.2-bci15.7-hardened-20260826",
       "tag": "26.7.2-bci15.7-hardened-20260826"
+    },
+    "kyverno": {
+      "digest": "sha256:bdc38a4a6c1781e77d8b5b13f8f7553234e3027c758dd2a00e542ebd04565016",
+      "gate": "pass",
+      "ref": "docker.io/paasup/kyverno:v1.19.0-security-hardened-20260827",
+      "tag": "v1.19.0-security-hardened-20260827"
+    },
+    "kyverno-cli": {
+      "digest": "sha256:45ea39ace4d99775e4ad7ef9c3cd4bba86933e2f2a2c72a4d3a43884d48f4913",
+      "gate": "pass",
+      "ref": "docker.io/paasup/kyverno-cli:v1.19.0-security-hardened-20260827",
+      "tag": "v1.19.0-security-hardened-20260827"
+    },
+    "kyvernopre": {
+      "digest": "sha256:abd393cf151f84707a0896ff69a2b7ccd46d3b8faa13b30221663744efdbc49a",
+      "gate": "pass",
+      "ref": "docker.io/paasup/kyvernopre:v1.19.0-security-hardened-20260827",
+      "tag": "v1.19.0-security-hardened-20260827"
+    },
+    "readiness-checker": {
+      "digest": "sha256:26c83629c36c7d1abac62a76929306edfbd0bdd4302311528caa36e802499e09",
+      "gate": "pass",
+      "ref": "docker.io/paasup/readiness-checker:v1.19.0-security-hardened-20260827",
+      "tag": "v1.19.0-security-hardened-20260827"
+    },
+    "reports-controller": {
+      "digest": "sha256:1a2495eb4f5f48f3c2a83eefb6d3fb5b5eaab4e10a5476ea125e1a8a05b61a6c",
+      "gate": "pass",
+      "ref": "docker.io/paasup/reports-controller:v1.19.0-security-hardened-20260827",
+      "tag": "v1.19.0-security-hardened-20260827"
     }
   },
   "schemaVersion": 1
