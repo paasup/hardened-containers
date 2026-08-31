@@ -170,8 +170,7 @@ COPY --from=backend-build --chown=1001:1001 /app/standalone-entrypoint.sh ./stan
 COPY --from=backend-prod-deps --chown=1001:1001 /app/node_modules ./node_modules
 COPY --from=frontend-builder --chown=1001:1001 /app/dist ./frontend-build
 COPY --from=src /src/LICENSE /licenses/LICENSE
-RUN chmod +x ./scripts/export-assets.sh ./standalone-entrypoint.sh  # upstream's own CDN asset-extraction script, copied in above  
-# upstream's own CDN asset-extraction script, copied in above
+RUN chmod +x ./scripts/export-assets.sh ./standalone-entrypoint.sh  # upstream's own CDN asset-extraction script, copied in above
 
 # Give non-root-user permission to update SSL certs, same as upstream.
 RUN chown -R non-root-user /etc/ssl/certs \

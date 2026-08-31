@@ -105,10 +105,51 @@ Go 쪽 강제 업그레이드에는 없는, 이번에 실제 빌드 실패로 �
 Gateway/QUIC 전송에 실제로 필요한 프로덕션 의존성이고, 미리 컴파일된 플랫폼별 바이너리로
 npm `optionalDependencies` 를 통해 배포된다(Rust 툴체인 불필요). 문제는 이미 **가장 최신
 공개 버전(1.0.8, 2025-03 배포)에 고정돼 있는데 그 버전 자체가 CVE 3건(CRITICAL 1·HIGH
-2, `shlex`·`quiche`)을 여전히 갖고 있다는 것** — 올릴 상위 버전이 없다. 실제로 고치려면
-Infisical 자신의 Rust 소스에서 이 애드온을 재빌드해야 하는데, 이 레포에는 아직 Rust/
-napi-rs 빌드 패턴이 없다. `cve-exceptions.json` 에 예외로 등록했다 — 근거: 업스트림 자체
-패키지, 새 버전 없음, 재빌드하려면 이 레포에 없는 새 툴체인이 필요함.
+2, `shlex`·`quiche`)을 여전히 갖고 있다는 것** — 올릴 상위 버전이 없다.
+
+**"Rust 빌드 파이프라인이 없어서"가 이유의 전부가 아니다 — 실제로 빌드를 시도해서 확인한
+결과를 남긴다(다음에 이 작업을 다시 검토할 때 처음부터 재조사하지 않도록).** 소스는
+공개돼 있다(`github.com/Infisical/js-quic`, MIT, 아카이브 안 됨, `napi-rs` 기반).
+`v1.0.8` 태그를 받아 `Cargo.toml`의 `quiche` 를 `0.18.0`→`0.24.5`(실제 해석된 버전은
+`0.24.9`)로 올려 `cargo check` 를 실제로 돌려봤다(`rust:1-bookworm` + `cmake`·
+`pkg-config`·`libssl-dev`·`libclang-dev`·`clang`, `js-quic` 자신의 `flake.nix` 가 요구하는
+툴체인과 일치).
+
+- **1단계 장벽 — `boring` 크레이트 버전 충돌.** `quiche 0.24.5` 는 `boring ^4.3` 을
+  요구하는데, `js-quic` 자신의 `Cargo.toml` 도 `boring = "3"` 을 **직접** 의존한다. 같은
+  네이티브 라이브러리(`boringssl`)를 링크하는 크레이트가 둘이면 버전이 갈리면 안 되므로
+  (`links = "boringssl"` 충돌, `EOVERRIDE` 류의 Cargo 버전) `js-quic` 의 `boring` 도
+  같이 `"4.3"` 으로 올려야 했다 — **이건 문제없이 해결됐다.** BoringSSL 자체(C/C++, cmake
+  로 빌드)는 그대로 처음부터 끝까지 컴파일에 성공했다(`libcrypto.a`/`libssl.a` 링크까지
+  확인).
+- **2단계 장벽 — `quiche` 의 공개 API 자체가 바뀜(진짜 장벽).** `boring` 문제를 해결한
+  뒤 `cargo check` 를 다시 돌리면 **컴파일 에러 20건**, 전부
+  `src/native/napi/connection.rs` 안에서 발생:
+  - `quiche::Stats` 구조체에서 필드 9개가 사라짐 — `peer_initial_max_data`,
+    `peer_initial_max_stream_data_bidi_local`, `peer_initial_max_stream_data_bidi_remote`,
+    `peer_initial_max_stream_data_uni`, `peer_initial_max_streams_bidi`,
+    `peer_initial_max_streams_uni`, `peer_ack_delay_exponent`, `peer_max_ack_delay`,
+    `peer_disable_active_migration`, `peer_active_conn_id_limit`,
+    `peer_max_datagram_frame_size`. `js-quic` 는 이 필드들을 그대로 읽어 JS 쪽 통계
+    API 로 넘긴다.
+  - 메서드 이름 변경: `active_source_cids`→`active_scids`, `source_cids_left`→
+    `scids_left`. `new_source_cid`·`retire_destination_cid`는 시그니처 자체가 달라짐.
+  - `stream_capacity` 가 이제 `&mut self` 를 요구하는데(`js-quic` 코드는 `&self` 로
+    호출) 가변성이 안 맞음.
+  - (참고로 `boring::ssl::*`/`boring::x509::*` 를 직접 쓰는 `src/native/napi/config.rs`
+    쪽은 이 에러 목록에 없었다 — TLS 설정 코드는 `boring` v3→v4 전환에서 그대로
+    컴파일됐다는 뜻.)
+- **업스트림도 아직 안 고쳤다.** `js-quic` 저장소는 2025-10-06 까지 커밋이 있지만(활발함),
+  `master` 브랜치의 `Cargo.toml` 도 여전히 `quiche = "0.18.0"` 그대로다 — Infisical 자신도
+  아직 이 API 변경을 반영한 적 없다.
+
+즉 남은 작업은 "버전 핀 하나 올리기"가 아니라 **quiche 의 바뀐 API 에 맞춰 `js-quic` 의
+Rust 코드를 실제로 고치고**(사라진 9개 통계 필드 처리 방침 결정, 메서드 3~4개 교체,
+가변성 수정), **컴파일 성공만이 아니라 실제 QUIC 연결 동작까지 검증하고**, 만약
+Infisical 자신의 TypeScript 쪽이 사라진 통계 필드를 소비하고 있다면 그쪽도 같이 손봐야
+하는 별도 프로젝트급 작업이다. `cve-exceptions.json` 에 예외로 등록했다 — 근거: 업스트림
+자체 패키지, 새 버전 없음(업스트림도 미수정), 실제 수정은 이 이미지 작업 범위를 넘는
+Rust 소스 패치가 필요함.
 
 ## 빌드·검증 방법
 

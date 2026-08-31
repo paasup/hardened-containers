@@ -123,6 +123,18 @@ What's left on `v0.164.1` splits into two layers:
 
 - **If Infisical publishes a newer `@infisical/quic`** that resolves the `quiche`/`shlex`
   CVEs, bump to it and drop the exception.
+- **If someone picks up the Rust patch this exception is standing in for** — an actual
+  build attempt (not just "no toolchain here") found the real blocker: bumping
+  `js-quic`'s vendored `quiche` from 0.18.0 to 0.24.9 requires also bumping its direct
+  `boring` dependency 3 -> 4.3 (a native-library-link conflict, which resolves cleanly —
+  BoringSSL itself compiles fine), but quiche's own public API changed across that gap
+  — 9 fields dropped from `quiche::Stats`, 2 methods renamed, 2 methods with changed
+  signatures, one mutability mismatch, all in `js-quic`'s
+  `src/native/napi/connection.rs`. Full list and exact identifiers are in
+  `images/infisical/README.md`'s "Exception" section — read that before re-investigating
+  from scratch. Fixing it means patching `js-quic`'s Rust source to the new API and
+  verifying actual QUIC behavior, not just a successful `cargo check` — upstream itself
+  has not done this yet (confirmed against `js-quic`'s `master` as of this writing).
 - **If a deployment needs one of the four dropped features** — reconsider building that
   specific toolchain back in (this is where the actual cost of dropping the Go sidecar
   or Oracle support would be paid) rather than reverting to the upstream image wholesale.
