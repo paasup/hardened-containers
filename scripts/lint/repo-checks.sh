@@ -253,13 +253,17 @@ for p in sorted(pathlib.Path("images").glob("*/image.env")):
 
     # A declared line must be the dotted prefix of the default variant's APP_VERSION:
     # line 18 covers 18.4, line 3.5 covers 3.5.1. Anything else means the two drifted.
+    # SUPPORT_LINE must stay byte-exact with endoflife.date's own release name (no "v" —
+    # confirmed against their API), but some projects' own APP_VERSION carries a "v"
+    # prefix (kyverno's v1.19.0) — strip it from APP_VERSION only, for this comparison.
     line = kv.get("SUPPORT_LINE")
     variant = kv.get("DEFAULT_BASE_OS")
     if line and variant:
         bench = p.parent / f"{variant}.build.env"
         if bench.exists():
             app = read_env(bench).get("APP_VERSION")
-            if app and app != line and not app.startswith(line + "."):
+            app_bare = app[1:] if app and app[:1] in ("v", "V") else app
+            if app and app_bare != line and not app_bare.startswith(line + "."):
                 bad.append(f"{p}: SUPPORT_LINE={line} does not match APP_VERSION={app} in {bench.name}")
 for b in bad:
     print(f"   FAIL — {b}")

@@ -146,9 +146,14 @@ def check(image_dir):
             + (f" since {rel['eolFrom']}" if rel.get("eolFrom") else "")
             + f" — still maintained: {', '.join(alive) if alive else 'none'}"
         )
-    elif row["pin"] != "-" and row["latest"] != "-" and row["pin"] != row["latest"]:
-        row["status"] = BEHIND
-        row["detail"] = f"line {line} is maintained, but {row['pin']} is behind {row['latest']}"
+    else:
+        # Some projects' own APP_VERSION carries a "v" prefix (kyverno's v1.19.0) that
+        # endoflife.date's release names never do — strip it for this comparison only,
+        # so that being genuinely current does not get reported as BEHIND.
+        pin_bare = row["pin"][1:] if row["pin"][:1] in ("v", "V") else row["pin"]
+        if row["pin"] != "-" and row["latest"] != "-" and pin_bare != row["latest"]:
+            row["status"] = BEHIND
+            row["detail"] = f"line {line} is maintained, but {row['pin']} is behind {row['latest']}"
     return row
 
 
