@@ -38,7 +38,7 @@ because the support line belongs to the application, not to a base-OS variant.
 |---|---|
 | `SUPPORT_SOURCE` | `endoflife.date` or `manual` |
 | `SUPPORT_PRODUCT` | endoflife.date product slug (required when the source is `endoflife.date`) |
-| `SUPPORT_LINE` | The line we track. Must equal a `releases[].name` upstream, and must be the dotted prefix of `APP_VERSION` — line `18` covers `18.4`, line `3.5` covers `3.5.1` |
+| `SUPPORT_LINE` | The line we track. Must equal a `releases[].name` upstream **byte-for-byte** — endoflife.date's release names never carry a leading `v` even when the project's own tags do (kyverno's releases are named `1.19`, not `v1.19`, even though its tags and our `APP_VERSION` are `v1.19.0`). Must also be the dotted prefix of `APP_VERSION` once any such `v` is stripped — line `18` covers `18.4`, line `1.19` covers `v1.19.0` |
 | `SUPPORT_REF` | Required when the source is `manual` — the page a person reads instead |
 | `SUPPORT_NOTE` | Optional. Where the project's cadence is worth stating in words |
 

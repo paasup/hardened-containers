@@ -245,6 +245,17 @@ for p in sorted(pathlib.Path("images").glob("*/image.env")):
         for key in ("SUPPORT_PRODUCT", "SUPPORT_LINE"):
             if not kv.get(key):
                 bad.append(f"{p}: SUPPORT_SOURCE=endoflife.date requires {key}")
+        # endoflife.date's own release names never carry a leading "v", even for
+        # projects whose tags do (kyverno's releases are named "1.19", not "v1.19",
+        # even though its own tags are v1.19.0) — this cannot be checked against the
+        # live API offline, but a leading "v" here is check-support-line.py finding
+        # nothing and reporting a live line as end-of-life (measured: all 7
+        # kyverno-family images, SUPPORT_LINE=v1.19).
+        sl = kv.get("SUPPORT_LINE") or ""
+        if sl[:1] in ("v", "V"):
+            bad.append(f"{p}: SUPPORT_LINE={sl} starts with '{sl[0]}' — endoflife.date "
+                       "release names never carry a leading v/V, even when the project's "
+                       "own tags do; this would silently never match upstream")
     elif src == "manual":
         if not kv.get("SUPPORT_REF"):
             bad.append(f"{p}: SUPPORT_SOURCE=manual requires SUPPORT_REF (the source a person reads)")

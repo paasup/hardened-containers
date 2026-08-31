@@ -1,6 +1,6 @@
 ---
 name: self-build-image
-description: Use when adding a self-built hardened image or changing an existing build definition. Requests like "build this image ourselves", "add a hardened image", "resolve the blocking CVE with a self-build", "run build-hardened-image.sh", or "a new image under images/" belong here. There are currently eight: adc, apisix, apisix-ingress-controller, argocd, cloudnative-pg, cnpg-postgresql, etcd, keycloak (the images/ directory is the single source of truth for the exact list).
+description: Use when adding a self-built hardened image or changing an existing build definition. Requests like "build this image ourselves", "add a hardened image", "resolve the blocking CVE with a self-build", "run build-hardened-image.sh", or "a new image under images/" belong here. There are currently seventeen: adc, apisix, apisix-ingress-controller, argocd, background-controller, cleanup-controller, cloudnative-pg, cnpg-postgresql, etcd, infisical, infisical-secrets-operator, keycloak, kyverno, kyverno-cli, kyvernopre, readiness-checker, reports-controller (the images/ directory is the single source of truth for the exact list).
 ---
 
 # Self-built hardened images
@@ -171,6 +171,14 @@ in the README and the ADR. The full rule is in the "Comment rules" section of
   by changing code or packages — if the tally does not add up against the real remediation
   record (a CVE in the tally that is not an overlay target, say), that cross-check has
   broken.
+- **`SUPPORT_LINE` must equal endoflife.date's `releases[].name` byte-for-byte — never
+  copy it from `APP_VERSION`.** Some projects' own tags carry a `v` prefix (kyverno's
+  `v1.19.0`) that endoflife.date's release names never do (`1.19`). All 7 kyverno-family
+  images were declared with `SUPPORT_LINE=v1.19`, which matched nothing upstream and made
+  `check-support-line.py` report a live, current line as end-of-life — failing every
+  `rescan.yml` run for all 7 images daily until caught. See
+  [support-policy.md](../../../docs/image-authoring/support-policy.md)'s `SUPPORT_LINE`
+  row for the byte-for-byte rule.
 
 ## Wrapping up
 
