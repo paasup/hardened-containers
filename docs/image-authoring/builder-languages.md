@@ -65,7 +65,21 @@ RUN zypper -n install -y ${NODE_PKG} && zypper -n clean --all
   gets scanned, so it belongs on a path the vendor patches.
 - Keep the two majors aligned. `NODE_PKG` is a `build.env` value too.
 - Copy only the bundled output (`main.cjs` and similar) — never put `node_modules` in
-  the final image.
+  the final image, **unless the bundler treats `dependencies` as external** (common for
+  a real backend app rather than a small CLI — `tsup`/esbuild do this by default for
+  Node targets) or the app has native addons (`.node` files can't be bundled at all). In
+  that case `node_modules` (production-only, via a separate `npm ci --omit=dev`/
+  `npm install --omit=dev` stage) legitimately ships alongside the bundle — matching
+  upstream's own build is the test, not a blanket rule (`infisical` keeps it; a small
+  Go-equivalent CLI-shaped Node app usually would not need to).
+- **If the app has native addons** (`argon2`, `bcrypt`, `odbc`, and similar — anything
+  needing `node-gyp`), compile them on the **same base as the final image**, not the
+  official `node` image, even though rule 2's builder exemption would otherwise allow
+  it — the same principle as the C/Lua rule below, extended to native Node addons
+  (measured: `infisical`). SLE_BCI's `python3` (3.6.15) is too old for `node-gyp`
+  (`SyntaxError` on the walrus operator) — install `python313`+`nodejs*-devel` and
+  symlink `python3` to it (SLE_BCI has no `update-alternatives` to do this
+  automatically).
 
 ## JVM (jar replacement)
 
@@ -138,6 +152,41 @@ git-lfs together), **reuse a single list across all of them** — add a helper l
 `images/argocd/go-mod-upgrade.sh` that applies only the modules present in that
 project's dependency graph. `go get` will happily add a module that is not a dependency
 to `go.mod`, so the list cannot simply be passed through.
+
+## Node module CVEs — npm's `overrides`, and where it differs from Go
+
+npm's analogue of `GO_MODULE_UPGRADES` is the `overrides` field, applied via `npm pkg
+set overrides[<pkg>]=<version>` (bracket syntax for scoped names) before `npm
+install`/`npm ci --omit=dev`, values taken from trivy's `FixedVersion` the same way —
+minimum version on the currently-installed major line, never hand-picked (measured:
+`infisical`, 26 packages). Two mechanics have no Go equivalent, both found by an actual
+build failing rather than anticipated in advance:
+
+- **npm refuses to `overrides` a package that is also a direct dependency**
+  (`npm error EOVERRIDE`). Split the list in two: a direct-upgrade list that does `npm
+  pkg set dependencies[<pkg>]=<version>` instead, and the `overrides` list for
+  everything transitive-only. To also dedupe *nested* copies of a direct-upgraded
+  package (other dependencies pulling in an old version of the same package), add a
+  self-referencing `overrides[<pkg>]["."]` entry alongside the `dependencies` bump —
+  but the two values must match **character-for-character**, `^` included; the
+  EOVERRIDE check is a textual comparison against `dependencies`, not a semver
+  satisfaction check, so `dependencies[<pkg>]=^1.2.3` paired with
+  `overrides[<pkg>]["."]=1.2.3` (no caret) still conflicts.
+- **`npm ci` refuses to run once `npm pkg set` has put `package.json` out of sync with
+  the committed `package-lock.json`** (`npm error EUSAGE`, worded as if the lockfile
+  were simply missing — it is present and valid). Use `npm install` (which reconciles
+  the lockfile) instead of `npm ci` in any stage that runs `npm pkg set` first.
+- **Forcing a nested dependency can break a *different* package that pins it on
+  purpose.** A dependency may hard-depend on an old API shape of the very package being
+  force-upgraded (measured: `oci-common` pinning `uuid@3.3.3` for its legacy `uuid/v1`
+  subpath import, removed from uuid's `package.json` `exports` map starting with uuid
+  9 — forcing `uuid` up without also upgrading `oci-common` crashed the app at runtime
+  with `ERR_PACKAGE_PATH_NOT_EXPORTED`, not caught by `npm install` succeeding, only by
+  actually running the app). If the offending package has since migrated to the newer
+  API itself, force-upgrading *it* too (even though nothing scanned it directly)
+  resolves both the breakage and the nested CVE at once. This is exactly why
+  `verify.sh` actually running the app (not just a successful build) matters as much
+  for Node force-upgrades as for Go ones.
 
 ### Pins fall behind while sitting still
 

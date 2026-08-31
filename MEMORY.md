@@ -27,6 +27,16 @@
 
 ## 열린 항목
 
+- **`infisical` 자체 빌드 레시피가 로컬에서 게이트 PASS(0/0 effective C/H, `@infisical/quic`
+  의 CVE 3건은 승인된 예외로 처리)·`CoverageProbe: ok`·`verify.sh`(실제 Postgres+Redis
+  기동 검증)까지 확인됐고 아직 커밋·PR 전이다.** 근거는
+  [ADR 0011](docs/decisions/0011-infisical-self-build.md). 다음 할 일: PR 열기 → 머지 →
+  `workflow_dispatch(push=true)`로 실제 게시 → `published.json`에 반영 확인. 게시되면
+  dip-catalog 쪽에서 `catalog/image-map/infisical.env`를 추가해
+  `infisical-standalone` 차트의 태그를 반영한다(현재 v0.158.0 고정 — 이 이미지는
+  v0.164.1 기준이라 차트 쪽도 같이 올려야 함, 6개 마이너 차이라 브레이킹 체인지 여부 검토
+  필요). 배포 검증(`infisical-secrets-operator`와 함께 실제 클러스터에 설치해
+  `InfisicalSecret` 동기화 확인)도 아직 별도로 하지 않았다.
 - **`infisical-secrets-operator` 자체 빌드 레시피가 로컬에서 게이트 PASS(0/0 effective
   C/H)·`CoverageProbe: ok`까지 확인됐고 아직 커밋·PR 전이다.** 근거는
   [ADR 0010](docs/decisions/0010-infisical-secrets-operator-self-build.md). 다음 할 일:
