@@ -69,7 +69,7 @@ dropped.
 | Frontend builder | Official `node` image | Same (official `node` image, matching upstream's own pin) | Output is static Vite assets only — no native binaries, no ABI concern, so it keeps the normal default (official language image) |
 | Backend builder | Official `node` image (Debian) | `registry.suse.com/bci/bci-base` (same base as the final stage) | The backend's production dependencies include native Node addons (`argon2`, `bcrypt`, `odbc`). Compiling on Debian and running on SUSE BCI risks a glibc ABI mismatch — the same principle as the C/Lua rule in [builder-languages.md](../../docs/image-authoring/builder-languages.md) ("keep the builder stage and the final stage on the same base and link dynamically"), extended to native Node addons |
 
-### Force-upgraded Node dependencies (26, `NPM_DIRECT_UPGRADES` + `NPM_OVERRIDES`)
+### Force-upgraded Node dependencies (27, `NPM_DIRECT_UPGRADES` + `NPM_OVERRIDES`)
 
 Like `golang.org/x/*` modules, most `node-pkg` findings are **transitive** dependencies.
 npm's equivalent of `go get` is the `overrides` field (`npm pkg set
@@ -83,9 +83,10 @@ Two things this repository's Go-based force-upgrades never have to handle, both
 measured by an actual build failing:
 
 - **npm refuses to `overrides` a package that is also a direct dependency**
-  (`npm error EOVERRIDE`) — 8 of the 26 (`@fastify/static`, `axios`, `dd-trace`,
-  `nanoid`, `nodemailer`, `oci-common`, `scim-patch`, `uuid`) are direct dependencies of
-  `backend/package.json`, so they go through `NPM_DIRECT_UPGRADES` instead (bumps
+  (`npm error EOVERRIDE`) — 9 of the 27 (`@fastify/static`, `axios`, `dd-trace`,
+  `mysql2`, `nanoid`, `nodemailer`, `oci-common`, `scim-patch`, `uuid`) are direct
+  dependencies of `backend/package.json`, so they go through `NPM_DIRECT_UPGRADES`
+  instead (bumps
   `dependencies` itself, plus a matching self-referencing `overrides[pkg]["."]` entry to
   also dedupe every *nested* copy other packages pull in — npm's EOVERRIDE check is a
   **textual** comparison against `dependencies`, not a semver one, so the two values

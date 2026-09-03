@@ -63,7 +63,7 @@ Infisical 백엔드(`infisical/infisical`, secrets-operator 와 짝을 이루는
 | 프론트엔드 빌더 | 공식 `node` 이미지 | 동일(공식 `node` 이미지, 업스트림과 같은 태그) | 산출물이 정적 Vite 에셋뿐이라 네이티브 바이너리·ABI 문제가 없다 — 평소 기본값(공식 언어 이미지) 그대로 |
 | 백엔드 빌더 | 공식 `node` 이미지(Debian) | `registry.suse.com/bci/bci-base`(최종 스테이지와 동일 베이스) | 백엔드 프로덕션 의존성에 네이티브 Node 애드온(`argon2`·`bcrypt`·`odbc`)이 있다. Debian 에서 컴파일해 SUSE BCI 에서 실행하면 glibc ABI 불일치 위험이 있다 — [builder-languages.md](../../docs/image-authoring/builder-languages.md) 의 C/Lua 규칙("빌더와 최종 스테이지를 같은 베이스로 유지하고 동적 링크")을 네이티브 Node 애드온에도 그대로 적용했다 |
 
-### 강제 상향한 Node 의존성(26개, `NPM_DIRECT_UPGRADES` + `NPM_OVERRIDES`)
+### 강제 상향한 Node 의존성(27개, `NPM_DIRECT_UPGRADES` + `NPM_OVERRIDES`)
 
 `golang.org/x/*`류 Go 모듈처럼, `node-pkg` 취약점은 대부분 **전이 의존성**이다. `go
 get` 의 npm 대응이 `overrides` 필드다(`npm pkg set overrides[<pkg>]=<version>` 후
@@ -75,8 +75,8 @@ get` 의 npm 대응이 `overrides` 필드다(`npm pkg set overrides[<pkg>]=<vers
 Go 쪽 강제 업그레이드에는 없는, 이번에 실제 빌드 실패로 실측한 두 가지 함정이 있다.
 
 - **npm 은 직접 의존성(direct dependency)인 패키지를 `overrides` 로 덮어쓰는 걸
-  거부한다**(`npm error EOVERRIDE`). 26개 중 8개(`@fastify/static`·`axios`·
-  `dd-trace`·`nanoid`·`nodemailer`·`oci-common`·`scim-patch`·`uuid`)는
+  거부한다**(`npm error EOVERRIDE`). 27개 중 9개(`@fastify/static`·`axios`·
+  `dd-trace`·`mysql2`·`nanoid`·`nodemailer`·`oci-common`·`scim-patch`·`uuid`)는
   `backend/package.json`의 직접 의존성이라 `NPM_DIRECT_UPGRADES` 로 별도 처리한다
   (`dependencies` 자체를 올리고, 다른 패키지가 끌어오는 *중첩* 사본까지 한 번에
   맞추기 위해 자기 참조 `overrides[pkg]["."]` 항목도 같이 넣는다 — npm 의 EOVERRIDE
