@@ -27,23 +27,14 @@
 
 ## 열린 항목
 
-- **`infisical` 은 main 에 머지됐지만 아직 게시 전이다 — 첫 CI 빌드가 게이트에서 떨어졌고,
-  로컬에서 핀 2개를 올려 다시 PASS 시킨 커밋이 아직 push 되지 않았다.** 첫 CI 실행(run
-  33677837730, 2026-09-02)은 build·verify·SBOM·scan 을 모두 통과하고 게이트에서만 실패했다
-  (`GHSA-3f6p-5ww8-9rcr` HIGH, mysql2 3.9.8). 2026-09-03 로컬 재빌드에서 mysql2 를
-  `NPM_DIRECT_UPGRADES` 로 올려 해소했고, 그 재빌드에서 다시 드러난 `fast-uri` HIGH 4건
-  (CVE-2026-75899·75931·75975·76172)은 기존 `NPM_OVERRIDES` 핀을 3.1.5 → 3.1.6 으로 올려
-  해소했다. 둘 다 소스 변경 없이 DB 가 움직여 생긴 드리프트다. 현재 로컬 게이트 PASS
-  (0 blocking, effective C/H 1/2 = `@infisical/quic` 승인 예외 3건, `CoverageProbe: ok`,
-  `verify.sh` 통과). 근거는 [ADR 0011](docs/decisions/0011-infisical-self-build.md).
-  다음 할 일: 두 커밋을 main 에 push → `self-build-image` 워크플로로 실제 게시(로컬 검증은
-  linux/amd64 에뮬레이션 + trivy 0.72.0 이므로 CI 의 0.74.0 판정이 최종) →
-  `published.json`·`sboms/` 반영 확인. 게시되면
-  dip-catalog 쪽에서 `catalog/image-map/infisical.env`를 추가해
-  `infisical-standalone` 차트의 태그를 반영한다(현재 v0.158.0 고정 — 이 이미지는
-  v0.164.1 기준이라 차트 쪽도 같이 올려야 함, 6개 마이너 차이라 브레이킹 체인지 여부 검토
-  필요). 배포 검증(`infisical-secrets-operator`와 함께 실제 클러스터에 설치해
-  `InfisicalSecret` 동기화 확인)도 아직 별도로 하지 않았다.
+- **`infisical` 은 게시 완료됐다** — `docker.io/paasup/infisical:v0.164.1-security-hardened-20260903`
+  (digest `sha256:144b06c8f2437c9a2afcde8677e9b9395797ce8e3b255af47fa36b8fa4520853`),
+  `published.json`·`sboms/infisical.cdx.json` 반영 확인됨. 근거는
+  [ADR 0011](docs/decisions/0011-infisical-self-build.md). 남은 다음 할 일: dip-catalog 쪽에서
+  `catalog/image-map/infisical.env`를 추가해 `infisical-standalone` 차트의 태그를 반영한다
+  (현재 v0.158.0 고정 — 이 이미지는 v0.164.1 기준이라 차트 쪽도 같이 올려야 함, 6개 마이너
+  차이라 브레이킹 체인지 여부 검토 필요). 배포 검증(`infisical-secrets-operator`와 함께 실제
+  클러스터에 설치해 `InfisicalSecret` 동기화 확인)도 아직 별도로 하지 않았다.
 - **`infisical-secrets-operator` 자체 빌드 레시피가 로컬에서 게이트 PASS(0/0 effective
   C/H)·`CoverageProbe: ok`까지 확인됐고 아직 커밋·PR 전이다.** 근거는
   [ADR 0010](docs/decisions/0010-infisical-secrets-operator-self-build.md). 다음 할 일:
