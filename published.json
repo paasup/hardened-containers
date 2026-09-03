@@ -54,6 +54,12 @@
       "ref": "docker.io/paasup/etcd:3.7.1-security-hardened-20260825",
       "tag": "3.7.1-security-hardened-20260825"
     },
+    "infisical": {
+      "digest": "sha256:144b06c8f2437c9a2afcde8677e9b9395797ce8e3b255af47fa36b8fa4520853",
+      "gate": "pass",
+      "ref": "docker.io/paasup/infisical:v0.164.1-security-hardened-20260903",
+      "tag": "v0.164.1-security-hardened-20260903"
+    },
     "keycloak": {
       "digest": "sha256:27518fa8542ad01418fa0903601e0ce9a63e993bcc11eaf1e75648b6d6f5ce7b",
       "gate": "pass",
