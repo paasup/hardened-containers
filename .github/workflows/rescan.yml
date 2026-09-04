@@ -352,8 +352,21 @@ jobs:
       # is dispatched explicitly (workflow_dispatch has no such exemption problem — it is
       # the trigger this repository already uses for the rebuild path below) rather than
       # assumed to happen on its own.
+      #
+      # continue-on-error: true — opening the PR is a distinct concern from the rebuild
+      # dispatch below, and a failure here must not silently swallow that one too (measured:
+      # it did, the first time this ran — `gh pr create` failing aborted the job before the
+      # rebuild step, so five unrelated images that needed a rebuild never got dispatched
+      # that day). The branch and its verify build are pushed either way; only opening the
+      # PR itself can fail, most likely because the organization has "Allow GitHub Actions
+      # to create and approve pull requests" turned off (Settings → Actions → General →
+      # Workflow permissions, org-admin only) — `pull-requests: write` on this job is not
+      # sufficient on its own when that organization policy is off. The Job Summary step
+      # surfaces this outcome explicitly so it is not a silent gap.
       - name: Open or update the Go CVE autofix PR
+        id: autofix_pr
         if: steps.split.outputs.autofix != ''
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ github.token }}
           IMAGES: ${{ steps.split.outputs.autofix }}
@@ -483,8 +496,13 @@ jobs:
       # publishes from the default branch (its "Decide whether to publish" step), so
       # dispatching against any other ref would build and gate the images without ever
       # pushing — the drift would still be there tomorrow with nothing to show for the run.
+      #
+      # always() && — this is an independent concern from the autofix PR step above and
+      # must run whether or not that one succeeded. The default `if:` carries an implicit
+      # success(), which is exactly what caused this rebuild dispatch to be skipped entirely
+      # the first time this ran, over an unrelated PR-creation failure.
       - name: Rebuild the images a rebuild can fix
-        if: steps.split.outputs.rebuild != ''
+        if: always() && steps.split.outputs.rebuild != ''
         env:
           GH_TOKEN: ${{ github.token }}
           IMAGES: ${{ steps.split.outputs.rebuild }}
@@ -504,6 +522,8 @@ jobs:
         env:
           AUTOFIX: ${{ steps.split.outputs.autofix }}
           REBUILD: ${{ steps.split.outputs.rebuild }}
+          PR_OUTCOME: ${{ steps.autofix_pr.outcome }}
+          REPO: ${{ github.repository }}
         run: |
           {
             echo "## drift routing"
@@ -512,4 +532,13 @@ jobs:
             echo "|---|---|"
             echo "| autofix PR (pin had to move) | ${AUTOFIX:-—} |"
             echo "| rebuild dispatch (1 run) | ${REBUILD:-—} |"
+            if [ "$PR_OUTCOME" = "failure" ]; then
+              echo
+              echo "> ⚠️ **the autofix branch and its verify build were pushed, but opening"
+              echo "> the pull request failed** — most likely the organization has \"Allow"
+              echo "> GitHub Actions to create and approve pull requests\" turned off"
+              echo "> (Settings → Actions → General → Workflow permissions; an org admin"
+              echo "> must enable it). Nothing was lost: open it by hand with"
+              echo "> \`gh pr create --repo $REPO --base main --head autofix/go-cves\`."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"

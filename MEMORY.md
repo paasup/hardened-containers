@@ -28,14 +28,29 @@
 ## 열린 항목
 
 - **Go 모듈 CVE 두 건(CVE-2026-56854 `x/crypto` CRITICAL, CVE-2026-84304 `grpc` HIGH)이
-  게시된 이미지 11개를 막고 있다.** 자동 수정 배관은 이 브랜치에서 만들었고
-  ([ADR 0012](docs/decisions/0012-go-cve-autofix-pr.md)), 수렴 대상 3개
-  (`etcd`·`apisix-ingress-controller`·`cloudnative-pg`)는 로컬에서 게이트 PASS·`cov=ok`
-  까지 확인했다. **아직 손대지 않은 8개**: `argocd`·`kyverno`·`kyverno-cli`·`kyvernopre`·
-  `background-controller`·`cleanup-controller`·`reports-controller`·
-  `infisical-secrets-operator`. 다음 할 일: 이 PR 머지 → 일일 rescan 이 나머지를
-  `autofix/go-cves` PR 로 올리는지 확인(그게 이 배관의 첫 실전 검증이다) → 초록이면 머지 후
-  `workflow_dispatch(push=true)` 로 재게시.
+  게시된 이미지들을 막고 있고, 자동 수정 배관을 2026-09-04에 수동 `workflow_dispatch`로
+  실전 테스트했다** ([ADR 0012](docs/decisions/0012-go-cve-autofix-pr.md)).
+  결과: `argocd`·`kyverno`·`kyverno-cli`·`kyvernopre`·`background-controller`·
+  `cleanup-controller`·`reports-controller` 7개가 `autofix/go-cves` 브랜치로 올바르게
+  라우팅됐고, 그중 6개(`argocd` 제외)는 검증 빌드에서 바로 게이트 PASS. `argocd`는
+  `x/crypto`→`x/net`→`x/text` 로 이어지는 3단 버전 제약이 걸려 로컬에서 직접
+  `x/net@0.57.0`·`x/text@0.41.0`까지 추가로 올려 PASS 확인, `main`에 반영함(자동
+  파생값은 최소치라 이런 연쇄가 나올 수 있다는 것을 실측으로 확인 — README에 이미
+  일반 패턴으로 기록돼 있었음). `etcd`·`apisix-ingress-controller`·`cloudnative-pg`
+  3개는 이전에 이미 게이트 PASS 확인해 `main`에 반영돼 있었고, 오늘 rescan이 이 셋을
+  "핀은 맞고 빌드만 낡음"으로 정확히 재분류해 리빌드 대상으로 잡았다.
+
+  **버그 두 개를 이 실행에서 찾아 고쳤다**: (1) org 정책("Allow GitHub Actions to create
+  and approve pull requests")이 꺼져 있어 `gh pr create`가 실패 — PR은 사람이 직접 열어야
+  한다(org admin이 Settings → Actions → General → Workflow permissions 에서 켤 수 있으면
+  자동화됨). (2) 그 PR 생성 실패가 `set -e` 기본 동작으로 뒤에 있던 리빌드 dispatch
+  스텝까지 통째로 건너뛰게 만들었음 — `continue-on-error`/`if: always()`로 두 경로를
+  독립시킴.
+
+  **다음 할 일**: `gh pr create --base main --head autofix/go-cves` 로 PR을 사람이 직접
+  연다(브랜치·검증 빌드는 이미 존재). 남은 이미지(`kyverno` 5종·`infisical-secrets-operator`)
+  는 다음 rescan(자동 03:00 KST, 또는 수동 dispatch)이 이번에 고친 배관으로 리빌드
+  dispatch를 실제로 낼지 확인. PR 머지 후 `workflow_dispatch(push=true)` 로 재게시.
 
 - **`infisical` 은 게시 완료됐다** — `docker.io/paasup/infisical:v0.164.1-security-hardened-20260903`
   (digest `sha256:144b06c8f2437c9a2afcde8677e9b9395797ce8e3b255af47fa36b8fa4520853`),
