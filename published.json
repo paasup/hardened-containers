@@ -13,16 +13,16 @@
       "tag": "3.18.0-security-hardened-20260826"
     },
     "apisix-ingress-controller": {
-      "digest": "sha256:8aba2bc9d942c7ba48d805a37fc9215663afad683ff2404d4ae8d00476af0dae",
+      "digest": "sha256:86c88a25cbc29310700e9dc74a8ba294e15315669393d9d151291f3846ff631b",
       "gate": "pass",
-      "ref": "docker.io/paasup/apisix-ingress-controller:2.1.0-security-hardened-20260825",
-      "tag": "2.1.0-security-hardened-20260825"
+      "ref": "docker.io/paasup/apisix-ingress-controller:2.1.0-security-hardened-20260904",
+      "tag": "2.1.0-security-hardened-20260904"
     },
     "argocd": {
-      "digest": "sha256:1917dfe20acb450bfd9f042faf620b32199115a0fd324bd02d6798ca11835482",
+      "digest": "sha256:baa1adbc39cb92673795966d8027cb741190b8e923d28460c8a4df4ee64a79ae",
       "gate": "pass",
-      "ref": "docker.io/paasup/argocd:3.5.1-security-hardened-20260825",
-      "tag": "3.5.1-security-hardened-20260825"
+      "ref": "docker.io/paasup/argocd:3.5.1-security-hardened-20260904",
+      "tag": "3.5.1-security-hardened-20260904"
     },
     "background-controller": {
       "digest": "sha256:e628168e1741546c6b928c93be904d1b8d32e7231d1dc267bc45dee2abe6ad89",
@@ -37,10 +37,10 @@
       "tag": "v1.19.0-security-hardened-20260827"
     },
     "cloudnative-pg": {
-      "digest": "sha256:25111a767a24babe28a06477548720c7ac0c08e92d713a89f00c36d626cfae91",
+      "digest": "sha256:9c4dfb3e146b8ff9b1cbd274fbc659c3c87fe09b4c73a386f84ba4df713246f3",
       "gate": "pass",
-      "ref": "docker.io/paasup/cloudnative-pg:1.30.0-security-hardened-20260825",
-      "tag": "1.30.0-security-hardened-20260825"
+      "ref": "docker.io/paasup/cloudnative-pg:1.30.0-security-hardened-20260904",
+      "tag": "1.30.0-security-hardened-20260904"
     },
     "cnpg-postgresql": {
       "digest": "sha256:4003557fcdcec8126313df4eef0a2145825230d8e3cae57c584b0e69d6089e02",
@@ -49,10 +49,10 @@
       "tag": "18.4-bci15.7-hardened-20260825"
     },
     "etcd": {
-      "digest": "sha256:a181251bdf26474b69d225427a9e6a26ff589794507e2efe63ed54ab79f55ad3",
+      "digest": "sha256:f79b0c3bed652e4c19963449b11dcdcde4c014bd1994412ca2c6c3ca6ebfe53f",
       "gate": "pass",
-      "ref": "docker.io/paasup/etcd:3.7.1-security-hardened-20260825",
-      "tag": "3.7.1-security-hardened-20260825"
+      "ref": "docker.io/paasup/etcd:3.7.1-security-hardened-20260904",
+      "tag": "3.7.1-security-hardened-20260904"
     },
     "infisical": {
       "digest": "sha256:144b06c8f2437c9a2afcde8677e9b9395797ce8e3b255af47fa36b8fa4520853",
