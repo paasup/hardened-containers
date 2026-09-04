@@ -60,6 +60,12 @@
       "ref": "docker.io/paasup/infisical:v0.164.1-security-hardened-20260903",
       "tag": "v0.164.1-security-hardened-20260903"
     },
+    "infisical-secrets-operator": {
+      "digest": "sha256:e5c4ae907298b17a26ef986a86600e0792400f9cb3dac015aee9fc07ab023a93",
+      "gate": "pass",
+      "ref": "docker.io/paasup/infisical-secrets-operator:v0.11.8-security-hardened-20260904",
+      "tag": "v0.11.8-security-hardened-20260904"
+    },
     "keycloak": {
       "digest": "sha256:27518fa8542ad01418fa0903601e0ce9a63e993bcc11eaf1e75648b6d6f5ce7b",
       "gate": "pass",
