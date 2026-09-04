@@ -35,6 +35,15 @@ on:
 permissions:
   contents: read
 
+# One rescan at a time. A manual rescan overlapping the scheduled one would fan out a second
+# full matrix and, worse, reach the `collect` job twice — two concurrent force-pushes to the
+# same autofix branch, and two dispatches where the whole point is that there is one.
+# Queue rather than cancel: a rescan interrupted midway through `collect` could leave the
+# branch pushed with no PR opened.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
 env:
   # The same values as build-image.yml. They live in two places because there is no way to
   # share env between workflows — update both when changing them.
@@ -45,6 +54,8 @@ jobs:
   # --- Determine the target images ----------------------------------------------
   discover:
     runs-on: ubuntu-latest
+    # Without a cap this inherits the 6-hour default while holding the concurrency slot above.
+    timeout-minutes: 10
     outputs:
       images: ${{ steps.list.outputs.images }}
     steps:
@@ -73,16 +84,20 @@ jobs:
         image: ${{ fromJson(needs.discover.outputs.images) }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Read-only on purpose. This job runs the repository's own code (rescan-published.sh, and
+    # through it the gate scripts), so it holds no token that could write to the repository or
+    # start a workflow — the `collect` job does both, and runs none of that code.
     permissions:
       contents: read
-      actions: write   # to call build-image.yml via workflow_dispatch when drift is found
     steps:
       - uses: actions/checkout@v4
 
       - name: Preflight — check tools
         run: |
           set -e
-          for t in docker python3 bash gh; do
+          # No gh here on purpose: this job holds no token (contents: read only) and never
+          # calls gh — the collect job below does both, and runs none of this job's code.
+          for t in docker python3 bash; do
             command -v "$t" >/dev/null || { echo "::error::$t not present on the runner"; exit 1; }
           done
 
@@ -132,16 +147,100 @@ jobs:
             { echo "## ${{ matrix.image }} (rescan)"; cat rescan-out/cve-gate.md; echo; } >> "$GITHUB_STEP_SUMMARY"
           fi
 
-      # Call the rebuild workflow only when there is drift and push was not disabled.
-      # gh workflow run authenticates with this job's GITHUB_TOKEN (actions: write).
-      - name: Drift found — trigger a build-image.yml rebuild
+      # Drift splits into two kinds, and they need opposite responses:
+      #
+      #   the pin is fine, the build is stale   a rebuild picks up the patched base OS package
+      #   the pin itself is behind              **no rebuild will ever fix this** — the version
+      #                                         in build.env has to move first
+      #
+      # Rebuilding the second kind is what this workflow used to do for everything, so a Go
+      # module CVE re-triggered the same doomed rebuild every single day. suggest-go-upgrades.py
+      # already knows how to read the trivy report and raise the pin; nothing was calling it.
+      # Now it is, and which kind of drift this is decides where the image is routed.
+      #
+      # This job only *produces* the routing decision as an artifact. Acting on it needs
+      # `contents: write` / `actions: write`, and this job runs the repository's own code —
+      # the collect job below holds those tokens and runs none of it.
+      - name: Drift found — try to raise the Go pins
+        id: autofix
         if: steps.rescan.outputs.drift == 'true' && github.event.inputs.push != 'false'
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          echo "::warning::${{ matrix.image }} drift detected — calling build-image.yml to rebuild"
-          gh workflow run build-image.yml --repo "${{ github.repository }}" \
-            -f image="${{ matrix.image }}" -f push=true
+          # A GitHub Actions run: step is bash -e by default, and `set -uo pipefail` only
+          # ADDS pipefail — it does not turn -e off. Left as the default, the very first
+          # non-zero exit below (a missing report, or the suggester itself failing) would
+          # abort the step outright, skip every line after it including the rebuild
+          # fallback, and leave this image out of BOTH routes. Every command that is allowed
+          # to fail is therefore run under an explicit set +e / set -e bracket, the same
+          # pattern build-hardened-image.sh uses around its own build step.
+          set -uo pipefail
+          img="${{ matrix.image }}"
+          mkdir -p route
+
+          # Drift does not always come with a report to read: rescan-published.sh also exits
+          # non-zero when the scan itself failed, and an image with no published.json entry
+          # yet is treated as drifted without ever being scanned. Neither can be diagnosed
+          # here, and both are rebuild-shaped, so a missing report falls through to rebuild
+          # rather than dropping the image out of *both* routes.
+          set +e
+          ls rescan-out/trivy-reports/*.json >/dev/null 2>&1
+          has_report=$?
+          set -e
+          if [ "$has_report" != "0" ]; then
+            echo "kind=rebuild" >> "$GITHUB_OUTPUT"
+            echo "$img" > "route/rebuild-$img.txt"
+            echo "::notice::$img — drifted with no trivy report to read; queueing a rebuild"
+            exit 0
+          fi
+
+          # rescan-out/trivy-reports/ holds exactly one report — this image's — so --image
+          # being a plain substring match on the filename cannot pull in a sibling here
+          # (it otherwise would: "kyverno" also matches kyverno-cli's and kyvernopre's).
+          set +e
+          python3 scripts/build/suggest-go-upgrades.py \
+            --reports rescan-out/trivy-reports --image "$img" --apply | tee autofix.log
+          rc="${PIPESTATUS[0]}"
+          set -e
+          if [ "$rc" != "0" ]; then
+            echo "kind=rebuild" >> "$GITHUB_OUTPUT"
+            echo "$img" > "route/rebuild-$img.txt"
+            echo "::warning::$img — suggest-go-upgrades.py exited $rc; queueing a rebuild"
+            exit 0
+          fi
+
+          # The suggester exits 0 whether or not it changed anything, so the working tree is
+          # what says which happened. `git diff --quiet` itself exits 1 on a real diff, so
+          # it is read directly rather than through $?.
+          set +e
+          git diff --quiet -- "images/$img/"
+          unchanged=$?
+          set -e
+          if [ "$unchanged" = "0" ]; then
+            echo "kind=rebuild" >> "$GITHUB_OUTPUT"
+            echo "$img" > "route/rebuild-$img.txt"
+            echo "::notice::$img — drift not attributable to a Go pin; queueing a rebuild"
+          else
+            echo "kind=autofix" >> "$GITHUB_OUTPUT"
+            mkdir -p "route/autofix/images/$img"
+            # Ship the whole image directory's changed files, not just build.env by name —
+            # the suggester targets <DEFAULT_BASE_OS>.build.env, which differs per image.
+            # -p makes mkdir a no-op for files directly in images/$img/, and handles one
+            # nested a level deeper without assuming there is none.
+            git diff --name-only -- "images/$img/" | while read -r f; do
+              mkdir -p "route/autofix/$(dirname "$f")"
+              cp "$f" "route/autofix/$f"
+            done
+            git diff -- "images/$img/" > "route/autofix/$img.diff"
+            grep -E '^#   (GO_|note:)' autofix.log > "route/autofix/$img.why" || true
+            echo "::warning::$img — Go pins raised; routing to the autofix PR"
+          fi
+
+      - name: Upload the routing decision
+        if: steps.autofix.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: route-${{ matrix.image }}
+          path: route/
+          if-no-files-found: error
 
       # Is the pin still on a line upstream patches? The gate cannot answer this — an
       # image on an end-of-life line passes cleanly until the first CVE nobody will fix.
@@ -166,3 +265,251 @@ jobs:
           # 1 = behind within a maintained line: a notice, not a failure.
           [ "$rc" = "1" ] && exit 0
           exit "$rc"
+
+  # --- Act on the collected drift -----------------------------------------------
+  # Everything the matrix decided is applied here, once, from one job.
+  #
+  # WHY THIS JOB EXISTS AT ALL
+  #   Each matrix entry used to call `gh workflow run` itself. Every dispatch is its own run,
+  #   and build-image.yml's concurrency group is per-ref with cancel-in-progress false for
+  #   dispatch — so the runs queue. GitHub keeps exactly **one** pending run per group and
+  #   cancels the previous pending one each time a new run arrives. On 2026-09-03 eleven
+  #   images drifted, eleven dispatches went out inside fifty seconds, and **nine were
+  #   cancelled within ten seconds** without building anything. The two that did run then
+  #   failed on a Go module CVE a rebuild could not fix.
+  #
+  #   build-image.yml's `image` input already accepts several space-separated names and turns
+  #   them into one matrix, precisely so a multi-image publish holds a single concurrency slot
+  #   — its own header comment says so. This job is what finally uses that.
+  #
+  #   Note this is not a parallelism cap: one dispatch with N matrix entries runs those N
+  #   builds concurrently, whereas N dispatches ran at most one. Aggregating raises the
+  #   parallelism, it does not lower it.
+  collect:
+    # `!cancelled()` rather than `always()`: it must run when some rescan entries FAILED
+    # (a failed entry is drift, which is the whole point), but a cancelled run has a
+    # partial, arbitrary set of artifacts — acting on that would open a PR or fire a
+    # dispatch covering only the images that happened to finish first.
+    needs: rescan
+    if: "!cancelled() && github.event.inputs.push != 'false'"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # The tokens live here, in a job that checks the repository out but runs none of its
+    # Dockerfiles or verify.sh — the same split build-image.yml makes for `record`.
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      # Full history: this job force-pushes a branch, and a shallow clone can be rejected
+      # with "shallow update not allowed" depending on which objects the remote is missing.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # continue-on-error because "no artifacts matched" is the ordinary outcome — it is what
+      # a day with no drift at all looks like — and download-artifact treats an empty match
+      # as an error. The step below reads the directory and copes with it being empty.
+      - name: Download the routing decisions
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: route-*
+          path: route
+          merge-multiple: true
+
+      - name: Sort the drifted images into rebuild and autofix
+        id: split
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+
+          # Both lists are built by iterating a glob, never by piping one into a command.
+          # With nullglob an unmatched glob vanishes, so `cat route/rebuild-*.txt` would
+          # become a bare `cat` reading stdin — the job would hang until its timeout on the
+          # ordinary "nothing drifted" day.
+          names=()
+          for f in route/rebuild-*.txt; do
+            n="$(basename "$f" .txt)"; names+=("${n#rebuild-}")
+          done
+          rebuild="${names[*]-}"
+
+          names=()
+          for d in route/autofix/images/*/; do names+=("$(basename "$d")"); done
+          autofix="${names[*]-}"
+          echo "rebuild=$rebuild" >> "$GITHUB_OUTPUT"
+          echo "autofix=$autofix" >> "$GITHUB_OUTPUT"
+          echo "rebuild: ${rebuild:-(none)}"
+          echo "autofix: ${autofix:-(none)}"
+
+      # Pins that moved go to a pull request, never straight to the default branch. A
+      # committed pin is "a record of what we verified" (CLAUDE.md rule 4), and a pin the
+      # suggester just raised is not verified yet — nothing has been built with it.
+      #
+      # A push made with this job's GITHUB_TOKEN does NOT fire build-image.yml's `push`
+      # trigger — GitHub deliberately does not chain workflow runs from a token-authored
+      # push, precisely to stop exactly this kind of accidental recursion. So verification
+      # is dispatched explicitly (workflow_dispatch has no such exemption problem — it is
+      # the trigger this repository already uses for the rebuild path below) rather than
+      # assumed to happen on its own.
+      - name: Open or update the Go CVE autofix PR
+        if: steps.split.outputs.autofix != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGES: ${{ steps.split.outputs.autofix }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          BRANCH=autofix/go-cves
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Cut from the default branch explicitly — not from whatever ref this job
+          # happened to check out. A manual `workflow_dispatch` of this workflow can run
+          # from any ref; branching from that ref instead would base the autofix PR on the
+          # wrong commit, and a second run could then force-push someone else's unrelated
+          # branch contents onto it.
+          #
+          # Rebuilt from the default branch every run rather than accumulated. The pins are
+          # derived fresh from today's report each time, so yesterday's commit is not a base
+          # to build on — it is a stale answer to the same question. This does mean the
+          # branch is bot-owned: hand-edits to it are overwritten. Fix things by merging the
+          # PR, or by committing to a branch of your own.
+          #
+          # One accepted consequence: if an image's OWN rescan fails transiently today (a
+          # registry hiccup, not a real problem), it has no report to re-derive from and
+          # routes to rebuild instead — dropping its pin change out of this reconstruction
+          # even if yesterday's fix for it is still unmerged. It is not lost: rebuilding at
+          # the old pin still fails the same gate, so tomorrow's rescan finds the same drift
+          # and re-derives and re-adds it. A day's delay, not a lost fix.
+          git fetch origin "$DEFAULT_BRANCH"
+          git switch -C "$BRANCH" "origin/$DEFAULT_BRANCH"
+
+          for img in $IMAGES; do cp -r "route/autofix/images/$img/." "images/$img/"; done
+          git add images/
+
+          if git diff --cached --quiet; then
+            echo "::notice::the raised pins are already on the default branch — nothing to open"
+            exit 0
+          fi
+
+          # The commit message (with its trailer) and the PR body are both built BEFORE
+          # anything is pushed. `git commit -F <file> -m <trailer>` is not a substitute for
+          # this — git rejects -F and -m together outright — and building the body only
+          # after the push means a failure in between leaves the branch force-pushed with no
+          # PR reflecting it, which is exactly the inconsistent state the concurrency lock
+          # at the top of this file exists to prevent.
+          {
+            echo "Raise Go pins for CVEs the daily rescan found"
+            echo
+            echo "The published images below are blocked by a Go CVE whose fix needs a"
+            echo "higher pin — rebuilding at the current pin cannot clear them."
+            echo "Derived by scripts/build/suggest-go-upgrades.py --apply from each image's"
+            echo "own trivy report; no version here was chosen by hand."
+            echo
+            for img in $IMAGES; do
+              echo "  $img"
+              sed 's/^#   /    /' "route/autofix/$img.why" 2>/dev/null || true
+            done
+            echo
+            echo "Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+          } > /tmp/commit-msg
+
+          {
+            echo "Opened automatically by the daily rescan (\`rescan.yml\`)."
+            echo
+            echo "These images are blocked by a Go CVE whose fix requires a **higher pin**."
+            echo "A rebuild at the current pin cannot clear them, which is why this is a pull"
+            echo "request and not another rebuild."
+            echo
+            echo "Every version was derived by \`scripts/build/suggest-go-upgrades.py --apply\`"
+            echo "from the image's own trivy report. None was chosen by hand."
+            echo
+            for img in $IMAGES; do
+              echo "### \`$img\`"
+              echo '```'
+              sed 's/^#   //' "route/autofix/$img.why" 2>/dev/null || true
+              echo '```'
+              echo "<details><summary>diff</summary>"
+              echo
+              echo '```diff'
+              cat "route/autofix/$img.diff" 2>/dev/null || true
+              echo '```'
+              echo "</details>"
+              echo
+            done
+            echo "---"
+            echo
+            echo "**A verify-only build of exactly these images was dispatched separately**"
+            echo "(a push made with this workflow's token does not itself trigger"
+            echo "build-image.yml's push trigger, so this job dispatches it explicitly)."
+            echo "See [Actions → self-build-image, filtered to this branch]"
+            echo "(https://github.com/$REPO/actions/workflows/build-image.yml?query=branch%3A$BRANCH)."
+            echo "**Merging is the review** — green there means the raised pins build and pass"
+            echo "the gate. Publish after merge with"
+            echo "\`workflow_dispatch(image=\"$IMAGES\", push=true)\`."
+            echo
+            echo "**If that build is red with \`requires <module>@vX, not @vY\`:** a suggestion"
+            echo "is only the minimum the CVE needs, and another module may demand more. Raise"
+            echo "that entry to the version the message names and push again — that is a normal"
+            echo "outcome here, not a bug in the suggestion."
+            echo
+            echo "This branch is rebuilt from the default branch on every rescan — do not commit to it by hand."
+          } > /tmp/pr-body
+
+          git commit -F /tmp/commit-msg
+          git push --force origin "$BRANCH"
+
+          # workflow_dispatch is exempt from the same-token restriction above — this is the
+          # same trigger the rebuild step below already relies on.
+          gh workflow run build-image.yml --repo "$REPO" \
+            --ref "$BRANCH" -f image="$IMAGES" -f push=false
+
+          if gh pr view "$BRANCH" --repo "$REPO" --json number >/dev/null 2>&1; then
+            gh pr edit "$BRANCH" --repo "$REPO" --body-file /tmp/pr-body
+            echo "::notice::updated the existing autofix PR"
+          else
+            gh pr create --repo "$REPO" --base "$DEFAULT_BRANCH" --head "$BRANCH" \
+              --title "Raise Go pins for CVEs found by the daily rescan" \
+              --body-file /tmp/pr-body
+          fi
+
+      # Drift a rebuild can actually fix: one dispatch carrying every such image, so the run
+      # holds a single concurrency slot and none of them get cancelled while pending.
+      #
+      # --ref is the default branch explicitly, not this run's own ref. build-image.yml only
+      # publishes from the default branch (its "Decide whether to publish" step), so
+      # dispatching against any other ref would build and gate the images without ever
+      # pushing — the drift would still be there tomorrow with nothing to show for the run.
+      - name: Rebuild the images a rebuild can fix
+        if: steps.split.outputs.rebuild != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGES: ${{ steps.split.outputs.rebuild }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          echo "::warning::drift detected — one build-image.yml dispatch for: $IMAGES"
+          gh workflow run build-image.yml --repo "${{ github.repository }}" \
+            --ref "$DEFAULT_BRANCH" -f image="$IMAGES" -f push=true
+
+      # Values reach the script through env rather than ${{ }} interpolation into the script
+      # body — they originate in directory names under images/, but keeping every value on
+      # that side of the boundary is what makes "no expression is spliced into a shell" a
+      # property you can check by reading, rather than one you have to re-argue per value.
+      - name: Job Summary
+        if: always()
+        env:
+          AUTOFIX: ${{ steps.split.outputs.autofix }}
+          REBUILD: ${{ steps.split.outputs.rebuild }}
+        run: |
+          {
+            echo "## drift routing"
+            echo
+            echo "| response | images |"
+            echo "|---|---|"
+            echo "| autofix PR (pin had to move) | ${AUTOFIX:-—} |"
+            echo "| rebuild dispatch (1 run) | ${REBUILD:-—} |"
+          } >> "$GITHUB_STEP_SUMMARY"

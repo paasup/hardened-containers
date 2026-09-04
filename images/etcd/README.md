@@ -36,7 +36,7 @@ module at fault), and the response is the same — **orchestration shares the on
 | --- | --- | --- | --- |
 | Build method | `ADD` prebuilt release binaries into the image | Compile from source at the pinned commit in `source.build.env` | Raising a statically linked Go module's version requires force-upgrading that module and rebuilding — copying a prebuilt binary cannot fix it |
 | Final base | `gcr.io/distroless/static-debian12` | `registry.suse.com/bci/bci-micro` | These images use SUSE BCI only ([docs/image-authoring/](../../docs/image-authoring/README.md) rule 2) — the binary is statically linked with no runtime dependencies, so the lightest variant without a package manager suffices |
-| Dependency pinning | Whatever each module's `go.mod` (`server`/`etcdctl`/`etcdutl`) specifies | One workspace-wide `replace` line in `go.work` force-upgrading `golang.org/x/text` | etcd manages the three binaries together as a Go workspace — a single workspace-wide line keeps the divergence from upstream minimal, instead of editing each `go.mod` |
+| Dependency pinning | Whatever each module's `go.mod` (`server`/`etcdctl`/`etcdutl`) specifies | Each `GO_MODULE_UPGRADES` entry turned into a workspace-wide `replace` in `go.work` | etcd manages the three binaries together as a Go workspace — `go get` applies only to the module it runs in, leaving the sibling modules vulnerable. A workspace-wide `replace` covers all three at once and keeps the divergence from upstream minimal |
 | Version string (ldflags) | The GitSHA from `git rev-parse --short HEAD`, injected at build time | The full pinned commit hash, injected directly | Checkout happens through BuildKit's git context (`ADD ...#${SOURCE_COMMIT}`), so the commit is already known — the host-side `verify.sh` can then confirm the version string reflects the pinned commit without running git inside the container |
 
 The builder stage (Go compilation) uses the official `golang` image as-is — it does not
@@ -46,10 +46,16 @@ subject to scanning or policy. The rest of the build procedure (compiling `serve
 `etcd_build()` from the upstream repository's `scripts/build_lib.sh` (unrelated to this
 repository's `scripts/`).
 
-`SOURCE_COMMIT` and `XTEXT_FIX_VERSION` are **not tracked automatically.** Someone
-reading upstream's `release-3.7` branch (or the next patch release tag) and editing
-`source.build.env` to open a PR is itself the update trigger. If a newer release ships
-including this fix, moving to it always takes priority over keeping this self-build.
+`SOURCE_COMMIT` is **not tracked automatically.** Someone reading upstream's `release-3.7`
+branch (or the next patch release tag) and editing `source.build.env` to open a PR is
+itself the update trigger. If a newer release ships including this fix, moving to it
+always takes priority over keeping this self-build.
+
+`GO_MODULE_UPGRADES`, by contrast, **is tracked automatically.** When the daily rescan
+finds drift, `suggest-go-upgrades.py --apply` raises the value and it arrives as an
+`autofix/go-cves` pull request. The mechanism — a workspace-wide `replace` — is unchanged;
+what matters is that the *values* sit in the same key every other Go image uses, because
+`--apply` never adds a missing key. That is why the old `XTEXT_FIX_VERSION` became this.
 
 ## Building and verifying
 

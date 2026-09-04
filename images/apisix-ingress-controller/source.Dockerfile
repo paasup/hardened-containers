@@ -34,28 +34,18 @@ ARG TARGETARCH
 ARG SOURCE_COMMIT
 ARG APP_VERSION
 ARG MIN_K8S_VERSION
-ARG XNET_FIX_VERSION
-ARG XTEXT_FIX_VERSION
-ARG GRPC_FIX_VERSION
-ARG OTEL_FIX_VERSION
+ARG GO_MODULE_UPGRADES
 WORKDIR /src
 
 # BuildKit's git context support — git itself guarantees commit integrity, with no tarball
 # and checksum to manage.
 ADD https://github.com/apache/apisix-ingress-controller.git#${SOURCE_COMMIT} /src
 
-# Force-upgrade only the vulnerable transitive dependencies, to their minimum versions (see
-# above). otel and otel/sdk must have matching versions, so they are specified together —
-# go get settles the remaining compatible versions.
+# Force-upgrade the vulnerable transitive dependencies to their minimum fixed versions (the
+# list lives in build.env). go get settles the remaining compatible versions.
 RUN --mount=type=cache,target=/root/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
-    go get \
-      golang.org/x/net@v${XNET_FIX_VERSION} \
-      golang.org/x/text@v${XTEXT_FIX_VERSION} \
-      google.golang.org/grpc@v${GRPC_FIX_VERSION} \
-      go.opentelemetry.io/otel@v${OTEL_FIX_VERSION} \
-      go.opentelemetry.io/otel/sdk@v${OTEL_FIX_VERSION} \
- && go mod tidy
+    go get ${GO_MODULE_UPGRADES} && go mod tidy
 
 # Reproduces upstream's Makefile build target as-is (GOARCH replaced by TARGETARCH, and the
 # full pinned commit hash baked into the GitSHA slot — see above).

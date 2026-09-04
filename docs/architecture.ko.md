@@ -78,13 +78,20 @@ flowchart TD
         E4["rescan-published.sh가<br/>published.json의 태그를 재스캔 (빌드 없음)"]
         E5{게이트 결과}
         E6[클린 → 그날은 종료]
-        E7["드리프트 → gh workflow run<br/>build-image.yml"]
+        E8["suggest-go-upgrades.py --apply<br/>핀이 움직였나?"]
+        E9["아니오 → 리빌드 목록에 추가<br/>(핀은 맞고 빌드만 낡음)"]
+        E10["예 → autofix PR 목록에 추가<br/>(리빌드로는 못 고침)"]
+        E7["collect: dispatch 1건<br/>gh workflow run build-image.yml<br/>-f image='a b c ...'"]
+        E11["collect: PR 1건<br/>autofix/go-cves"]
         E3 --> E4 --> E5
         E5 -->|PASS| E6
-        E5 -->|FAIL| E7
+        E5 -->|FAIL| E8
+        E8 --> E9 --> E7
+        E8 --> E10 --> E11
     end
 
     E7 -.->|workflow_dispatch| D4
+    E11 -.->|collect가 검증 빌드를 별도로 dispatch| C1
     E6 -.->|다음날| E3
     P3 -.->|이미지 파일이 다시 변경됨| C1
     P3 -.->|재스캔 결과만 확인| Manual["사람이 실행<br/>gh workflow run rescan.yml"]
@@ -104,9 +111,20 @@ flowchart TD
    `push=true`로 실행하는 것이 `REGISTRY_HOST` 레지스트리에 최초로 push하고
    `published.json`의 첫 항목을 만드는 시점이다. 이때부터 "배포된 이미지"가 된다.
 4. **유지보수 루프 — `rescan.yml` (매일 자동 + 수동)** — 배포된 이미지는 매일 재스캔된다.
-   클린하면 아무 일도 일어나지 않고, CVE 드리프트가 발견되면 `rescan.yml`이 그 이미지에
-   대해서만 `build-image.yml`을 호출해 재빌드·재배포한다(재빌드 로직 자체는 절대 중복되지
-   않는다). [image-authoring/ci.md](image-authoring/ci.md)의 "일일 드리프트 점검" 참고.
+   클린하면 아무 일도 일어나지 않는다. 드리프트가 발견되면 **두 종류로 갈라진다**:
+   `suggest-go-upgrades.py --apply`가 핀을 올리지 못하면 빌드만 낡은 것이므로 **리빌드**
+   대상이고, 핀을 올렸다면 지금 핀으로는 아무리 리빌드해도 풀리지 않으므로 **autofix PR**
+   대상이다. 조치는 `collect` job 이 한 번에 한다 — 리빌드는 **dispatch 1건에 이미지 전체를
+   공백 구분으로** 담고, 올라간 핀은 `autofix/go-cves` **PR 1건**으로 모은다(재빌드 로직
+   자체는 절대 중복되지 않는다). PR을 검증하는 것은 브랜치 push 자체가 아니라 `collect`가
+   push 직후 **별도로 dispatch 하는 검증 빌드**다 — 이 job 이 쥔 토큰으로 낸 push 는
+   `build-image.yml`의 push 트리거를 의도적으로 발동시키지 않기 때문이다.
+
+   이미지마다 dispatch 를 따로 내면 안 된다 — `build-image.yml`의 concurrency 그룹은
+   pending run 을 1건만 유지하고 나머지를 **취소**하기 때문이다(2026-09-03에 11건 중 9건이
+   그렇게 사라졌다). 러너 한도 때문에 **job** 이 밀리는 것은 대기일 뿐 손실이 아니지만,
+   **run** 이 그룹에서 밀리는 것은 취소다. 모으면 병렬도가 오히려 올라간다.
+   [image-authoring/ci.md](image-authoring/ci.md)의 "일일 드리프트 점검" 참고.
 
 ---
 

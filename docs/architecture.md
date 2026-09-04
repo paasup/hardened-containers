@@ -81,13 +81,20 @@ flowchart TD
         E4["rescan-published.sh re-scans<br/>the tag in published.json (no build)"]
         E5{gate result}
         E6[clean → done for the day]
-        E7["drift → gh workflow run<br/>build-image.yml"]
+        E8["suggest-go-upgrades.py --apply<br/>did a pin move?"]
+        E9["no → queue for rebuild<br/>(pin is fine, build is stale)"]
+        E10["yes → queue for the autofix PR<br/>(no rebuild can fix this)"]
+        E7["collect: ONE dispatch<br/>gh workflow run build-image.yml<br/>-f image='a b c ...'"]
+        E11["collect: ONE pull request<br/>autofix/go-cves"]
         E3 --> E4 --> E5
         E5 -->|PASS| E6
-        E5 -->|FAIL| E7
+        E5 -->|FAIL| E8
+        E8 --> E9 --> E7
+        E8 --> E10 --> E11
     end
 
     E7 -.->|workflow_dispatch| D4
+    E11 -.->|collect dispatches a verify build separately| C1
     E6 -.->|next day| E3
     P3 -.->|image files changed again| C1
     P3 -.->|check rescan result only| Manual["human runs<br/>gh workflow run rescan.yml"]
@@ -108,9 +115,22 @@ The four stages:
    registry and creates the first `published.json` entry. From then on it is a "published
    image".
 4. **Maintenance loop — `rescan.yml` (daily, automatic and manual)** — published images
-   are re-scanned every day. If clean, nothing happens; if CVE drift appears,
-   `rescan.yml` calls `build-image.yml` for that image alone to rebuild and republish
-   (the rebuild logic itself is never duplicated). See "daily drift check" in
+   are re-scanned every day. If clean, nothing happens. Drift **splits in two**: if
+   `suggest-go-upgrades.py --apply` cannot raise a pin, only the build is stale, so the
+   image is queued for a **rebuild**; if it does raise one, no amount of rebuilding at the
+   current pin will clear the CVE, so it is queued for the **autofix PR**. The `collect`
+   job acts on both at once — rebuilds go out as **one dispatch carrying every image**
+   space-separated, and raised pins as **one pull request** on `autofix/go-cves` (the
+   rebuild logic itself is never duplicated). What verifies that PR is a `build-image.yml`
+   run `collect` dispatches explicitly right after the push — not the push itself, since a
+   push made with this job's own token deliberately does not trigger `build-image.yml`'s
+   push trigger.
+
+   Dispatching per image is what must not happen: `build-image.yml`'s concurrency group
+   keeps only one pending run and **cancels** the rest — nine of eleven vanished that way
+   on 2026-09-03. A **job** held back by the runner limit merely waits, losing nothing; a
+   **run** held back by a concurrency group is cancelled. Aggregating therefore raises
+   parallelism. See "daily drift check" in
    [image-authoring/ci.md](image-authoring/ci.md).
 
 ---

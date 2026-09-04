@@ -32,7 +32,7 @@ etcd 서버/`etcdctl`/`etcdutl` 바이너리를 업스트림 소스에서 직접
 | --- | --- | --- | --- |
 | 빌드 방식 | 사전 빌드된 릴리스 바이너리를 이미지에 `ADD` | `source.build.env` 의 pinned commit 을 소스에서 직접 컴파일 | 정적 링크된 Go 모듈 버전을 올리려면 그 모듈을 강제로 업그레이드해 다시 빌드해야 한다 — 바이너리를 그대로 가져오는 방식으로는 고칠 수 없다 |
 | 최종 베이스 | `gcr.io/distroless/static-debian12` | `registry.suse.com/bci/bci-micro` | 이미지들이 SUSE BCI 하나만 쓴다([docs/image-authoring/](../../docs/image-authoring/README.md) 원칙 2) — 정적 링크 바이너리라 런타임 의존성이 없어 패키지 매니저 없는 가장 가벼운 변종으로 충분하다 |
-| 의존성 고정 | 각 모듈(`server`/`etcdctl`/`etcdutl`)의 `go.mod` 가 지정한 버전 그대로 | `go.work` 워크스페이스 전역 `replace` 한 줄로 `golang.org/x/text` 를 강제 업그레이드 | etcd 는 세 바이너리를 Go 워크스페이스로 함께 관리한다 — 각 `go.mod` 를 개별로 고치는 대신 워크스페이스 전역 한 줄로 업스트림과의 차이를 최소로 유지한다 |
+| 의존성 고정 | 각 모듈(`server`/`etcdctl`/`etcdutl`)의 `go.mod` 가 지정한 버전 그대로 | `GO_MODULE_UPGRADES` 의 각 항목을 `go.work` 워크스페이스 전역 `replace` 로 변환해 강제 업그레이드 | etcd 는 세 바이너리를 Go 워크스페이스로 함께 관리한다 — `go get` 은 실행한 모듈에만 적용돼 형제 모듈이 취약한 채로 남는다. 워크스페이스 전역 `replace` 는 세 모듈에 한 번에 걸리고 업스트림과의 차이도 최소로 유지된다 |
 | 버전 문자열(ldflags) | `git rev-parse --short HEAD` 로 얻은 GitSHA 를 빌드 시점에 주입 | pinned commit 전체 해시를 직접 주입 | BuildKit 의 git context(`ADD ...#${SOURCE_COMMIT}`)로 체크아웃하므로 커밋을 이미 알고 있다 — 호스트의 `verify.sh` 가 컨테이너 안에서 git 을 실행하지 않고도 버전 문자열에 pinned commit 이 반영됐는지 확인할 수 있다 |
 
 빌더 스테이지(Go 컴파일)는 공식 `golang` 이미지를 그대로 쓴다 — 최종 이미지에 남지
@@ -41,10 +41,16 @@ etcd 서버/`etcdctl`/`etcdutl` 바이너리를 업스트림 소스에서 직접
 업스트림 저장소(etcd-io/etcd)의 `scripts/build_lib.sh` 안 `etcd_build()` 를 그대로 재현한다
 (이 레포의 `scripts/` 와는 무관하다).
 
-`SOURCE_COMMIT`·`XTEXT_FIX_VERSION` 은 **자동 추적하지 않는다.** 사람이 업스트림
-`release-3.7` 브랜치(또는 다음 패치 릴리스 태그)를 보고 `source.build.env` 를 고쳐 PR 을
-여는 것 자체가 갱신 트리거다. 상위 릴리스가 이 CVE 를 포함해 나오면 그쪽으로 갈아타는
-것이 이 자체 빌드를 유지하는 것보다 항상 우선한다.
+`SOURCE_COMMIT` 은 **자동 추적하지 않는다.** 사람이 업스트림 `release-3.7` 브랜치(또는
+다음 패치 릴리스 태그)를 보고 `source.build.env` 를 고쳐 PR 을 여는 것 자체가 갱신
+트리거다. 상위 릴리스가 이 CVE 를 포함해 나오면 그쪽으로 갈아타는 것이 이 자체 빌드를
+유지하는 것보다 항상 우선한다.
+
+`GO_MODULE_UPGRADES` 는 반대로 **자동 추적한다.** 일일 rescan 이 드리프트를 찾으면
+`suggest-go-upgrades.py --apply` 가 값을 올려 `autofix/go-cves` PR 로 올린다. 워크스페이스
+전역 `replace` 라는 적용 방식은 그대로지만, 값이 다른 Go 이미지와 같은 키에 담겨 있어야
+자동 적용 대상이 된다 — `--apply` 는 없는 키를 새로 만들지 않기 때문이다. 예전의
+`XTEXT_FIX_VERSION` 이 이 키로 바뀐 이유다.
 
 ## 빌드·검증 방법
 

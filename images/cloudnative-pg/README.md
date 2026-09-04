@@ -47,6 +47,13 @@ subject to scanning or policy.
 release tag once it exists) and editing `source.build.env` to open a PR is itself the
 update trigger.
 
+`GO_MODULE_UPGRADES` is **normally empty.** This image compiles the maintenance branch
+HEAD, so it picks up fixes upstream has already backported and has had nothing to force.
+The key is declared anyway, because `suggest-go-upgrades.py --apply` **never adds a
+missing key** — without the declaration, a module CVE upstream has *not* backported
+leaves this image silently outside the automated fix (which is exactly what happened with
+CVE-2026-84304 on 2026-09-03).
+
 **Suggested review cadence**: whenever the gate reports a blocking CVE for this image
 again, or upstream ships a new patch release — if that release already resolves the CVEs
 above, moving to it always takes priority over keeping this self-build.

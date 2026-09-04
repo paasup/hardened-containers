@@ -18,6 +18,9 @@ ADR is for.
 | [0007](0007-argocd-self-build.md) | Replace the argocd image with a source-compiled self-build | Accepted |
 | [0008](0008-keycloak-self-build.md) | Build the Keycloak image ourselves | Accepted |
 | [0009](0009-kyverno-self-build.md) | Replace the kyverno image family (7 images) with source-compiled self-builds | Accepted |
+| [0010](0010-infisical-secrets-operator-self-build.md) | Replace the infisical-secrets-operator image with a source-compiled self-build | Accepted |
+| [0011](0011-infisical-self-build.md) | Replace the infisical image with a source-compiled self-build | Accepted |
+| [0012](0012-go-cve-autofix-pr.md) | Raise Go pins automatically, but deliver them as a pull request | Accepted |
 
 ## When to write a new ADR
 

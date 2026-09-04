@@ -112,6 +112,10 @@ jobs:
   # (a gap in an earlier version, which filtered on images/** alone).
   discover:
     runs-on: ubuntu-latest
+    # Small and always fast. Without a cap it inherits the 6-hour default, and it holds this
+    # workflow's concurrency slot the whole time it hangs — which blocks every other dispatch
+    # for the same ref behind it.
+    timeout-minutes: 10
     outputs:
       images: ${{ steps.list.outputs.images }}
     steps:
@@ -139,14 +143,52 @@ jobs:
               json="$(printf '%s\n' $img | to_json)"
             fi
           else
-            before="${{ github.event.before }}"
-            # A brand-new branch has an all-zero `before` and no diff base. Rather than
-            # building everything, fall back to the representative subset.
+            default_branch="${{ github.event.repository.default_branch }}"
+            if [ "${{ github.ref_name }}" = "$default_branch" ]; then
+              # On the default branch a push is incremental, so the previous tip is the
+              # right base.
+              before="${{ github.event.before }}"
+            else
+              # On any other branch the question is "what does this branch change", not
+              # "what did this push add" — and `before` answers the second one badly:
+              #
+              #   creating a branch    `before` is all-zeros, so there is no base at all
+              #   force-pushing one    `before` is the tip that was just discarded, and
+              #                        diffing against it reports only what moved since the
+              #                        *previous* version of the branch — for a branch
+              #                        rebuilt from the default branch each time (the
+              #                        autofix branch does exactly this) that is often
+              #                        nothing, and nothing gets verified
+              #
+              # Both cases used to land on the representative subset or on an empty list, so
+              # a branch could go green having never built the images it changed. The
+              # merge-base with the default branch is the honest base in both.
+              #
+              # Fetched into a named ref rather than read back from FETCH_HEAD: `checkout`'s
+              # own earlier fetch already left a FETCH_HEAD behind (pointing at the ref this
+              # run actually checked out), and if the fetch on the next line silently failed,
+              # reading FETCH_HEAD would reuse that stale value instead — a merge-base against
+              # the run's own commit, which is that commit itself, which then passes the
+              # "usable base" check below although nothing was actually fetched. Success is
+              # therefore checked explicitly, and only a real fetch's result is ever used.
+              set +e
+              git fetch --no-tags origin "$default_branch:refs/remotes/origin/$default_branch" >/dev/null 2>&1
+              fetch_rc=$?
+              set -e
+              if [ "$fetch_rc" = "0" ]; then
+                before="$(git merge-base "origin/$default_branch" "${{ github.sha }}" 2>/dev/null || true)"
+              else
+                before=""
+              fi
+            fi
+            # No usable base (unrelated histories, or a fetch that could not run). Rather
+            # than building everything, fall back to the representative subset.
             if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ] \
                || ! git cat-file -e "$before^{commit}" 2>/dev/null; then
-              echo "::notice::new branch (no diff base) — limiting to the representative subset: $ORCHESTRATOR_SUBSET"
+              echo "::notice::no usable diff base — limiting to the representative subset: $ORCHESTRATOR_SUBSET"
               json="$(printf '%s\n' $ORCHESTRATOR_SUBSET | to_json)"
             else
+              echo "::notice::diffing against $before"
               scripts_changed="$(git diff --name-only "$before" "${{ github.sha }}" -- scripts/)"
               if [ -n "$scripts_changed" ]; then
                 echo "::notice::scripts/** changed — limiting to the representative subset instead of all $(ls images | wc -l | tr -d ' ') images: $ORCHESTRATOR_SUBSET"
@@ -358,6 +400,60 @@ jobs:
             { echo "## ${{ matrix.image }}"; cat build-out/cve-gate.md; echo; } >> "$GITHUB_STEP_SUMMARY"
           fi
 
+  # --- Which images actually got published --------------------------------------
+  # `attest` and `record` used to hang off `needs: [discover, build]` and take their matrix
+  # from discover's full target list. That carried two faults which only a single-image
+  # dispatch hid, and which a multi-image one makes severe:
+  #
+  #   1. `needs` carries an implicit success(). One failed image out of seventeen skipped
+  #      attestation and the published.json update **for all sixteen that passed** — after
+  #      paying the full matrix wall-clock to find out, since fail-fast is false.
+  #   2. attest's matrix entries for images that never published had no publish-record
+  #      artifact to download, so they failed rather than skipped.
+  #
+  # Both come from asking discover "what did we aim to build" when the question is "what did
+  # we actually publish". This job answers the latter, from the artifacts themselves, and the
+  # two jobs below key off it. `if: always()` is deliberate: a partly-failed matrix is exactly
+  # the case that has to keep working.
+  published:
+    needs: build
+    if: >-
+      always() && github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.push != 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      images: ${{ steps.list.outputs.images }}
+    steps:
+      # A build job writes this artifact only when the gate passed AND the push happened, so
+      # its presence is the publication signal. Zero matches is a legitimate answer — every
+      # image failed its gate — but download-artifact treats an empty match as an error, so
+      # this step is allowed to fail and the next one reads the directory instead.
+      - name: Download publication records
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          pattern: publish-record-*
+          path: publish-record
+          merge-multiple: true
+
+      - name: List the images that published
+        id: list
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          names=()
+          for rec in publish-record/*.json; do
+            case "$rec" in *.cdx.json) continue ;; esac   # the SBOM also matches *.json
+            names+=("$(basename "$rec" .json)")
+          done
+          json="$(printf '%s\n' ${names[@]+"${names[@]}"} \
+            | python3 -c 'import json,sys; print(json.dumps(sorted({l.strip() for l in sys.stdin if l.strip()})))')"
+          echo "images=$json" >> "$GITHUB_OUTPUT"
+          echo "published: $json"
+
   # --- Attest what was published ------------------------------------------------
   # GitHub Artifact Attestations: proves this digest was produced by this repository's
   # workflow. Consumers verify with a single command and no key material:
@@ -371,12 +467,12 @@ jobs:
   # push-to-registry is false: the attestation lives in GitHub, so this job needs no registry
   # credentials, and it does not depend on the registry supporting OCI referrers.
   attest:
-    needs: [discover, build]
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.push != 'false'
+    needs: published
+    if: needs.published.outputs.images != '[]'
     strategy:
       fail-fast: false
       matrix:
-        image: ${{ fromJson(needs.discover.outputs.images) }}
+        image: ${{ fromJson(needs.published.outputs.images) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -432,8 +528,8 @@ jobs:
   # that environment with "Deployment branches: selected → <default branch>" and put the
   # registry secrets there. Unlike an `if:`, that cannot be edited away in a pull request.
   record:
-    needs: [discover, build]
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.push != 'false'
+    needs: published
+    if: needs.published.outputs.images != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: production

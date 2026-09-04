@@ -283,6 +283,61 @@ if not bad:
 sys.exit(1 if bad else 0)
 PY
 
+# --- 9. Go images express module pins through GO_MODULE_UPGRADES -------------
+# suggest-go-upgrades.py --apply substitutes existing KEY=value lines and never adds a
+# missing key. So an image that keeps its module pins in per-module <LIB>_FIX_VERSION ARGs,
+# or declares none at all, silently drops out of the automated Go CVE fix: rescan.yml finds
+# the drift every day, the suggester writes nothing, and the pin never moves. That is not a
+# hypothetical — on 2026-09-03 three images (etcd, apisix-ingress-controller,
+# cloudnative-pg) sat in exactly that state while a CRITICAL x/crypto CVE was outstanding.
+#
+# The rule is already in builder-languages.md ("do not create new instances of the third
+# form"). This makes it enforceable, because a rule that lives only in prose comes back.
+section "Go module pins are automatable"
+python3 - <<'PY' || FAILED=1
+import re, pathlib, sys
+
+def read_env(p):
+    kv = {}
+    for line in p.read_text(encoding="utf-8").split("\n"):
+        s = line.strip()
+        if not s or s.startswith("#") or "=" not in s:
+            continue
+        k, v = s.split("=", 1)
+        if re.fullmatch(r"[A-Z_][A-Z0-9_]*", k):
+            kv[k] = v.strip().strip('"').strip("'")
+    return kv
+
+# Names that look like a per-module forced upgrade. RUNTIME_/BUILDER_ are unrelated.
+FIX_VERSION = re.compile(r"^(?!RUNTIME_|BUILDER_)[A-Z0-9]+_FIX_VERSION$")
+
+bad = []
+for p in sorted(pathlib.Path("images").glob("*/*.build.env")):
+    kv = read_env(p)
+    # GO_BUILDER_TAG is what identifies a Go build — every Go image in this repository
+    # pins its toolchain through the builder image tag.
+    if "GO_BUILDER_TAG" not in kv:
+        continue
+    if "GO_MODULE_UPGRADES" not in kv:
+        bad.append(f"{p}: has GO_BUILDER_TAG but no GO_MODULE_UPGRADES — declare it "
+                   '(empty is fine: GO_MODULE_UPGRADES="") so suggest-go-upgrades.py '
+                   "--apply can raise it; --apply never adds a missing key")
+    for name in sorted(kv):
+        if FIX_VERSION.match(name):
+            bad.append(f"{p}: {name} is a per-module pin — move it into GO_MODULE_UPGRADES "
+                       "(docs/image-authoring/builder-languages.md)")
+    # Declaring the key but not passing it means the Dockerfile never sees the new value.
+    if "GO_MODULE_UPGRADES" in kv and \
+            "GO_MODULE_UPGRADES" not in (kv.get("BUILD_ARGS") or "").split():
+        bad.append(f"{p}: GO_MODULE_UPGRADES is set but missing from BUILD_ARGS — "
+                   "the build would silently use the Dockerfile default")
+for b in bad:
+    print(f"   FAIL — {b}")
+if not bad:
+    print("   OK — every Go image's module pins are in GO_MODULE_UPGRADES and passed through")
+sys.exit(1 if bad else 0)
+PY
+
 # --- summary -----------------------------------------------------------------
 echo
 if [ "$FAILED" = "0" ]; then

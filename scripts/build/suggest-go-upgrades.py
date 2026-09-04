@@ -13,6 +13,11 @@ stdout. Severity is judged by reusing `image-gate.py`'s
 Why the latest is not pulled automatically at build time: see the "Go module CVEs"
 section of docs/image-authoring/builder-languages.md.
 
+Called by hand, and by rescan.yml — when the daily drift check finds a published image
+blocked, it runs `--apply` here and collects whatever moved into the autofix pull request.
+So `--apply` is no longer only a human action, but its output still reaches the default
+branch only through a PR whose verify build passed. See docs/decisions/0012.
+
 Usage
 -----
     python3 scripts/build/suggest-go-upgrades.py --reports <trivy-reports dir>
@@ -177,6 +182,34 @@ def numeric_prefix(v):
     return tuple(int(x) for x in m.group(1).split(".")), m.group(2)
 
 
+# The builder image variant assumed when an image has no GO_BUILDER_TAG to copy a suffix
+# from. Every Go image in this repository is on -trixie.
+DEFAULT_BUILDER_SUFFIX = "-trixie"
+
+
+def choose_builder_tag(rows, current):
+    """The single GO_BUILDER_TAG value that resolves every blocking stdlib CVE.
+
+    **Staying on the minor the image already pins is preferred.** A toolchain minor bump
+    is a far bigger change than a patch bump — go.mod may not accept it, and it can move
+    language semantics — so this climbs to the highest stable branch only when no
+    candidate sits on the current minor. The existing suffix is preserved, since it names
+    the builder image variant rather than the toolchain.
+
+    This is the one place that decision is made: both the printed suggestion and `--apply`
+    call it, so they can never recommend two different values for the same report.
+
+    Returns `(tag, stayed_on_current_minor)`, or `(None, False)` when there is no
+    stable candidate at all.
+    """
+    if not rows:
+        return None, False
+    cur_nums, suffix = numeric_prefix(current)
+    same_minor = [r for r in rows if r[0] == cur_nums[:2]]
+    (a, b), c = (same_minor or rows)[-1]
+    return f"{a}.{b}.{c}{suffix or DEFAULT_BUILDER_SUFFIX}", bool(same_minor)
+
+
 def parse_module_specs(raw):
     """'mod@v1.2.3 mod2@v0.4.0' → {mod: (1,2,3)}"""
     out = {}
@@ -218,12 +251,10 @@ def pin_changes(paths, pins, gate, rank, floor):
         elif not cur:
             notes.append(f"{len(std_alts)} blocking stdlib CVEs — this image has no GO_BUILDER_TAG")
         else:
-            cur_nums, suffix = numeric_prefix(cur)
-            same_minor = [r for r in rows if r[0] == cur_nums[:2]]
-            (a, b), c = (same_minor or rows)[-1]
-            if cur_nums[:3] < (a, b, c):
+            tag, _ = choose_builder_tag(rows, cur)
+            if numeric_prefix(cur)[0][:3] < numeric_prefix(tag)[0][:3]:
                 changes.append({"key": "GO_BUILDER_TAG", "current": cur,
-                                "required": f"{a}.{b}.{c}{suffix}",
+                                "required": tag,
                                 "reason": f"{len(std_alts)} blocking stdlib CVEs", "appliable": True})
 
     mods = collect_modules(paths, gate, rank, floor)
@@ -261,14 +292,34 @@ def apply_changes(build_env_path, changes):
             continue
         key = ch["key"]
         pattern = re.compile(rf'^({re.escape(key)}=)(")?.*?(")?$', re.MULTILINE)
-        if not pattern.search(text):
+        m = pattern.search(text)
+        if not m:
             continue
-        quote = '"' if " " in ch["required"] else ""
-        text = pattern.sub(lambda m: f'{m.group(1)}{quote}{ch["required"]}{quote}', text, count=1)
+        # Keep the quoting the line already had. Deciding it afresh from the new value
+        # rewrites GO_MODULE_UPGRADES="one@v1.2.3" to the unquoted form the moment the
+        # list drops to a single module — a diff that says nothing, on a file whose whole
+        # point is that its diffs are the record of what changed.
+        quote = '"' if (m.group(2) and m.group(3)) or " " in ch["required"] else ""
+        text = pattern.sub(lambda _: f'{m.group(1)}{quote}{ch["required"]}{quote}', text, count=1)
         applied.append(key)
     if applied:
         p.write_text(text)
     return applied
+
+
+def current_pins(image):
+    """The pins already committed for `image`, so the printed suggestion can be phrased
+    against them rather than in a vacuum.
+
+    Returns `{}` when `--image` does not name an image directory — it is only a
+    report-filename filter, so it is not required to.
+    """
+    if not image:
+        return {}
+    try:
+        return read_env(resolve_build_env_path(image))
+    except SystemExit:
+        return {}
 
 
 def resolve_build_env_path(image):
@@ -312,6 +363,7 @@ def main():
 
     mods = collect_modules(paths, gate, rank, floor)
     std_alts = collect_stdlib(paths, gate, rank, floor)
+    pins = current_pins(args.image)
 
     if std_alts:
         rows = builder_candidates(std_alts)
@@ -319,9 +371,11 @@ def main():
         print(f"#   {len(std_alts)} CVEs affected. Any of the following resolves all of them:")
         for (a, b), c in rows:
             print(f"#     go{a}.{b}.{c}")
-        if rows:
-            (a, b), c = rows[-1]
-            print(f"# GO_BUILDER_TAG={a}.{b}.{c}-trixie   # the highest stable branch")
+        tag, on_current_minor = choose_builder_tag(rows, pins.get("GO_BUILDER_TAG", ""))
+        if tag:
+            why = ("staying on the minor this image already pins" if on_current_minor
+                   else "the highest stable branch")
+            print(f"# GO_BUILDER_TAG={tag}   # {why}")
         else:
             print("#   ::warning:: no stable-release alternative — a pre-release toolchain may be required")
         print()

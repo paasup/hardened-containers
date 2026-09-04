@@ -45,16 +45,27 @@ FROM --platform=$BUILDPLATFORM golang:${GO_BUILDER_TAG} AS builder
 ARG TARGETARCH
 ARG SOURCE_COMMIT
 ARG APP_VERSION
-ARG XTEXT_FIX_VERSION
+ARG GO_MODULE_UPGRADES
 WORKDIR /src
 
 # BuildKit's git context support — git itself guarantees commit integrity, with no tarball
 # and checksum to manage.
 ADD https://github.com/etcd-io/etcd.git#${SOURCE_COMMIT} /src
 
-# Addresses CVE-2026-56852: force-upgrade golang.org/x/text workspace-wide.
-# `go work sync` propagates this replace into each module's go.sum (server, etcdctl, etcdutl).
-RUN echo "replace golang.org/x/text => golang.org/x/text v${XTEXT_FIX_VERSION}" >> go.work \
+# Force-upgrade the vulnerable module(s) workspace-wide (the list lives in build.env).
+#
+# Upstream is a Go workspace, so `go get` is not the lever the single-module images use —
+# it would touch only the module it is run in, leaving the sibling modules (server, etcdctl,
+# etcdutl) on the vulnerable version. A `replace` in go.work applies to all of them at once,
+# and `go work sync` propagates it into each module's go.sum.
+#
+# The *values* still come from GO_MODULE_UPGRADES rather than a per-module ARG, so this
+# image is covered by suggest-go-upgrades.py --apply like every other Go image. The
+# `<mod>@<version>` spec splits cleanly into a replace directive: ${spec#*@} keeps the "v"
+# prefix that replace requires.
+RUN for spec in ${GO_MODULE_UPGRADES}; do \
+      echo "replace ${spec%@*} => ${spec%@*} ${spec#*@}" >> go.work; \
+    done \
  && go work sync
 
 # Reproduces etcd_build() from upstream (etcd-io/etcd) scripts/build_lib.sh as-is.

@@ -58,8 +58,27 @@ available through `workflow_dispatch`.
 
 **The cap is always logged.** A silent subset would read as "everything was verified".
 
-A brand-new branch has no diff base (`github.event.before` is all zeros), so it falls back
-to the same subset rather than building everything.
+### What a push is diffed against
+
+On the **default branch**, against `github.event.before` — a push there is incremental, so
+the previous tip is the right base.
+
+On **any other branch**, against the **merge-base with the default branch**. The question
+for a branch is "what does this branch change", and `before` answers a different one badly:
+
+| | `before` is | diffing against it gives |
+|---|---|---|
+| creating a branch | all zeros | no base at all |
+| force-pushing a branch | the tip just discarded | only what moved since the branch's *previous* version |
+
+The second case is the dangerous one, and the autofix branch hits it every day: it is
+rebuilt from the default branch each run, so a re-derived pin that is unchanged since
+yesterday shows no diff — and the image carrying it would never be built, while the pull
+request went green. The merge-base is honest in both cases.
+
+If no base is usable at all (unrelated histories, or the fetch could not run), it falls
+back to the representative subset rather than building everything. **The fallback is always
+logged**, as is the base actually chosen.
 
 ### Publishing is restricted to the default branch
 
@@ -168,15 +187,58 @@ the second merely call the first is a relationship worth showing in the file bou
    (no rebuild, no new tag, no push — this avoids wasting CI time and tag space). A
    failure means an image that was clean yesterday is now blocked by a new CVE: that is
    "drift".
-3. **Rebuild call** — if there is drift and the `push` input is not `false`, the job
-   uses its `GITHUB_TOKEN` (`actions: write`) to run
-   `gh workflow run build-image.yml -f image=<image> -f push=true`. The rebuild,
-   verification, SBOM, scan, gate, and push are all performed by `build-image.yml`
-   itself. Whether the rebuild actually resolves the CVE is decided by that workflow's
-   gate — if it does not, nothing is pushed.
-4. **Failure notification** — there is no automatic issue creation. If the gate keeps
+3. **Routing** — drift splits into two kinds needing opposite responses, so each matrix
+   entry runs `suggest-go-upgrades.py --apply` against its own trivy report and lets the
+   working tree decide which kind this is:
+
+   | The suggester… | means | response |
+   |---|---|---|
+   | changed nothing | the pin is fine, the build is stale | **rebuild** — picks up the patched base OS package |
+   | raised a pin | the pin itself is behind | **autofix PR** — no rebuild at the current pin can ever clear it |
+
+   The entry writes its verdict to an artifact and holds no write token. The single
+   `collect` job acts on all of them at once.
+4. **Act, once** — `collect` opens or updates one pull request on `autofix/go-cves`
+   carrying every raised pin, and issues **one** `gh workflow run build-image.yml` naming
+   every rebuild image space-separated. It is not the push to the autofix branch that
+   verifies it — a push made with this job's token deliberately does not fire
+   `build-image.yml`'s push trigger, so nothing would run at all otherwise. `collect`
+   dispatches the verify build explicitly, scoped to the branch with `push=false`, right
+   after pushing (`gh workflow run build-image.yml --ref autofix/go-cves -f image="..."
+   -f push=false`) — the same `workflow_dispatch` trigger the rebuild call above already
+   uses. The branch is rebuilt from the default branch every rescan — never commit to it
+   by hand.
+5. **Failure notification** — there is no automatic issue creation. If the gate keeps
    failing on rebuild, the `build-image.yml` job stays in a failed state and GitHub
    Actions' default notification (email, per repository watch settings) carries it.
+
+### Why one dispatch and not one per image
+
+Each matrix entry used to call `gh workflow run` itself. **That silently threw work away.**
+Every dispatch is its own run, and `build-image.yml`'s concurrency group is per-ref with
+`cancel-in-progress: false` for dispatch, so the runs queue — and GitHub keeps exactly
+**one** pending run per group, cancelling the previous pending one whenever a new run
+arrives. On 2026-09-03 eleven images drifted, eleven dispatches went out within fifty
+seconds, and **nine were cancelled inside ten seconds** having built nothing.
+
+The distinction that matters:
+
+| what is queued | GitHub's behaviour |
+|---|---|
+| a **run**, behind a concurrency group | one pending kept, the rest **cancelled** |
+| a **job**, behind the runner limit | **waits**, then runs — nothing is lost |
+
+Only the first was ever the problem. Runner capacity was not: in that same rescan all
+seventeen matrix jobs started within six seconds of each other.
+
+So aggregating **raises** parallelism rather than capping it — one dispatch with N matrix
+entries builds N images concurrently, where N dispatches managed one. `build-image.yml`'s
+`image` input has always accepted space-separated names for exactly this reason.
+
+There is deliberately **no `max-parallel`** on the build matrix. The worst case,
+`image=all`, is `discover 1 + build 17 = 18` jobs against a limit of 20, and `attest` only
+starts once `build` is done. If headroom is ever needed, `max-parallel` on that matrix is
+the one knob to turn.
 
 An image with no entry in `published.json` yet (before first publication) has nothing to
 rescan, so it is treated as drifted and `build-image.yml` is called immediately.

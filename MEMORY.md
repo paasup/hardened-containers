@@ -27,6 +27,16 @@
 
 ## 열린 항목
 
+- **Go 모듈 CVE 두 건(CVE-2026-56854 `x/crypto` CRITICAL, CVE-2026-84304 `grpc` HIGH)이
+  게시된 이미지 11개를 막고 있다.** 자동 수정 배관은 이 브랜치에서 만들었고
+  ([ADR 0012](docs/decisions/0012-go-cve-autofix-pr.md)), 수렴 대상 3개
+  (`etcd`·`apisix-ingress-controller`·`cloudnative-pg`)는 로컬에서 게이트 PASS·`cov=ok`
+  까지 확인했다. **아직 손대지 않은 8개**: `argocd`·`kyverno`·`kyverno-cli`·`kyvernopre`·
+  `background-controller`·`cleanup-controller`·`reports-controller`·
+  `infisical-secrets-operator`. 다음 할 일: 이 PR 머지 → 일일 rescan 이 나머지를
+  `autofix/go-cves` PR 로 올리는지 확인(그게 이 배관의 첫 실전 검증이다) → 초록이면 머지 후
+  `workflow_dispatch(push=true)` 로 재게시.
+
 - **`infisical` 은 게시 완료됐다** — `docker.io/paasup/infisical:v0.164.1-security-hardened-20260903`
   (digest `sha256:144b06c8f2437c9a2afcde8677e9b9395797ce8e3b255af47fa36b8fa4520853`),
   `published.json`·`sboms/infisical.cdx.json` 반영 확인됨. 근거는

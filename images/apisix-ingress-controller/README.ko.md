@@ -28,7 +28,7 @@ apisix-ingress-controller 바이너리를 업스트림 소스에서 직접 컴�
 | 항목 | 업스트림 | 이 이미지 | 이유 |
 | --- | --- | --- | --- |
 | 애플리케이션 코드 | 릴리스 태그 그대로 | 동일(태그 그대로) | 이 프로젝트는 유지보수 브랜치가 없고 `master` 하나뿐이라, `master` HEAD 로 옮기면 신규 기능 커밋까지 섞여 최소 diff 원칙에 맞지 않는다. 태그는 유지하고 취약 모듈만 강제 업그레이드한다 |
-| 전이 의존성 | go.mod 고정 버전 | `go get`+`go mod tidy` 로 최소 호환 버전까지 상향 | `go.work` 워크스페이스가 없는 단일 모듈 프로젝트라 전역 `replace` 한 줄로 끝나지 않는다 — 여러 모듈을 한 번에 지정해야 하며(otel 코어/sdk 는 버전이 서로 맞아야 해서 반드시 함께 지정), `go get`이 나머지 호환 버전을 정리한다 |
+| 전이 의존성 | go.mod 고정 버전 | `GO_MODULE_UPGRADES` 목록을 `go get`+`go mod tidy` 로 최소 호환 버전까지 상향 | `go.work` 워크스페이스가 없는 단일 모듈 프로젝트라 전역 `replace` 한 줄로 끝나지 않는다 — 여러 모듈을 한 번에 지정해야 하며(otel 코어/sdk 는 버전이 서로 맞아야 해서 반드시 함께 지정), `go get`이 나머지 호환 버전을 정리한다. 모듈별 `<LIB>_FIX_VERSION` ARG 를 쓰다가 이 키 하나로 바꿨다 — `suggest-go-upgrades.py --apply` 가 없는 키는 만들지 않아서, 그대로 뒀다면 이 이미지만 자동 수정에서 빠진다 |
 | 최종 베이스 이미지 | `gcr.io/distroless/cc-debian12` | `registry.suse.com/bci/bci-micro:15.7` | 이미지들은 SUSE BCI 하나만 쓴다([docs/image-authoring/](../../docs/image-authoring/README.md) 원칙 2). 바이너리가 `CGO_ENABLED=0` 정적 링크라 glibc 를 포함하는 `cc` 변형이 애초에 필요 없다 — `static` 대비 이점이 없어 `bci-micro` 로 통일한다 |
 
 `SOURCE_COMMIT`과 의존성 최소 버전은 자동 추적하지 않는다. 사람이 업스트림 새 태그(또는

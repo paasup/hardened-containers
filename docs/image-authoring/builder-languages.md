@@ -36,18 +36,23 @@ ARG TARGETARCH                             # cross-compile: builder on host arch
   `git rev-parse HEAD`, but we build without a `.git`, so we pass `SOURCE_COMMIT`
   explicitly — without it the version check in `verify.sh` breaks and the image cannot
   testify to what it was built from.
-- **Forced upgrades of vulnerable modules take three forms.** The "Go module CVEs"
-  section below covers deriving the values.
+- **Every Go image declares `GO_MODULE_UPGRADES`, even when it is empty.** That one key is
+  the only place forced module upgrades are written. What the Dockerfile does with the list
+  varies with the project's shape, but the key never does:
 
-  | Form | When | Example |
+  | How the Dockerfile applies it | When | Example |
   | --- | --- | --- |
-  | `GO_MODULE_UPGRADES` + `go-mod-upgrade.sh` | One image builds several Go projects | `argocd` |
-  | Global `replace` in `go.work` | Upstream uses a workspace | `etcd` |
-  | Individual `<LIB>_FIX_VERSION` | A small fixed set of vulnerable modules | `apisix-ingress-controller` |
+  | `go get ${GO_MODULE_UPGRADES} && go mod tidy` | A single Go module | `kyverno`, `apisix-ingress-controller` |
+  | `go-mod-upgrade.sh` per project | One image builds several Go projects | `argocd` |
+  | A `replace` per entry in `go.work` | Upstream is a Go workspace | `etcd` |
 
-  Do not create new instances of the third form — whether it is one module or two,
-  standardising on `GO_MODULE_UPGRADES` is better because
-  `suggest-go-upgrades.py --apply` can handle it automatically.
+  The key is declared even when there is nothing to upgrade
+  (`GO_MODULE_UPGRADES=""` — `readiness-checker`, `cloudnative-pg`), because
+  **`suggest-go-upgrades.py --apply` substitutes existing `KEY=value` lines and never adds a
+  missing key.** An image without the key silently drops out of the automated fix: rescan
+  finds the drift daily, the suggester writes nothing, the pin never moves. Per-module
+  `<LIB>_FIX_VERSION` ARGs had the same effect and are gone for that reason.
+  `repo-checks.sh` check 9 enforces this.
 - **If upstream already backported the fix, use that commit instead of bumping the
   module** — the smaller the divergence the better (`cloudnative-pg` resolved its CVEs
   by compiling the release branch HEAD as-is).
@@ -133,8 +138,20 @@ reported separately.
 **Why we do not pull the latest at build time** — `go get -u` on every build means the
 same source produces different images. It is the same reason this repository does not
 use rolling tags. A version pin is **a record of what we verified**, and `git diff`
-shows what moved and why. Run without `--apply` to get suggestions only; a person
-reviews them and commits with `--apply`.
+shows what moved and why.
+
+**CI runs `--apply` for you; the review moved, it did not disappear.** `rescan.yml`
+runs the suggester against each drifted image's own trivy report and, when a pin moves,
+collects the changes into a single pull request on `autofix/go-cves` rather than
+committing to the default branch. What verifies it is a `build-image.yml` run dispatched
+explicitly right after the push (not the push itself — a push made with the workflow's own
+token does not trigger `build-image.yml`'s push trigger, deliberately). A green run there
+means the raised pins really do build and pass the gate — so what gets merged is still a
+record of something verified. See [ci.md](ci.md).
+
+Run it by hand the same way when working locally; `--dry-run` shows what it would write.
+The branch is bot-owned and rebuilt from the default branch every rescan, so do not commit
+to it by hand.
 
 Two traps show up in practice.
 

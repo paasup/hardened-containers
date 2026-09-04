@@ -30,11 +30,21 @@ FROM --platform=$BUILDPLATFORM golang:${GO_BUILDER_TAG} AS builder
 ARG TARGETARCH
 ARG SOURCE_COMMIT
 ARG APP_VERSION
+ARG GO_MODULE_UPGRADES
 WORKDIR /src
 
 # BuildKit's git context support — git itself guarantees commit integrity, with no tarball
 # and checksum to manage.
 ADD https://github.com/cloudnative-pg/cloudnative-pg.git#${SOURCE_COMMIT} /src
+
+# Force-upgrade the vulnerable module(s) to their minimum fixed version (see build.env).
+# Normally empty here — this image resolves its CVEs by compiling the maintenance branch
+# HEAD, where upstream has already backported them. The lever exists so that a module CVE
+# upstream has *not* backported can be fixed without editing this Dockerfile, and so
+# suggest-go-upgrades.py --apply can raise the pin on its own.
+RUN --mount=type=cache,target=/root/go/pkg/mod \
+    --mount=type=cache,target=/root/.cache/go-build \
+    if [ -n "${GO_MODULE_UPGRADES}" ]; then go get ${GO_MODULE_UPGRADES} && go mod tidy; fi
 
 # Reproduces upstream's Makefile LDFLAGS and the build settings in .goreleaser.yml.
 RUN --mount=type=cache,target=/root/go/pkg/mod \
