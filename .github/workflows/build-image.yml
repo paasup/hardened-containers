@@ -468,7 +468,14 @@ jobs:
   # credentials, and it does not depend on the registry supporting OCI referrers.
   attest:
     needs: published
-    if: needs.published.outputs.images != '[]'
+    # always() && — without it, the implicit success() this `if:` would otherwise get
+    # walks the FULL transitive chain back through `published` to `build`, not just the
+    # immediate `needs: published`. `build` is a matrix job whose own conclusion is
+    # "failure" the moment any single entry fails, fail-fast:false notwithstanding — so
+    # `success()` reads false here even when `published` itself succeeded and correctly
+    # listed images to attest. Measured: this skipped attest/record for 4 images that had
+    # genuinely published, over 2 unrelated images failing their gate in the same matrix.
+    if: always() && needs.published.outputs.images != '[]'
     strategy:
       fail-fast: false
       matrix:
@@ -529,7 +536,8 @@ jobs:
   # registry secrets there. Unlike an `if:`, that cannot be edited away in a pull request.
   record:
     needs: published
-    if: needs.published.outputs.images != '[]'
+    # See the comment on `attest`'s `if:` — same transitive-success() pitfall.
+    if: always() && needs.published.outputs.images != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: production
