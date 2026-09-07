@@ -8,13 +8,12 @@
 - **Zero-CVE 보장**: 모든 이미지에 대해 알려진 취약점(CRITICAL, HIGH 등) 0건을 강제하는 게이트를 통과해야만 레지스트리에 푸시가 허용된다.
 - **독립적인 완결성**: 외부 시스템 의존성 없이, 클론 후 `docker`와 `trivy`만 있으면 레포지토리 내부에서 빌드부터 기능 검증, SBOM 생성, 스캔, 게이트 판정까지 전부 끝난다.
 - **결정론적 관리**: 일관된 베이스 OS(SUSE BCI) 적용 및 롤링 태그 배제를 통해, 언제든 추적 및 재현 가능한 무결점 이미지 빌드 환경을 제공한다.
-- **최신 버전의 정의**: 여기서 "최신"은 단순한 최신 태그가 아니라 **업스트림이 아직 보안 패치를 제공하는 라인 중 가장 새로운 릴리스**를 뜻한다. 이 정의는 앱마다 다르다 — PostgreSQL은 메이저 다섯 개를 동시에 유지보수하지만, APISIX는 가장 새로운 마이너 하나만 유지보수한다. 각 이미지가 어느 라인에 앉는지는 `images/<이미지>/image.env` 가 선언하며, 핀이 유지보수 종료(EOL) 라인으로 밀려난 것은 CVE와 같은 등급의 결함이다 — 다만 리빌드로는 고쳐지지 않고 사람이 핀을 옮겨야 한다.
+- **최신 버전의 정의**: "최신"은 단순 최신 태그가 아니라 **업스트림이 아직 보안 패치를 제공하는 라인 중 가장 새로운 릴리스**다. 기준은 앱마다 다르다 — PostgreSQL은 메이저 다섯 개를 동시 유지보수, APISIX는 최신 마이너 하나만. 각 이미지의 라인은 `images/<이미지>/image.env` 에 선언되며, EOL 라인으로 밀려난 핀은 CVE와 동급 결함으로 취급한다(리빌드로는 못 고치고 사람이 핀을 옮겨야 함).
 
 ## 개요
 
-현재 8개 이미지를 다룬다: `adc`, `apisix`, `apisix-ingress-controller`, `argocd`,
-`cloudnative-pg`, `cnpg-postgresql`, `etcd`, `keycloak`. 정확한 목록은 `images/` 디렉토리가
-단일 출처다. 발행된 태그·다이제스트는 [published.json](published.json) 에 있다.
+정확한 이미지 목록은 `images/` 디렉토리가 단일 출처다 — 지금 무엇이 게시돼 있는지는
+아래 "게시된 이미지" 절 참고.
 
 이 이미지들은 업스트림 프로젝트를 **비공식적으로 재빌드한 배포물**이며, 어떤 업스트림
 프로젝트와도 제휴·보증 관계가 없다. 상표·라이선스 고지는 [NOTICE](NOTICE) 참고.
@@ -42,6 +41,47 @@ REGISTRY=<나의-레지스트리> IMAGE=etcd BASE_OS=source \
   bash scripts/build/build-hardened-image.sh /tmp/out
 ```
 
+## 게시된 이미지
+
+[![rescan-published-images](https://github.com/paasup/hardened-containers/actions/workflows/rescan.yml/badge.svg)](https://github.com/paasup/hardened-containers/actions/workflows/rescan.yml)
+
+[published.json](published.json) 이 최신 출처이며, 게시할 때마다 이 표도 자동 갱신된다.
+
+Critical/High 는 게이트 차단 기준(항상 0)이 아니라, 승인된 예외
+([cve-exceptions.json](cve-exceptions.json)) 건수다.
+
+<!-- BEGIN GENERATED TABLE: published images — do not edit by hand, run scripts/build/render-published-images-table.py -->
+<table>
+<thead>
+<tr><th rowspan="2">분류</th><th rowspan="2">이미지</th><th rowspan="2">최신 태그</th><th colspan="2">CVE</th></tr>
+<tr><th>Critical</th><th>High</th></tr>
+</thead>
+<tbody>
+<tr><td rowspan="3">APISIX</td><td><code>adc</code></td><td><code>0.29.0-security-hardened-20260825</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>apisix</code></td><td><code>3.18.0-security-hardened-20260826</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>apisix-ingress-controller</code></td><td><code>2.1.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td>ArgoCD</td><td><code>argocd</code></td><td><code>3.5.1-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td rowspan="2">CloudNativePG</td><td><code>cloudnative-pg</code></td><td><code>1.30.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>cnpg-postgresql</code></td><td><code>18.4-bci15.7-hardened-20260825</code></td><td>0</td><td>0</td></tr>
+<tr><td>etcd</td><td><code>etcd</code></td><td><code>3.7.1-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td rowspan="2">Infisical</td><td><code>infisical</code></td><td><code>v0.164.1-security-hardened-20260907</code></td><td>1</td><td>2</td></tr>
+<tr><td><code>infisical-secrets-operator</code></td><td><code>v0.11.8-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td>Keycloak</td><td><code>keycloak</code></td><td><code>26.7.2-bci15.7-hardened-20260826</code></td><td>0</td><td>1</td></tr>
+<tr><td rowspan="7">Kyverno</td><td><code>background-controller</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>cleanup-controller</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>kyverno</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>kyverno-cli</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>kyvernopre</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>readiness-checker</code></td><td><code>v1.19.0-security-hardened-20260827</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>reports-controller</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+</tbody>
+</table>
+<!-- END GENERATED TABLE: published images -->
+
+`docker pull docker.io/paasup/<이미지>:<태그>` 로 받는다(포크에서는 레지스트리가
+달라진다 — "포크해서 쓰려면" 참고). digest 로 검증하는 법은 바로 아래 "발행된 이미지
+검증" 절 참고.
+
 ## 발행된 이미지 검증
 
 두 가지가 따로 있고, 수명과 목적이 다르다.
@@ -66,38 +106,35 @@ DIG=$(jq -r '.images.etcd.digest' published.json)
 gh attestation verify "oci://${REF%:*}@${DIG}" --repo paasup/hardened-containers
 ```
 
-> **`--repo` 를 반드시 지정한다.** 이것이 "어느 저장소의 워크플로가 만들었는가"를 못박는
-> 부분이다. 생략하면 "누군가 서명했다"까지만 확인된다.
+> **`--repo` 를 반드시 지정한다** — 생략하면 "누군가 서명했다"까지만 확인된다.
 
-빌드 provenance 는 SLSA 형식이고, SBOM attestation 도 함께 붙는다. 태그가 아니라
-**다이제스트**에 붙는다 — 태그는 나중에 다른 이미지를 가리킬 수 있기 때문이다.
+빌드 provenance(SLSA)와 SBOM attestation 은 둘 다 태그가 아니라 **다이제스트**에
+붙는다 — 태그는 나중에 다른 이미지를 가리킬 수 있어서다.
 
 ## 포크해서 쓰려면
 
 이 저장소는 특정 레지스트리에 묶여 있지 않다. 포크한 뒤 다음을 설정한다.
 
 1. **저장소 변수** (Settings → Secrets and variables → Actions → Variables)
-   - `REGISTRY_HOST` — push 대상 (예: `docker.io/myorg`).
-     **설정하지 않으면 CI 는 push 하지 않고 빌드·검증만 한다** — 설정 없이 돌렸을 때
-     남의 레지스트리로 push 를 시도하지 않게 하는 안전장치다.
+   - `REGISTRY_HOST` — push 대상(예: `docker.io/myorg`).
+     **비워두면 CI 는 빌드·검증만 하고 push 하지 않는다** — 남의 레지스트리로 잘못
+     push 되는 걸 막는 안전장치다.
 2. **저장소 시크릿**
    - `DOCKERHUB_USER` / `DOCKERHUB_TOKEN` — 레지스트리 인증.
 3. **`published.json` 을 비운다.**
    ```sh
    echo '{"schemaVersion": 1, "images": {}}' > published.json
    ```
-   `rescan.yml` 이 이 파일에 적힌 태그를 그대로 pull 해 재스캔하므로, 비우지 않으면
-   포크가 원본 저장소의 이미지를 재스캔하게 된다.
+   비우지 않으면 `rescan.yml` 이 원본 저장소의 이미지를 재스캔하게 된다.
 4. **`cve-exceptions.json` 을 검토한다.** 예외는 "위험을 수용한다"는 기록이다. 남의
    판단을 그대로 물려받지 말고 자기 환경 기준으로 다시 판단한다.
 
 ## 알려진 한계
 
 - **빌드는 재현 가능하지 않다.** 베이스 이미지를 다이제스트가 아니라 태그
-  (`bci-base:15.7`, `golang:1.26.6-trixie`)로 참조하고 `docker build --pull` 을 쓴다.
-  **의도적인 선택이다** — 매 빌드가 최신 보안 패치를 받아야 CVE 0건을 유지할 수 있고,
-  다이제스트로 고정하면 그 목적과 정면으로 충돌한다. 대신 "무엇을 빌드했는가"는 발행된
-  이미지의 다이제스트와 커밋된 SBOM 이 기록한다.
+  (`bci-base:15.7` 등)로 참조해 매번 최신 패치를 받는다 — **의도적 선택**이다(다이제스트
+  고정은 CVE 0건 유지와 정면 충돌). "무엇을 빌드했는가"는 발행된 digest 와 커밋된
+  SBOM 이 기록한다.
 - **linux/amd64 전용.** 멀티아치 빌드는 아직 없다.
 - **게이트 PASS 는 동작을 보증하지 않는다.** CVE 스캐너는 런타임 요구사항을 보지 못한다.
   배포 환경에서의 동작 확인은 별도로 필요하다.

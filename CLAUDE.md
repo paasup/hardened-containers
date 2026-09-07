@@ -24,7 +24,7 @@ hardened-containers/
 ├── images/<image>/          # image definitions — this directory is the single source of truth for the list
 │   ├── <variant>.Dockerfile
 │   ├── <variant>.build.env  # build contract (DOCKERFILE · TARGET · BUILD_ARGS · APP_VERSION)
-│   ├── image.env            # holds only DEFAULT_BASE_OS
+│   ├── image.env            # DEFAULT_BASE_OS · CATEGORY (root README table grouping) · SUPPORT_* (upstream line)
 │   ├── verify.sh            # functional verification — runs on the host under bash
 │   └── README.md            # why we build it ourselves + differences from upstream
 ├── scripts/

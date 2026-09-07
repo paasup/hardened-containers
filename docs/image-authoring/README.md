@@ -184,6 +184,13 @@ Either way, only three files are new: `<variant>.Dockerfile`, `<variant>.build.e
    **Any `ARG` used in a `FROM` must be declared before the first `FROM` (global
    scope).** Declared inside a stage it becomes local to that stage, is not used to
    resolve later `FROM` image names, and the build fails with an empty image name.
+   **`image.env` must also declare `CATEGORY=<Display Name>`** — the group this image
+   appears under in the root README's published-images table
+   (`scripts/build/render-published-images-table.py`). Reuse an existing category's exact
+   spelling if this image belongs with one (e.g. `CATEGORY=Kyverno` for anything in the
+   Kyverno family); otherwise pick a new display name. Missing this is caught the moment
+   the image first publishes — the `record` job in `build-image.yml` regenerates the
+   table on every publish and fails loudly if any published image has no `CATEGORY`.
 4. **Run the static checks.** They take about a second and cover most of what follows —
    the supply-chain rules, the `build.env` contract, the syntax directive, path
    references, and the bilingual README pair. The same script runs on every pull request

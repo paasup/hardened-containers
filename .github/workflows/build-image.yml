@@ -610,12 +610,19 @@ jobs:
           path.write_text(json.dumps(doc, indent=2, sort_keys=True) + "\n")
           PY
 
-            git add published.json sboms/
+            # Must run here, every iteration: after published.json is freshly written and
+            # after this iteration's own `git reset --hard`, so it never renders against a
+            # stale published.json and a retry's reset never discards a README a previous
+            # iteration regenerated but had not yet committed. Fails loudly (nonzero, -e) if
+            # any published image has no CATEGORY in its image.env.
+            python3 scripts/build/render-published-images-table.py
+
+            git add published.json sboms/ README.md README.ko.md
             if git diff --cached --quiet; then
               echo "published.json unchanged"
               exit 0
             fi
-            git commit -m "update publication record and SBOMs" \
+            git commit -m "update publication record, SBOMs, and published-images table" \
               -m "Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
             if git push origin "HEAD:${GITHUB_REF_NAME}"; then
               echo "publication record updated (attempt $attempt)"

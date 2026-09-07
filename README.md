@@ -22,17 +22,14 @@ the source, and refuses to publish anything that still carries them.
   and the build date, and every dependency pin is a committed value — the tag is a
   record of what we actually verified.
 - **"Latest" means still supported.** Not simply the newest tag, but the newest release
-  on an upstream line that is **still receiving security patches**. Which line that is
-  differs per project — PostgreSQL maintains five majors at once, APISIX maintains only
-  its newest minor. Each image declares the line it sits on in
-  `images/<image>/image.env`. A pin that has drifted onto an end-of-life line is a
-  defect of the same class as a CVE — but rebuilding cannot fix it; a person has to move
-  the pin.
+  on an upstream line that is **still receiving security patches** — this differs per
+  project (PostgreSQL maintains five majors at once, APISIX only its newest minor). Each
+  image declares its line in `images/<image>/image.env`; a pin that has drifted onto an
+  end-of-life line is treated as a CVE-class defect (rebuilding can't fix it — a person
+  has to move the pin).
 
-Eight images are currently built: `adc`, `apisix`, `apisix-ingress-controller`,
-`argocd`, `cloudnative-pg`, `cnpg-postgresql`, `etcd`, `keycloak`. The `images/`
-directory is the single source of truth for that list. Published tags and digests are
-recorded in [published.json](published.json).
+The `images/` directory is the single source of truth for the exact image list — see
+"Published images" below for what is currently out.
 
 > These images are **unofficial rebuilds** of their upstream projects. They are not
 > affiliated with, endorsed by, or supported by any upstream project. See
@@ -62,6 +59,48 @@ REGISTRY=<your-registry> IMAGE=etcd BASE_OS=source \
   bash scripts/build/build-hardened-image.sh /tmp/out
 ```
 
+## Published images
+
+[![rescan-published-images](https://github.com/paasup/hardened-containers/actions/workflows/rescan.yml/badge.svg)](https://github.com/paasup/hardened-containers/actions/workflows/rescan.yml)
+
+[published.json](published.json) is the always-current source; this table regenerates
+automatically on every publish.
+
+Critical/High are not the gate's blocking count (always zero) — they are the count of
+approved exceptions ([cve-exceptions.json](cve-exceptions.json)).
+
+<!-- BEGIN GENERATED TABLE: published images — do not edit by hand, run scripts/build/render-published-images-table.py -->
+<table>
+<thead>
+<tr><th rowspan="2">Category</th><th rowspan="2">Image</th><th rowspan="2">Latest tag</th><th colspan="2">CVE</th></tr>
+<tr><th>Critical</th><th>High</th></tr>
+</thead>
+<tbody>
+<tr><td rowspan="3">APISIX</td><td><code>adc</code></td><td><code>0.29.0-security-hardened-20260825</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>apisix</code></td><td><code>3.18.0-security-hardened-20260826</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>apisix-ingress-controller</code></td><td><code>2.1.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td>ArgoCD</td><td><code>argocd</code></td><td><code>3.5.1-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td rowspan="2">CloudNativePG</td><td><code>cloudnative-pg</code></td><td><code>1.30.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>cnpg-postgresql</code></td><td><code>18.4-bci15.7-hardened-20260825</code></td><td>0</td><td>0</td></tr>
+<tr><td>etcd</td><td><code>etcd</code></td><td><code>3.7.1-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td rowspan="2">Infisical</td><td><code>infisical</code></td><td><code>v0.164.1-security-hardened-20260907</code></td><td>1</td><td>2</td></tr>
+<tr><td><code>infisical-secrets-operator</code></td><td><code>v0.11.8-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td>Keycloak</td><td><code>keycloak</code></td><td><code>26.7.2-bci15.7-hardened-20260826</code></td><td>0</td><td>1</td></tr>
+<tr><td rowspan="7">Kyverno</td><td><code>background-controller</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>cleanup-controller</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>kyverno</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>kyverno-cli</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>kyvernopre</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>readiness-checker</code></td><td><code>v1.19.0-security-hardened-20260827</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>reports-controller</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+</tbody>
+</table>
+<!-- END GENERATED TABLE: published images -->
+
+Pull with `docker pull docker.io/paasup/<image>:<tag>` (a fork publishes under its own
+registry — see "Using it for your own registry"). To verify a digest, see "Verifying a
+published image" just below.
+
 ## Verifying a published image
 
 Two separate things, with different lifetimes and different purposes.
@@ -87,11 +126,11 @@ DIG=$(jq -r '.images.etcd.digest' published.json)
 gh attestation verify "oci://${REF%:*}@${DIG}" --repo paasup/hardened-containers
 ```
 
-> **Always pass `--repo`.** That is what pins *which* repository's workflow produced the
-> image. Without it you have only established that something signed it.
+> **Always pass `--repo`** — without it you have only established that something signed
+> the image.
 
-The provenance is SLSA build provenance, and an SBOM attestation is attached alongside it.
-Both attach to the **digest**, not the tag — a tag can later point at a different image.
+Build provenance (SLSA) and the SBOM attestation both attach to the **digest**, not the
+tag — a tag can later point at a different image.
 
 ## Using it for your own registry
 
@@ -99,27 +138,25 @@ Nothing here is tied to one registry. After forking:
 
 1. **Repository variable** (Settings → Secrets and variables → Actions → Variables)
    - `REGISTRY_HOST` — where to push, e.g. `docker.io/myorg`.
-     **If this is unset, CI builds and verifies but never pushes.** That is deliberate:
-     a fork that runs the workflow without configuring anything must not attempt to push
-     to someone else's registry.
+     **Left unset, CI only builds and verifies** — a safety net against pushing to
+     someone else's registry by accident.
 2. **Repository secrets**
    - `DOCKERHUB_USER` / `DOCKERHUB_TOKEN` — registry credentials.
 3. **Reset `published.json`.**
    ```sh
    echo '{"schemaVersion": 1, "images": {}}' > published.json
    ```
-   `rescan.yml` pulls the tags recorded in this file. If you do not reset it, your fork
-   will rescan the original repository's images instead of your own.
+   Skip this and `rescan.yml` will rescan the original repository's images instead of
+   your own.
 4. **Review `cve-exceptions.json`.** An exception is a record that someone accepted a
    risk. Do not inherit that judgement — re-make it for your environment.
 
 ## Known limitations
 
-- **Builds are not reproducible.** Base images are referenced by tag
-  (`bci-base:15.7`, `golang:1.26.6-trixie`) and pulled fresh on every build. This is a
-  deliberate trade-off: keeping CVE counts at zero requires picking up the latest
-  security patches, which pinning by digest would prevent. What was actually built is
-  instead recorded by the published digest and the committed SBOM.
+- **Builds are not reproducible.** Base images are referenced by tag (`bci-base:15.7`,
+  etc.) and pulled fresh every build — **deliberate**, since pinning by digest would
+  prevent picking up the latest patches. What was actually built is recorded by the
+  published digest and the committed SBOM instead.
 - **linux/amd64 only.** No multi-arch builds yet.
 - **A passing gate does not prove the image works.** A CVE scanner cannot see runtime
   requirements. Verifying behaviour in your own environment is a separate step.

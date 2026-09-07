@@ -338,6 +338,9 @@ if not bad:
 sys.exit(1 if bad else 0)
 PY
 
+section "published-images table freshness"
+python3 scripts/build/render-published-images-table.py --check || FAILED=1
+
 # --- summary -----------------------------------------------------------------
 echo
 if [ "$FAILED" = "0" ]; then
