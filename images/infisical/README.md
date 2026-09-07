@@ -69,24 +69,25 @@ dropped.
 | Frontend builder | Official `node` image | Same (official `node` image, matching upstream's own pin) | Output is static Vite assets only — no native binaries, no ABI concern, so it keeps the normal default (official language image) |
 | Backend builder | Official `node` image (Debian) | `registry.suse.com/bci/bci-base` (same base as the final stage) | The backend's production dependencies include native Node addons (`argon2`, `bcrypt`, `odbc`). Compiling on Debian and running on SUSE BCI risks a glibc ABI mismatch — the same principle as the C/Lua rule in [builder-languages.md](../../docs/image-authoring/builder-languages.md) ("keep the builder stage and the final stage on the same base and link dynamically"), extended to native Node addons |
 
-### Force-upgraded Node dependencies (27, `NPM_DIRECT_UPGRADES` + `NPM_OVERRIDES`)
+### Force-upgraded Node dependencies (37, `NPM_DIRECT_UPGRADES` + `NPM_OVERRIDES`)
 
 Like `golang.org/x/*` modules, most `node-pkg` findings are **transitive** dependencies.
 npm's equivalent of `go get` is the `overrides` field (`npm pkg set
 overrides[<pkg>]=<version>`, then `npm install`). Values are not hand-picked — they come
 from trivy's `FixedVersion`, taking the minimum version **on the same major line already
-installed** (two exceptions forced onto a newer major because no same-major fix exists:
-`ip-address` -> 10.x, `sigstore` -> 4.x). Exact values and the CVEs behind them are in
-`source.build.env`.
+installed** (three exceptions forced onto a newer major because no same-major fix exists:
+`ip-address` -> 10.x, `sigstore` -> 4.x, `toml` -> 4.x). Exact values and the CVEs behind
+them are in `source.build.env`.
 
-Two things this repository's Go-based force-upgrades never have to handle, both
+Three things this repository's Go-based force-upgrades never have to handle, all
 measured by an actual build failing:
 
 - **npm refuses to `overrides` a package that is also a direct dependency**
-  (`npm error EOVERRIDE`) — 9 of the 27 (`@fastify/static`, `axios`, `dd-trace`,
-  `mysql2`, `nanoid`, `nodemailer`, `oci-common`, `scim-patch`, `uuid`) are direct
-  dependencies of `backend/package.json`, so they go through `NPM_DIRECT_UPGRADES`
-  instead (bumps
+  (`npm error EOVERRIDE`) — 14 of the 37 (`@fastify/static`, `@simplewebauthn/server`,
+  `axios`, `dd-trace`, `dompurify`, `fastify`, `mysql2`, `nanoid`, `nodemailer`,
+  `oci-common`, `qs`, `re2`, `scim-patch`, `uuid`) are direct dependencies of
+  `backend/package.json` (or, `dompurify`, of `frontend/package.json`), so they go
+  through `NPM_DIRECT_UPGRADES` instead (bumps
   `dependencies` itself, plus a matching self-referencing `overrides[pkg]["."]` entry to
   also dedupe every *nested* copy other packages pull in — npm's EOVERRIDE check is a
   **textual** comparison against `dependencies`, not a semver one, so the two values
@@ -94,6 +95,15 @@ measured by an actual build failing:
   `npm install` in both build stages for the same reason: `npm ci` refuses to proceed
   once `npm pkg set` has put `package.json` out of sync with the committed
   `package-lock.json`, by design.
+- **Both variables apply identically to both stages — direct in only one of them still
+  means `NPM_DIRECT_UPGRADES`.** `dompurify` is transitive in `backend/package.json` but
+  a direct dependency (`^3.2.4`) of `frontend/package.json`. Listing it under
+  `NPM_OVERRIDES` passes the backend stage but kills the frontend stage with
+  `EOVERRIDE` — one package can need opposite treatment depending on which stage's
+  `package.json` is being patched, so it goes in `NPM_DIRECT_UPGRADES` if it is direct
+  in *either* one (the frontend build output is static Vite assets only, invisible to
+  the final image's SBOM, but a failed frontend build still fails the whole image before
+  the gate is ever reached).
 - **Forcing a nested dependency can break a *different* package that pins it on
   purpose.** `oci-common@2.108.0` (direct, the OCI Vault integration) pins
   `uuid@3.3.3` and imports uuid's legacy `uuid/v1` subpath — removed entirely from

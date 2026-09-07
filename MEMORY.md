@@ -60,6 +60,24 @@
   (현재 v0.158.0 고정 — 이 이미지는 v0.164.1 기준이라 차트 쪽도 같이 올려야 함, 6개 마이너
   차이라 브레이킹 체인지 여부 검토 필요). 배포 검증(`infisical-secrets-operator`와 함께 실제
   클러스터에 설치해 `InfisicalSecret` 동기화 확인)도 아직 별도로 하지 않았다.
+- **`infisical`(게시된 `...-20260903` 태그)이 2026-09-06 일일 rescan에서 drift로 걸려
+  자동 리빌드가 두 번 실패했다** — npm 전이 의존성 `toml@3.0.0`의 신규 disclosure
+  2건(CVE-2026-63376·CVE-2026-77465, 둘 다 HIGH)이 원인. `SOURCE_COMMIT`이 그대로라
+  `NPM_OVERRIDES`에 없으면 재빌드해도 항상 같은 `toml@3.0.0`이 재설치되므로, rescan이
+  Go 모듈이 아닌 이 drift를 매일 같은 핀으로 재빌드만 반복해 영구히 실패할 상황이었다
+  (`suggest-go-upgrades.py`는 Go 전용이라 npm drift를 자동으로 핀 상향 PR로 못 돌림 —
+  npm 버전의 그 자동화는 아직 없음). `toml@4.2.0`(메이저 상향, 같은 메이저에 수정
+  버전 없음)로 고치면서, 사용자 피드백에 따라 같은 게이트 리포트의 non-blocking
+  medium/low도 함께 정리(`dompurify`·`qs`·`re2`·`fastify`·`body-parser`·
+  `@opentelemetry/core`·`@xmldom/xmldom`·`@simplewebauthn/server`, 8개 패키지 추가
+  — `source.build.env`의 `NPM_DIRECT_UPGRADES`/`NPM_OVERRIDES`가 27→37개로 늘었다).
+  로컬 빌드+`verify.sh`+게이트 PASS 확인(0 blocking, non-blocking 6건 전부
+  `@infisical/quic` 번들 Rust 애드온 쪽 `tokio`/`quiche`/`ring` — 기존 예외와 동일
+  근본 원인, 재발 안 함). **아직 커밋·푸시 전.** 다음 할 일: 커밋 → main 푸시 →
+  `build-image.yml`(image=infisical, push=true)로 재게시 → `published.json` digest가
+  새 태그로 갱신됐는지 확인 → 다음날 rescan이 clean으로 뜨는지 확인. npm 버전
+  drift가 Go처럼 자동 핀-상향 PR로 안 가고 매번 사람이 직접 고쳐야 하는 이 갭은
+  `suggest-go-upgrades.py`의 npm 대응물을 만들면 없어지는데, 별도 논의 필요.
 - **`infisical-secrets-operator` 자체 빌드 레시피가 로컬에서 게이트 PASS(0/0 effective
   C/H)·`CoverageProbe: ok`까지 확인됐고 아직 커밋·PR 전이다.** 근거는
   [ADR 0010](docs/decisions/0010-infisical-secrets-operator-self-build.md). 다음 할 일:

@@ -63,28 +63,37 @@ Infisical 백엔드(`infisical/infisical`, secrets-operator 와 짝을 이루는
 | 프론트엔드 빌더 | 공식 `node` 이미지 | 동일(공식 `node` 이미지, 업스트림과 같은 태그) | 산출물이 정적 Vite 에셋뿐이라 네이티브 바이너리·ABI 문제가 없다 — 평소 기본값(공식 언어 이미지) 그대로 |
 | 백엔드 빌더 | 공식 `node` 이미지(Debian) | `registry.suse.com/bci/bci-base`(최종 스테이지와 동일 베이스) | 백엔드 프로덕션 의존성에 네이티브 Node 애드온(`argon2`·`bcrypt`·`odbc`)이 있다. Debian 에서 컴파일해 SUSE BCI 에서 실행하면 glibc ABI 불일치 위험이 있다 — [builder-languages.md](../../docs/image-authoring/builder-languages.md) 의 C/Lua 규칙("빌더와 최종 스테이지를 같은 베이스로 유지하고 동적 링크")을 네이티브 Node 애드온에도 그대로 적용했다 |
 
-### 강제 상향한 Node 의존성(27개, `NPM_DIRECT_UPGRADES` + `NPM_OVERRIDES`)
+### 강제 상향한 Node 의존성(37개, `NPM_DIRECT_UPGRADES` + `NPM_OVERRIDES`)
 
 `golang.org/x/*`류 Go 모듈처럼, `node-pkg` 취약점은 대부분 **전이 의존성**이다. `go
 get` 의 npm 대응이 `overrides` 필드다(`npm pkg set overrides[<pkg>]=<version>` 후
 `npm install`). 값은 하나하나 손으로 고른 게 아니라 trivy 리포트의 `FixedVersion` 에서
 뽑았고 — 원칙은 **설치된 버전과 같은 메이저 라인 안에서** 고치는 최소 버전(같은
-메이저에 수정 버전이 없는 두 건, `ip-address`→10.x·`sigstore`→4.x 만 메이저를
-올렸다). 정확한 값과 CVE 는 `source.build.env`에 있다.
+메이저에 수정 버전이 없는 세 건, `ip-address`→10.x·`sigstore`→4.x·`toml`→4.x 만
+메이저를 올렸다). 정확한 값과 CVE 는 `source.build.env`에 있다.
 
-Go 쪽 강제 업그레이드에는 없는, 이번에 실제 빌드 실패로 실측한 두 가지 함정이 있다.
+Go 쪽 강제 업그레이드에는 없는, 이번에 실제 빌드 실패로 실측한 세 가지 함정이 있다.
 
 - **npm 은 직접 의존성(direct dependency)인 패키지를 `overrides` 로 덮어쓰는 걸
-  거부한다**(`npm error EOVERRIDE`). 27개 중 9개(`@fastify/static`·`axios`·
-  `dd-trace`·`mysql2`·`nanoid`·`nodemailer`·`oci-common`·`scim-patch`·`uuid`)는
-  `backend/package.json`의 직접 의존성이라 `NPM_DIRECT_UPGRADES` 로 별도 처리한다
-  (`dependencies` 자체를 올리고, 다른 패키지가 끌어오는 *중첩* 사본까지 한 번에
-  맞추기 위해 자기 참조 `overrides[pkg]["."]` 항목도 같이 넣는다 — npm 의 EOVERRIDE
-  검사는 semver 만족 여부가 아니라 `dependencies` 값과의 **문자열 일치** 여부를 보므로
-  `^` 까지 포함해 두 값이 글자 그대로 같아야 한다). `npm ci` 는 두 빌드 스테이지 모두
-  `npm install` 로 바꿨다 — `npm pkg set` 이 `package.json` 을 커밋된
-  `package-lock.json` 과 어긋나게 만든 뒤에는 `npm ci` 가 설계상 진행을 거부하기
-  때문이다.
+  거부한다**(`npm error EOVERRIDE`). 37개 중 14개(`@fastify/static`·
+  `@simplewebauthn/server`·`axios`·`dd-trace`·`dompurify`·`fastify`·`mysql2`·
+  `nanoid`·`nodemailer`·`oci-common`·`qs`·`re2`·`scim-patch`·`uuid`)는
+  `backend/package.json`(또는 `dompurify` 처럼 `frontend/package.json`)의 직접
+  의존성이라 `NPM_DIRECT_UPGRADES` 로 별도 처리한다 (`dependencies` 자체를 올리고,
+  다른 패키지가 끌어오는 *중첩* 사본까지 한 번에 맞추기 위해 자기 참조
+  `overrides[pkg]["."]` 항목도 같이 넣는다 — npm 의 EOVERRIDE 검사는 semver 만족
+  여부가 아니라 `dependencies` 값과의 **문자열 일치** 여부를 보므로 `^` 까지 포함해
+  두 값이 글자 그대로 같아야 한다). `npm ci` 는 두 빌드 스테이지 모두 `npm install`
+  로 바꿨다 — `npm pkg set` 이 `package.json` 을 커밋된 `package-lock.json` 과
+  어긋나게 만든 뒤에는 `npm ci` 가 설계상 진행을 거부하기 때문이다.
+- **두 변수는 프론트엔드·백엔드 두 스테이지에 동일하게 적용된다 — 한쪽에서만
+  직접 의존성이어도 `NPM_DIRECT_UPGRADES` 로 가야 한다.** `dompurify` 는
+  `backend/package.json` 에서는 전이 의존성이지만 `frontend/package.json` 에서는
+  직접 의존성(`^3.2.4`)이다. `NPM_OVERRIDES` 에 넣으면 백엔드 스테이지는 통과해도
+  프론트엔드 스테이지에서 `EOVERRIDE` 로 죽는다 — 한 패키지에 대해 두 스테이지가
+  서로 다른 처방을 요구할 수 있다는 뜻이므로, 어느 한쪽에서라도 직접 의존성이면
+  `NPM_DIRECT_UPGRADES` 를 쓴다(프론트엔드 산출물은 정적 Vite 에셋뿐이라 최종
+  이미지의 SBOM에는 잡히지 않지만, 빌드 자체가 실패하면 게이트까지 갈 수 없다).
 - **중첩 의존성 하나를 강제로 올리면, 그걸 일부러 낮춰 쓰던 다른 패키지가 깨질 수
   있다.** `oci-common@2.108.0`(직접 의존성, OCI Vault 연동)은 `uuid@3.3.3` 을 고정해
   쓰면서 uuid 의 옛날 서브패스 API `uuid/v1` 을 쓰는데, 이 서브패스는 uuid 9 부터
