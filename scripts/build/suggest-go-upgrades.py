@@ -18,11 +18,20 @@ blocked, it runs `--apply` here and collects whatever moved into the autofix pul
 So `--apply` is no longer only a human action, but its output still reaches the default
 branch only through a PR whose verify build passed. See docs/decisions/0012.
 
+**The severity floor decides two different things, so it is used twice.** At the default
+HIGH it answers "does this image need a rebuild at all" — the gate's blocking threshold.
+Once the answer is yes, the rebuild should carry every other fixable module CVE with it, so
+run it again with `--min-severity UNKNOWN` to collect those too (unrated findings included;
+anything without a fixed version is skipped regardless). The reasoning is in
+docs/image-authoring/remediation-priority.md — the cost is the rebuild, not the CVE.
+
 Usage
 -----
     python3 scripts/build/suggest-go-upgrades.py --reports <trivy-reports dir>
     python3 scripts/build/suggest-go-upgrades.py --reports out/trivy-reports \\
-        --image etcd --min-severity HIGH
+        --image etcd --min-severity HIGH        # does it need a rebuild?
+    python3 scripts/build/suggest-go-upgrades.py --reports out/trivy-reports \\
+        --image etcd --min-severity UNKNOWN     # it does — now take everything fixable
     python3 scripts/build/suggest-go-upgrades.py --reports out/trivy-reports \\
         --image etcd --apply --dry-run     # print what would be written, change nothing
     python3 scripts/build/suggest-go-upgrades.py --reports out/trivy-reports \\
@@ -337,8 +346,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--reports", required=True, help="directory of trivy reports (JSON)")
     ap.add_argument("--image", default="", help="only reports whose filename contains this string")
-    ap.add_argument("--min-severity", default="HIGH", choices=["CRITICAL", "HIGH", "MEDIUM", "LOW"],
-                    help="only suggest at or above this severity (default HIGH — the gate's blocking threshold)")
+    ap.add_argument("--min-severity", default="HIGH",
+                    choices=["CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN"],
+                    help="only suggest at or above this severity. Default HIGH — the gate's "
+                         "blocking threshold, i.e. what decides whether a rebuild happens at "
+                         "all. Once a rebuild is going to happen anyway, run it again with "
+                         "UNKNOWN to collect every fixable module CVE in the image, unrated "
+                         "ones included: findings without a fixed version are skipped either "
+                         "way, so UNKNOWN means 'everything that can actually be fixed'. See "
+                         "docs/image-authoring/remediation-priority.md")
     ap.add_argument("--apply", action="store_true",
                      help="write directly into images/<image>/<variant>.build.env. Requires --image")
     ap.add_argument("--dry-run", action="store_true",

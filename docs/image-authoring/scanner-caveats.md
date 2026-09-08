@@ -18,6 +18,16 @@ second is caught by the coverage self-check (`CoverageProbe`) in `scan-image.sh`
 third is out of scope for this repository's slim gate — CVEs a vendor has not yet
 evaluated are not cross-checked separately.
 
+**Do not confuse that third mode with a reported-but-unrated finding.** "Unevaluated by
+vendor" above means the CVE does not appear in the scanner output at all, and looking for
+those is what stays out of scope. A different case is a CVE the scanner *does* report — with
+a package, an installed version, usually a fixed version — where neither the vendor nor NVD
+has assigned a severity, so `effective_severity` comes out `UNKNOWN`. The Go vulnerability
+database publishes no CVSS at all, so for Go modules this is common rather than exceptional.
+Those are in scope: `image-gate.py` reports them in their own section (they still do not gate
+the build), and what to do with them is
+[remediation-priority.md](remediation-priority.md).
+
 The `CoverageProbe` sentinel packages are deliberately **not** produced by lowering the
 version of an installed package. If the only packages in the install list happen to have
 no vendor advisories at all, lowering their versions still yields zero findings, and

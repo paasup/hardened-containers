@@ -43,7 +43,7 @@ hardened-containers/
 ├── .claude/                 # how Claude Code works in this repository
 │   ├── skills/<skill>/SKILL.md  # repeatable procedures — one per recurring task
 │   ├── agents/              # open-ended judgement — image-author (writes files)
-│   │                        # · security-investigator (read-only, reports)
+│   │                        # · security-investigator · cve-triage (read-only, report only)
 │   └── workflows/           # multi-agent sweeps — pin-freshness-sweep.js (read-only)
 ├── docs/
 │   ├── image-authoring/
@@ -51,6 +51,7 @@ hardened-containers/
 │   │   ├── base-os-policy.md    # choosing the base OS (SUSE BCI)
 │   │   ├── builder-languages.md # per-language builder rules + Go module CVEs
 │   │   ├── scanner-caveats.md   # why scanner output and tags cannot be trusted directly
+│   │   ├── remediation-priority.md # what gets fixed, in what order — dispositions · unrated CVEs
 │   │   ├── ci.md                # CI behaviour, signing and attestation
 │   │   ├── support-policy.md    # what "latest" means per app — upstream line + EOL check
 │   │   └── readme-template.md   # template for per-image README.md

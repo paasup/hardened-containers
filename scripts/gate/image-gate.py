@@ -12,6 +12,14 @@ rating)`; anything HIGH or above blocks (unless an approved exception applies). 
 report must have been scanned at all severities (the default in `scan-image.sh`) — a
 filtered report makes the vendor-downgrade comparison impossible.
 
+Findings below the threshold are reported, never gated, in two groups: MEDIUM/LOW, and
+**unrated** — neither the vendor nor NVD has scored them, so `effective_severity` is
+UNKNOWN. Unrated is not the same as low, and these used to be dropped from the report
+entirely, which is how unrated advisories sat unnoticed in published images. What to do
+with either group is docs/image-authoring/remediation-priority.md, not this script: the
+short version is that a rebuild forced by a CRITICAL/HIGH also carries every other fixable
+finding in that image.
+
 It also reads the `CoverageProbe` self-check that `scan-image.sh` leaves in the report, to
 distinguish zero findings meaning "safe" from zero findings meaning "the scanner has no
 data for this distribution".
@@ -173,6 +181,7 @@ def evaluate(img, exceptions):
     excepted = []      # items covered by an approved exception
     underrated = []    # items the vendor rated below NVD (where NVD >= HIGH)
     non_blocking = []  # effective MEDIUM/LOW — tracked for visibility, never gates
+    unrated = []       # nobody has rated it yet — tracked for visibility, never gates
 
     # Collapse to unique CVEs. Counting the same CVE once per package it was split across
     # would overstate the real risk.
@@ -180,8 +189,16 @@ def evaluate(img, exceptions):
     for f in img["findings"]:
         cur = by_cve.setdefault(f["id"], {"id": f["id"], "pkgs": set(), "vendor_sev": "UNKNOWN",
                                           "nvd_sev": None, "nvd_score": None,
-                                          "status": set(), "fixed": set()})
+                                          "status": set(), "fixed": set(),
+                                          "installed": set(), "sev_source": set()})
         cur["pkgs"].add(f["pkg"])
+        # Carried through because deciding what to do with a finding needs the version that
+        # is actually in the image (to weigh against `fixed`) and where the rating came from
+        # — or that nothing rated it. Both were collected and then dropped before.
+        if f["installed"]:
+            cur["installed"].add(f["installed"])
+        if f["sev_source"]:
+            cur["sev_source"].add(f["sev_source"])
         if RANK.get(f["vendor_sev"], 0) > RANK.get(cur["vendor_sev"], 0):
             cur["vendor_sev"] = f["vendor_sev"]
         if f["nvd_sev"] and RANK.get(f["nvd_sev"], 0) > RANK.get(cur["nvd_sev"] or "UNKNOWN", 0):
@@ -204,6 +221,13 @@ def evaluate(img, exceptions):
         if RANK.get(effective, 0) < RANK["HIGH"]:
             if effective in ("MEDIUM", "LOW"):
                 non_blocking.append(cve)
+            else:
+                # Neither the vendor nor NVD has rated it. That is undetermined, not low —
+                # when a score lands the gate may start blocking on it, across every image
+                # carrying the same pin. Silently dropping these is what let unrated
+                # advisories sit unnoticed in published images, so they are reported in their
+                # own section instead. See docs/image-authoring/remediation-priority.md.
+                unrated.append(cve)
             continue
 
         exc = next((e for e in exceptions if exception_applies(e, cve["id"], img["image"])), None)
@@ -240,11 +264,13 @@ def evaluate(img, exceptions):
         "excepted": sorted(excepted, key=lambda c: c["id"]),
         "underrated": sorted(underrated, key=lambda c: -(c["nvd_score"] or 0)),
         "non_blocking": sorted(non_blocking, key=lambda c: (-RANK.get(c["effective_sev"], 0), c["id"])),
+        # Fixable ones first: those are the ones a rebuild can carry along.
+        "unrated": sorted(unrated, key=lambda c: (0 if c["fixed"] else 1, c["id"])),
         "no_data": no_data,
         "counts": {
             "vendor": {s: sum(1 for c in by_cve.values() if c["vendor_sev"] == s) for s in ("CRITICAL", "HIGH")},
             "nvd": {s: sum(1 for c in by_cve.values() if c["nvd_sev"] == s) for s in ("CRITICAL", "HIGH")},
-            "effective": {s: sum(1 for c in by_cve.values() if c["effective_sev"] == s) for s in ("CRITICAL", "HIGH", "MEDIUM", "LOW")},
+            "effective": {s: sum(1 for c in by_cve.values() if c["effective_sev"] == s) for s in ("CRITICAL", "HIGH", "MEDIUM", "LOW", "UNKNOWN")},
         },
     }
 
@@ -260,7 +286,10 @@ SUMMARY_LEGEND = (
     "means there are findings that \"look safe by vendor rating but carry risk closer to "
     "the NVD rating\", and it is worth confirming that the base OS swap did more than "
     "just lower the number. **Medium/Low** is tracked for visibility only — it never "
-    "blocks the gate; see the non-blocking findings table below for the CVE list."
+    "blocks the gate; see the non-blocking findings table below for the CVE list. "
+    "**Unrated** reads *fixable/total* for CVEs nobody has rated yet: they never block "
+    "either, but the fixable ones are meant to ride along on the next rebuild "
+    "(docs/image-authoring/remediation-priority.md)."
 )
 
 
@@ -277,15 +306,18 @@ def render_md(r, expired_exceptions):
     src = PROBE_LABEL.get(r.get("coverage_probe"), "? not measured")
     under = len(r["underrated"])
     non_block = len(r["non_blocking"])
-    A("| Image | OS | Coverage | EOSL | Effective C/H | Blocking | Excepted | Downgraded | Medium/Low |")
-    A("|---|---|---|---|---:|---:|---:|---:|---:|")
+    unrated_n = len(r["unrated"])
+    unrated_fixable = sum(1 for x in r["unrated"] if x["fixed"])
+    A("| Image | OS | Coverage | EOSL | Effective C/H | Blocking | Excepted | Downgraded | Medium/Low | Unrated |")
+    A("|---|---|---|---|---:|---:|---:|---:|---:|---:|")
     A(
         f"| `{r['image']}` | {r['os']} | {src} | "
         f"{'⚠️ EOL' if r['eosl'] else '-'} | "
         f"**{c['effective']['CRITICAL']}/{c['effective']['HIGH']}** | "
         f"{len(r['blocking'])} | {len(r['excepted'])} | "
         f"{('⚠️ ' + str(under)) if under else '-'} | "
-        f"{c['effective']['MEDIUM']}/{c['effective']['LOW']} |"
+        f"{c['effective']['MEDIUM']}/{c['effective']['LOW']} | "
+        f"{(str(unrated_fixable) + '/' + str(unrated_n)) if unrated_n else '-'} |"
     )
     A("")
     A(SUMMARY_LEGEND)
@@ -359,6 +391,26 @@ def render_md(r, expired_exceptions):
               f"{pkgs} | {status} | {fixed} |")
         A("")
 
+    if r["unrated"]:
+        fixable = sum(1 for c in r["unrated"] if c["fixed"])
+        A(f"### ❔ Unrated findings — `{r['image']}`")
+        A("")
+        A(f"Nobody has rated these yet — no vendor severity and no NVD score — so they do not "
+          f"gate the build. Undetermined is not low: when a score lands, one of these can start "
+          f"blocking. **{fixable} of {len(r['unrated'])} already have a fixed version**, and per "
+          f"docs/image-authoring/remediation-priority.md those ride along on the next rebuild "
+          f"rather than earning one of their own.")
+        A("")
+        A("| CVE | Package | Installed | Status | Fixed version |")
+        A("|---|---|---|---|---|")
+        for c in r["unrated"]:
+            pkgs = ", ".join(sorted(c["pkgs"])[:3]) + ("…" if len(c["pkgs"]) > 3 else "")
+            installed = "/".join(sorted(c["installed"])) or "-"
+            status = "/".join(sorted(c["status"])) or "-"
+            fixed = "/".join(sorted(c["fixed"])) or "**(none)**"
+            A(f"| {c['id']} | {pkgs} | {installed} | {status} | {fixed} |")
+        A("")
+
     if r["excepted"]:
         A("### Approved exceptions")
         A("")
@@ -401,6 +453,11 @@ def main():
     if args.sbom:
         img["os_pkg_count"] = sbom_os_package_count(args.sbom)
     r = evaluate(img, exceptions)
+
+    # Expired exceptions belong in the JSON too, not only in the markdown — an expired entry
+    # is work waiting for someone, and anything reading the JSON to decide what to do next
+    # (docs/image-authoring/remediation-priority.md) would otherwise not see it.
+    r["expired_exceptions"] = expired
 
     md = render_md(r, expired)
     print(md)

@@ -17,6 +17,7 @@ adding or changing an image.
 | [base-os-policy.md](base-os-policy.md) | Choosing the runtime base OS (SUSE BCI) — when to use which BCI variant, measuring versions, the "seed" rootfs, tools missing from `bci-micro`, SLE package names |
 | [builder-languages.md](builder-languages.md) | Builder-stage rules per language (Go · Node · JVM · C/Lua), handling Go module CVEs, pin drift |
 | [scanner-caveats.md](scanner-caveats.md) | Why trivy output cannot be taken at face value, and how to confirm an image tag's actual base OS |
+| [remediation-priority.md](remediation-priority.md) | What gets fixed and in what order — the four dispositions every finding needs, why a rebuild forced by a CRITICAL/HIGH carries every other fixable finding with it, and how findings that arrive with no severity are handled |
 | [ci.md](ci.md) | Why the build is triggered by `push`, how `build-image.yml`, `pr-checks.yml`, and `rescan.yml` behave, signing and attestation, the publication record (`published.json`) |
 | [support-policy.md](support-policy.md) | What "latest" means per application — declaring the upstream line an image sits on, the daily end-of-life check, and publishing more than one line |
 | [readme-template.md](readme-template.md) | Template for per-image `README.md` |

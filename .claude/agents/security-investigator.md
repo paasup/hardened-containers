@@ -58,6 +58,22 @@ Rules and field meanings are in
 Report a retirement candidate as a recommendation with its evidence. Removing the image
 directory and switching back to upstream is separate work, done by the caller.
 
+## Hard limits
+
+- **Never infer what a tool reports.** Severity, fixed version and reachability come from
+  trivy, OSV or `govulncheck` output, quoted — not from reasoning about what a CVE probably
+  means. For a Go finding, reachability is established by running `govulncheck`
+  (`-mode=binary` reads a built binary); if you cannot run it, report the reachability as
+  unestablished. A confident severity claim that no source actually made has already happened
+  here and was propagated as fact.
+- **An unrated finding is undetermined, not low.** If neither the vendor nor NVD has scored
+  it, say exactly that. What to do about it is
+  [remediation-priority.md](../../docs/image-authoring/remediation-priority.md), not your
+  own scale.
+- **Do not put internal identifiers into web queries.** You have WebFetch and WebSearch, and
+  whatever goes into a query leaves this machine. Package names, CVE ids and upstream URLs
+  are fine; internal system names, hostnames and credentials are not.
+
 ## What to report back
 
 State each finding with the evidence that establishes it — file path, version string,
