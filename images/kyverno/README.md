@@ -36,8 +36,8 @@ This was confirmed, not inferred:
   packages update daily, the pre-release marker only when Alpine's own release
   engineering moves it.
 - Running this repository's own coverage self-check
-  (`scripts/gate/scan-image.sh`'s probe, the same technique dip-catalog's `sbom.yml`
-  uses) against that base image directly still returns `CoverageProbe: none`.
+  (`scripts/gate/scan-image.sh`'s probe) against that base image directly still returns
+  `CoverageProbe: none`.
 
 With no branch pin in its apko config, this base keeps tracking `edge` — there is no
 guarantee waiting for the next kyverno release fixes it. A newer tag does not help

@@ -32,9 +32,8 @@ kyverno는 Dockerfile이 없다 — 7개 이미지 전부 `ko`가 `.ko.yaml`의
 - 이 이미지는 매일 재빌드되는데도(wolfi-dev/tools의 `release.yaml`, 01:00 UTC cron)
   그 `VERSION_ID`는 7일간(2026-08-20~08-27) 그대로였다 — 패키지는 매일 갱신되지만
   사전 릴리스 버전 마커 자체는 Alpine 코어가 올릴 때만 바뀐다.
-- 이 저장소의 커버리지 자가진단(`scripts/gate/scan-image.sh`의 프로브, dip-catalog의
-  `sbom.yml`이 쓰는 것과 같은 기법)을 그 베이스 이미지에 직접 돌려도 여전히
-  `CoverageProbe: none`이다.
+- 이 저장소의 커버리지 자가진단(`scripts/gate/scan-image.sh`의 프로브)을 그 베이스
+  이미지에 직접 돌려도 여전히 `CoverageProbe: none`이다.
 
 apko 설정에 Alpine 브랜치 고정이 없어 이 베이스는 계속 `edge`를 쫓는다 — 즉 "다음
 kyverno 릴리스를 기다리면 풀린다"는 보장이 없다. 새 태그로 옮겨도(v1.19.0이 이미

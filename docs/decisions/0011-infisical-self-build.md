@@ -28,7 +28,7 @@ points at is compiled with:
 
 ## Context
 
-dip-catalog's `infisical-standalone` chart was pinned to `v0.158.0` — six minor
+This image was in use at `v0.158.0` — six minor
 versions behind upstream's `v0.164.1`. A live rescan of `v0.158.0` found 879 effective
 HIGH/CRITICAL CVEs; rescanning `v0.164.1` found 354 — most of the reduction from
 upstream's own churn, confirming a tag bump alone (lever 1) already does real work.

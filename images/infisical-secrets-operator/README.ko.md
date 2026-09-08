@@ -4,8 +4,7 @@
 
 Infisical Kubernetes Secrets Operator(`infisical/kubernetes-operator`) 바이너리를
 업스트림 소스에서 직접 컴파일한다. 이 이미지가 어느 차트·환경에서 쓰이는지, 태그를
-어떻게 반영하는지는 이 레포가 모른다 — 이 레포는 "이미지를 어떻게 만드는가"만 다룬다
-(참고로 이 이미지는 형제 레포 `dip-catalog`의 `secrets-operator` 차트가 쓴다).
+어떻게 반영하는지는 이 레포가 모른다 — 이 레포는 "이미지를 어떻게 만드는가"만 다룬다.
 
 > 이 이미지는 Infisical Kubernetes Operator 를 재빌드한 **비공식 배포물**이며 업스트림
 > 프로젝트와 제휴·보증 관계가 없다. 상표·라이선스 고지는 [NOTICE](../../NOTICE) 참고.

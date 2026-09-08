@@ -5,8 +5,7 @@ English · [한국어](README.ko.md)
 The Infisical Kubernetes Secrets Operator (`infisical/kubernetes-operator`) binary,
 compiled directly from upstream source. Which chart or environment this image is used
 by, and how the tag gets rolled out, is not something this repository knows — it deals
-only with how the image is made (for reference, this image is consumed by the sibling
-repository `dip-catalog`'s `secrets-operator` chart).
+only with how the image is made.
 
 > This image is an **unofficial rebuild** of the Infisical Kubernetes Operator. It is
 > not affiliated with, endorsed by, or supported by the upstream project. See

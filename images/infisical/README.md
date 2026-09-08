@@ -5,8 +5,7 @@ English · [한국어](README.ko.md)
 The Infisical backend (`infisical/infisical`, the standalone server paired with
 secrets-operator), compiled directly from upstream source. Which chart or environment
 this image is used by, and how the tag gets rolled out, is not something this
-repository knows — it deals only with how the image is made (for reference, this image
-is consumed by the sibling repository `dip-catalog`'s `infisical-standalone` chart).
+repository knows — it deals only with how the image is made.
 
 > This image is an **unofficial rebuild** of Infisical. It is not affiliated with,
 > endorsed by, or supported by the upstream project. See [NOTICE](../../NOTICE) for
@@ -19,7 +18,7 @@ and the build framework generally are owned by
 
 ## Why we build this ourselves
 
-`infisical/infisical` was pinned at `v0.158.0` in dip-catalog — six minor versions
+`infisical/infisical` was in use at `v0.158.0` — six minor versions
 behind upstream's latest (`v0.164.1`) — so a tag bump alone already does a lot of the
 work. This image targets the latest tag (`v0.164.1`).
 

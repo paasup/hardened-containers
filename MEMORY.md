@@ -58,26 +58,21 @@
   npm 전이 의존성 `toml` 등의 신규 CVE로 2026-09-06 rescan에서 drift 처리되어 이 태그로
   리빌드·재게시됨 — 핀 변경 근거는 README.md/README.ko.md "강제 상향한 Node 의존성"
   절). 근거는 [ADR 0011](docs/decisions/0011-infisical-self-build.md). 남은 다음 할 일:
-  dip-catalog 쪽에서 `catalog/image-map/infisical.env`를 추가해 `infisical-standalone`
-  차트의 태그를 반영한다(현재 v0.158.0 고정 — 이 이미지는 v0.164.1 기준이라 차트 쪽도
-  같이 올려야 함, 6개 마이너 차이라 브레이킹 체인지 여부 검토 필요). 배포 검증
-  (`infisical-secrets-operator`와 함께 실제 클러스터에 설치해 `InfisicalSecret` 동기화
-  확인)도 아직 별도로 하지 않았다.
+  이 이미지는 v0.164.1 기준인데 이전에 쓰이던 v0.158.0 과 6개 마이너 차이라 브레이킹
+  체인지 여부를 검토해야 한다. 배포 검증(`infisical-secrets-operator`와 함께 실제
+  클러스터에 설치해 `InfisicalSecret` 동기화 확인)도 아직 하지 않았다.
 - **`infisical-secrets-operator` 자체 빌드 레시피가 로컬에서 게이트 PASS(0/0 effective
   C/H)·`CoverageProbe: ok`까지 확인됐고 아직 커밋·PR 전이다.** 근거는
   [ADR 0010](docs/decisions/0010-infisical-secrets-operator-self-build.md). 다음 할 일:
   PR 열기 → 머지 → `workflow_dispatch(push=true)`로 실제 게시 → `published.json`에 반영
-  확인. 게시되면 dip-catalog 쪽에서 `catalog/image-map/infisical-secrets-operator.env`를
-  추가해 `secrets-operator` 차트(`manifests/helm/secrets-operator/0.11.8/`)의 태그를
-  반영한다. 배포 검증(실제 클러스터에 `infisical-standalone`과 함께 설치해
-  `InfisicalSecret` 동기화 확인)도 아직 별도로 하지 않았다.
+  확인. 배포 검증(실제 클러스터에 Infisical 서버와 함께 설치해 `InfisicalSecret` 동기화
+  확인)도 아직 별도로 하지 않았다.
 - **kyverno 7개 이미지(`kyverno`·`kyverno-cli`·`kyvernopre`·`background-controller`·
   `cleanup-controller`·`reports-controller`·`readiness-checker`) 자체 빌드 레시피가
   로컬에서 전부 게이트 PASS·`CoverageProbe: ok`까지 확인됐고 아직 커밋·PR 전이다.**
   근거는 [ADR 0009](docs/decisions/0009-kyverno-self-build.md). 다음 할 일: PR 열기 →
   머지 → `workflow_dispatch(push=true)`로 실제 게시 → `published.json`에 7개 항목
-  반영 확인. 게시되면 dip-catalog 쪽에서 `catalog/image-map/`에 7개 매핑을 추가해
-  카탈로그 태그를 반영한다.
+  반영 확인.
 - **`cnpg-postgresql` 이 18.4 로, 유지보수 라인 안에서 18.6 보다 뒤진다.** 라인 자체는
   2030-11-14 까지 유지되므로 급하지 않다(support-line 검사에서 notice, 실패 아님). 올릴
   때 메이저가 `APP_VERSION`·`PG_VERSION`(EVR)·`EXTENSIONS` 세 곳에 중복돼 있는 것을 함께

@@ -22,8 +22,7 @@ with etcd's one-line global `replace`
 
 ## Context
 
-This image is consumed by the sibling repository `dip-catalog`'s `secrets-operator`
-Helm chart. Even on the latest tag (`v0.11.8`), the gate-blocking CVEs in the upstream
+Even on the latest tag (`v0.11.8`), the gate-blocking CVEs in the upstream
 image came not from OS packages but from **Go module and stdlib versions statically
 linked** into the binary (the evidence at the time: CVE-2026-46600 in
 `golang.org/x/net`, CVE-2026-56852 in `golang.org/x/text`, CVE-2026-33186

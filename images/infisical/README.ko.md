@@ -5,7 +5,7 @@
 Infisical 백엔드(`infisical/infisical`, secrets-operator 와 짝을 이루는 standalone 서버)
 바이너리를 업스트림 소스에서 직접 컴파일한다. 이 이미지가 어느 차트·환경에서 쓰이는지,
 태그를 어떻게 반영하는지는 이 레포가 모른다 — 이 레포는 "이미지를 어떻게 만드는가"만
-다룬다(참고로 이 이미지는 형제 레포 `dip-catalog`의 `infisical-standalone` 차트가 쓴다).
+다룬다.
 
 > 이 이미지는 Infisical 을 재빌드한 **비공식 배포물**이며 업스트림 프로젝트와 제휴·보증
 > 관계가 없다. 상표·라이선스 고지는 [NOTICE](../../NOTICE) 참고.
@@ -16,7 +16,7 @@ Infisical 백엔드(`infisical/infisical`, secrets-operator 와 짝을 이루는
 
 ## 왜 자체 빌드하는가
 
-`infisical/infisical` 은 dip-catalog 에 `v0.158.0` 으로 고정돼 있었는데, 이는 업스트림
+`infisical/infisical` 은 `v0.158.0` 으로 쓰이고 있었는데, 이는 업스트림
 최신(`v0.164.1`)보다 6개 마이너 버전 뒤처져 있었다 — 상위 태그 교체만으로도 효과가 크다는
 뜻이다. 이 이미지는 최신 태그(`v0.164.1`)를 기준으로 잡았다.
 

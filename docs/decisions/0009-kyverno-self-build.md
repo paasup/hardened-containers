@@ -42,8 +42,7 @@ This was confirmed directly, not inferred:
   (2026-08-20 through 2026-08-27) — packages update daily, but the pre-release version
   marker itself only advances when Alpine's own release engineering moves it.
 - Running this repository's own coverage self-check
-  (`scripts/gate/scan-image.sh`'s probe logic, ported from the same technique used in
-  the dip-catalog `sbom.yml` pipeline) against that base image directly, on 2026-08-27,
+  (`scripts/gate/scan-image.sh`'s probe logic) against that base image directly, on 2026-08-27,
   still returns `CoverageProbe: none` — trivy genuinely has no advisory data for this
   edge snapshot, confirmed by sentinel-package injection, not just an absence of raw
   findings.
