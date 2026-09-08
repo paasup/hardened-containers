@@ -8,6 +8,43 @@ description: Use when adding a self-built hardened image or changing an existing
 In the CVE gate escalation order (newer upstream tag → base OS swap → **self-build** →
 approved exception), you only get here when the first two do not resolve it.
 
+## 0. Hand the authoring to the image-author agent
+
+*(If you are the `image-author` agent, this section is not for you — it tells the calling
+session to hand the work to you. Skip to the next section.)*
+
+Adding an image, or changing an existing build definition, is not a fixed procedure: it
+needs root-causing where the CVEs come from, choosing the base and the minimal package set,
+picking CVE-patched versions per language, and iterating build → fix → rebuild. Delegate
+that to the [`image-author`](../../agents/image-author.md) agent — one image per call, since
+each call runs local `docker build` repeatedly:
+
+```
+Agent(subagent_type: "image-author", prompt: "<which image, what problem, what you already know>")
+```
+
+Add `isolation: "worktree"` **only when the working tree is already committed clean** and
+several images are being authored in parallel. A worktree checks out committed state only,
+so with uncommitted work in the tree the agent would be looking at a stale repository.
+
+**Then verify what it actually did — this is not optional.** The agent's report says what it
+meant to do; only the diff says what it did, and its write scope cannot be enforced
+mechanically:
+
+```sh
+git status && git diff
+bash scripts/lint/repo-checks.sh
+```
+
+`repo-checks.sh` is what catches a build that was made to pass by weakening supply-chain
+verification (TLS bypass, an unverified download) — the one class of "fix" that must never
+survive review. Check too that `verify.sh` exercises the app rather than just printing a
+version, and that the README separates CVEs actually fixed from CVEs accepted through an
+exception.
+
+The rest of this document is the reference the agent works from; the sections below are not
+duplicated in its prompt.
+
 ## Rule — there is always one orchestrator
 
 **`scripts/build/build-hardened-image.sh` builds every self-built image.** Whether it
@@ -78,6 +115,15 @@ are common to every language: **keep versions out of the Dockerfile and in `buil
 **always register them in `BUILD_ARGS`** (miss it and the build silently uses the
 default), and **preserve the upstream runtime contract** (`USER`, `ENTRYPOINT`, the file
 layout).
+
+**When the line itself is end-of-life**, this stops being a pin change. `check-support-line.py`
+exiting `2` means no pin raise inside that line helps (the case
+[pin-freshness-check](../pin-freshness-check/SKILL.md) hands over here), so the work is a
+major migration with breaking changes and belongs to `image-author` with that framing: it
+establishes the actual breaking changes from upstream's own changelog first, and decides
+whether the version fields duplicated across this repository — `cnpg-postgresql` carries its
+major in `APP_VERSION`, `PG_VERSION` (EVR) and `EXTENSIONS` — get consolidated in the same
+change. Everything after that is the ordinary procedure in this document.
 
 ## Everything the build fetches must be verified
 

@@ -31,7 +31,8 @@ hardened-containers/
 │   ├── build/
 │   │   ├── build-hardened-image.sh   # the one orchestrator — build→verify→SBOM→scan→gate→push
 │   │   ├── suggest-go-upgrades.py    # suggests Go module/toolchain pins, applies with --apply
-│   │   └── check-support-line.py     # is our pin still on a line upstream patches?
+│   │   ├── check-support-line.py     # is our pin still on a line upstream patches?
+│   │   └── render-published-images-table.py  # regenerates the README tables from published.json
 │   ├── lint/
 │   │   └── repo-checks.sh            # static repository checks — runs locally and on every PR
 │   └── gate/
@@ -39,6 +40,11 @@ hardened-containers/
 │       └── image-gate.py             # the zero-CRITICAL/HIGH gate verdict
 ├── .github/workflows/       # build-image.yml (build/publish) · pr-checks.yml (static PR checks)
 │                            # · rescan.yml (daily drift check)
+├── .claude/                 # how Claude Code works in this repository
+│   ├── skills/<skill>/SKILL.md  # repeatable procedures — one per recurring task
+│   ├── agents/              # open-ended judgement — image-author (writes files)
+│   │                        # · security-investigator (read-only, reports)
+│   └── workflows/           # multi-agent sweeps — pin-freshness-sweep.js (read-only)
 ├── docs/
 │   ├── image-authoring/
 │   │   ├── README.md            # entry point — orchestration rules, checklist, the two shapes
@@ -121,9 +127,16 @@ Follow the "Checklist for adding an image" in
 | **A pitfall not to step into again** | [docs/image-authoring/](docs/image-authoring/README.md) |
 | **Why one candidate was chosen over others** | [docs/decisions/](docs/decisions/) — ADRs |
 | **Current state and what to do next** | [MEMORY.md](MEMORY.md) |
+| **How a recurring task is carried out** | `.claude/skills/<skill>/SKILL.md` — the procedure |
+| **Judgement a procedure cannot capture** | `.claude/agents/` — `image-author` authors and edits, `security-investigator` only reports |
 
 `MEMORY.md` is not where completed work accumulates — once an item is no longer "what to
-do next", move it to one of the three above and delete it.
+do next", move it to one of the first three destinations above and delete it.
+
+The two `.claude/` rows record **how work is done**, never what the rules are: a skill or an
+agent prompt points at the document that states a rule and does not restate it. A rule
+copied into a prompt is a second copy that will drift — a new pitfall belongs in
+`docs/image-authoring/`, and the prompt just keeps pointing there.
 
 ## Documentation language
 

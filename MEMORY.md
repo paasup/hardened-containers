@@ -73,6 +73,22 @@
   근거는 [ADR 0009](docs/decisions/0009-kyverno-self-build.md). 다음 할 일: PR 열기 →
   머지 → `workflow_dispatch(push=true)`로 실제 게시 → `published.json`에 7개 항목
   반영 확인.
+- **CVE 조치 파이프라인에 구멍 4개가 남아 있다** (2026-09-08 스킬·에이전트 정비 중 코드를
+  훑어 확인한 것들이다). 지금 당장 무엇을 막고 있지는 않아 여기 메모로 둔다 — 착수가
+  계속 미뤄지면 이 파일의 유지 규칙대로 GitHub Issue 로 올린다.
+  1. `suggest-go-upgrades.py` 가 `cve-exceptions.json` 을 읽지 않는다. 이미 승인된 예외까지
+     drift 로 잡아 불필요한 autofix PR 을 낼 수 있다
+     ([ADR 0012](docs/decisions/0012-go-cve-autofix-pr.md)가 한계로 적어둔 항목이고, Go
+     예외가 아직 하나도 없어서 실제로 터진 적은 없다).
+  2. non-Go 수동 핀(`SOURCE_COMMIT`·jar 버전·`XTEXT_FIX_VERSION`)에는 제안 스크립트가 없다.
+     지금은 `pin-freshness-check` 가 `image-author` 에게 넘겨 매번 손으로 조사한다 —
+     `suggest-*-upgrades.py` 형태의 두 번째 스크립트가 자연스러운 다음 단계.
+  3. red 오토픽스 빌드의 제약 실패가 재제안으로 피드백되지 않는다. 빌드 로그의
+     `requires X@vY` 를 사람이 읽고 다시 돌리는 수밖에 없다(연쇄 제약은 ADR 0012 에서
+     실측됨).
+  4. 만료된 예외의 재검토를 넛지하는 장치가 없다. `cve-gate.md` 에 한 줄 뜨는 것이 전부라
+     아무도 안 보면 그대로 지나간다.
+
 - **`cnpg-postgresql` 이 18.4 로, 유지보수 라인 안에서 18.6 보다 뒤진다.** 라인 자체는
   2030-11-14 까지 유지되므로 급하지 않다(support-line 검사에서 notice, 실패 아님). 올릴
   때 메이저가 `APP_VERSION`·`PG_VERSION`(EVR)·`EXTENSIONS` 세 곳에 중복돼 있는 것을 함께

@@ -16,3 +16,10 @@ push.log
 
 # Personal local settings (permission allowlists and the like) — not shared
 .claude/settings.local.json
+
+# Patterns that must never appear in this public repository — internal system names and
+# their internal paths. Kept out of the tree on purpose: committing the list would make it
+# the very trace it exists to catch. repo-checks.sh reads it if present (and CI reads
+# INTERNAL_NAME_PATTERN from a secret instead), and reports "did not run" when neither is
+# there. One extended-regex pattern per line; # comments allowed.
+.internal-names

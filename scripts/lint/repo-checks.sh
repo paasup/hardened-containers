@@ -25,6 +25,9 @@ FAILED=0
 section() { printf '\n== %s\n' "$1"; }
 ok()      { printf '   OK — %s\n' "$1"; }
 fail()    { printf '   FAIL — %s\n' "$1"; FAILED=1; }
+# A finding that must be seen but must not block: something a person has to finish, where
+# the unfinished state is legitimate for a while (a translation that has not caught up yet).
+warn()    { printf '   WARN — %s\n' "$1"; }
 
 # --- 1. Internal path references resolve -------------------------------------
 # Moving or renumbering files silently breaks references. Lines that also mention
@@ -150,23 +153,48 @@ section "bilingual READMEs"
 python3 - <<'PY' || FAILED=1
 import pathlib, sys
 bad = []
-targets = [pathlib.Path(".")] + sorted(p for p in pathlib.Path("images").iterdir() if p.is_dir())
-for d in targets:
-    en, ko = d / "README.md", d / "README.ko.md"
+pairs = [(pathlib.Path("README.md"), pathlib.Path("README.ko.md"))]
+pairs += [(d / "README.md", d / "README.ko.md")
+          for d in sorted(p for p in pathlib.Path("images").iterdir() if p.is_dir())]
+# architecture.md is the one docs/** document meant to be read end to end rather than
+# consulted as a reference, so CLAUDE.md gives it the same bilingual treatment.
+pairs.append((pathlib.Path("docs/architecture.md"), pathlib.Path("docs/architecture.ko.md")))
+for en, ko in pairs:
     if not en.exists():
-        bad.append(f"{d}: no README.md"); continue
+        bad.append(f"{en}: missing"); continue
     if not ko.exists():
-        bad.append(f"{d}: no README.ko.md (READMEs are bilingual)"); continue
-    if "README.ko.md" not in en.read_text(encoding="utf-8")[:400]:
-        bad.append(f"{en}: no link to README.ko.md near the top")
-    if "README.md" not in ko.read_text(encoding="utf-8")[:400]:
-        bad.append(f"{ko}: no link to README.md near the top")
+        bad.append(f"{ko}: missing (this document is bilingual)"); continue
+    if ko.name not in en.read_text(encoding="utf-8")[:400]:
+        bad.append(f"{en}: no link to {ko.name} near the top")
+    if en.name not in ko.read_text(encoding="utf-8")[:400]:
+        bad.append(f"{ko}: no link to {en.name} near the top")
 for b in bad:
     print(f"   FAIL — {b}")
 if not bad:
-    print("   OK — every README has its Korean counterpart, cross-linked")
+    print(f"   OK — {len(pairs)} bilingual pairs, each present and cross-linked")
 sys.exit(1 if bad else 0)
 PY
+
+# --- 6b. The English side has caught up with the Korean source ---------------
+# Korean is the source of truth for every bilingual pair (CLAUDE.md): the .ko.md is edited
+# first and the change is then carried into English. A .ko.md whose last commit is newer
+# than its counterpart's therefore means the English document is behind — stating something
+# that is no longer true. This warns rather than fails: translating is a separate pass, and
+# blocking a commit for it would only push people to skip the Korean-first order.
+section "bilingual translation freshness"
+drifted=0
+for ko in README.ko.md docs/architecture.ko.md images/*/README.ko.md; do
+  [ -e "$ko" ] || continue
+  en="${ko%.ko.md}.md"
+  [ -e "$en" ] || continue
+  ko_t="$(git log -1 --format=%ct -- "$ko" 2>/dev/null)"; ko_t="${ko_t:-0}"
+  en_t="$(git log -1 --format=%ct -- "$en" 2>/dev/null)"; en_t="${en_t:-0}"
+  if [ "$ko_t" -gt "$en_t" ]; then
+    warn "$ko was committed after $en — carry the change into English"
+    drifted=1
+  fi
+done
+[ "$drifted" = "0" ] && ok "every English document is at least as recent as its Korean source"
 
 # --- 7. Syntax ---------------------------------------------------------------
 section "syntax"
@@ -340,6 +368,68 @@ PY
 
 section "published-images table freshness"
 python3 scripts/build/render-published-images-table.py --check || FAILED=1
+
+# --- 11. Relative links inside .claude/ resolve ------------------------------
+# Check 1 above only extracts paths that *begin* with docs/, images/ or scripts/, so it
+# passes a skill link whose `../` depth is wrong (it finds the docs/... tail and confirms
+# that exists at the repository root). The skills and agents link to each other and up into
+# docs/ constantly, and a wrong depth is invisible until someone follows the link — so
+# resolve each link against the file that contains it.
+section ".claude relative links"
+python3 - <<'PY' || FAILED=1
+import pathlib, re, sys
+root = pathlib.Path(".").resolve()
+bad = []
+link = re.compile(r'\]\(([^)\s#]+)(?:#[^)]*)?\)')
+mds = sorted(pathlib.Path(".claude").rglob("*.md"))
+for md in mds:
+    for target in link.findall(md.read_text(encoding="utf-8")):
+        if target.startswith(("http://", "https://", "mailto:")):
+            continue
+        if not (md.parent / target).resolve().exists():
+            bad.append(f"{md}: {target}")
+for b in bad:
+    print(f"   FAIL — link does not resolve: {b}")
+if not bad:
+    print(f"   OK — every relative link in {len(mds)} .claude/ documents resolves")
+sys.exit(1 if bad else 0)
+PY
+
+# --- 12. No internal names in a public repository ----------------------------
+# Names of internal systems, and their internal file paths, must not appear here. Beyond the
+# leak, each image README already states that this repository does not know which chart or
+# environment consumes an image — naming one contradicts the boundary the repository claims
+# for itself.
+#
+# The forbidden terms are deliberately NOT in this file. Writing them into the checker would
+# make the checker the very trace it looks for, and obfuscating them would hide it badly
+# while still being reconstructible. So the patterns come from outside the repository and
+# this file carries only the mechanism:
+#
+#   .internal-names        one extended-regex pattern per line, untracked (see .gitignore)
+#   INTERNAL_NAME_PATTERN  a single extended regex — for CI, set from a repository secret
+#
+# With neither present the check says it did not run rather than passing quietly: a check
+# that silently does nothing is worse than no check at all.
+section "no internal names"
+internal_pat=""
+if [ -f .internal-names ]; then
+  internal_pat="$(grep -vE '^[[:space:]]*(#|$)' .internal-names | paste -sd'|' -)"
+fi
+if [ -n "${INTERNAL_NAME_PATTERN:-}" ]; then
+  internal_pat="${internal_pat:+$internal_pat|}$INTERNAL_NAME_PATTERN"
+fi
+if [ -z "$internal_pat" ]; then
+  warn "no pattern source (.internal-names or INTERNAL_NAME_PATTERN) — this check did not run"
+else
+  internal_hits="$(grep -rniE "$internal_pat" --exclude-dir=.git \
+                     --exclude='.internal-names' . 2>/dev/null || true)"
+  if [ -n "$internal_hits" ]; then
+    while IFS= read -r l; do fail "internal name or path: $l"; done <<<"$internal_hits"
+  else
+    ok "no internal names or internal paths"
+  fi
+fi
 
 # --- summary -----------------------------------------------------------------
 echo

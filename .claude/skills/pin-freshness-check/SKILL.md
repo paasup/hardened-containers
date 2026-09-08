@@ -38,6 +38,34 @@ behind — that is the ordinary case this skill handles.
 `SUPPORT_REF` URL in `image.env` yourself. Rules and field meanings are in
 [docs/image-authoring/support-policy.md](../../../docs/image-authoring/support-policy.md).
 
+## 1c. Checking every image at once
+
+Drop `--image` and the same script checks **all** images in one pass, printing a table
+(image · line · our pin · latest in line · maintained · EOL date) and then a note per image
+that needs one:
+
+```sh
+python3 scripts/build/check-support-line.py
+```
+
+That is the whole line-freshness picture for the repository, in seconds — do not loop it per
+image, and do not spend an agent on it.
+
+The half it does **not** answer is whether each committed pin still points at the current
+upstream point; that needs per-image research across unrelated ecosystems, which the
+`pin-freshness-sweep` workflow fans out one agent per image. Pass it the output above so it
+does not redo the line check:
+
+```
+Workflow({name: 'pin-freshness-sweep', args: {images: [
+  {image: '<image>', line_status: 'supported|eol|manual', support_detail: '<what the table and note said>'},
+]}})
+```
+
+Budget for it: roughly 20 minutes and 65k tokens per image (measured), so a full 17-image
+sweep is about an hour. Sweep a subset when that is too much, and bring anything it flags
+back here, one image at a time, for the judgement calls and the actual change.
+
 ## 2. Enumerate the pins
 
 Pin names differ per image, so do not hardcode them. Read `DEFAULT_BASE_OS` from the
@@ -49,17 +77,24 @@ extract every field that looks like a version, commit, or tag — `APP_VERSION`,
 
 ## 3. Re-evaluate the upstream tag
 
-Re-scan the **latest** tag of the official upstream image that was originally vulnerable,
-or read its release notes, and see whether the CVE that motivated the self-build is
-already resolved (the principle in etcd's README: adopting a new upstream release always
-takes priority over keeping the self-build). If it is resolved:
+Whether the reason for self-building still holds is a judgement call on upstream evidence,
+so hand it to the [`security-investigator`](../../agents/security-investigator.md) agent
+(read-only — it reports, it does not change anything):
+
+```
+Agent(subagent_type: "security-investigator", prompt: "should we still self-build <image>? <why it was self-built>")
+```
+
+It re-scans the latest upstream tag or reads its release notes and establishes whether the
+CVE that motivated the self-build is resolved there (the principle in etcd's README:
+adopting a new upstream release always takes priority over keeping the self-build). If it
+is resolved:
 
 - This skill does not delete the image directory or edit `build.env` itself — **flag it as
   a retirement candidate, report to the user**, and record it under "Open items" in
   [MEMORY.md](../../../MEMORY.md).
-- The actual retirement (removing the directory, switching back to referencing the
-  upstream image) is separate work — this repository's responsibility ends at the build
-  and the `published.json` update.
+- The actual retirement is separate work with its own procedure —
+  [retire-self-build](../retire-self-build/SKILL.md).
 
 ## 4. Go toolchain and module pins — do not reimplement
 
@@ -75,9 +110,16 @@ python3 scripts/build/suggest-go-upgrades.py --reports <trivy-reports dir> \
 ## 5. Other manual pins — based on real investigation
 
 Manual pins such as `SOURCE_COMMIT`, JVM jar versions, and `XTEXT_FIX_VERSION` have no
-automatic suggestion script. Actually look up the upstream repository's releases, tags,
-and advisories (WebFetch/WebSearch) and confirm — again, no guessing, only established
-facts:
+automatic suggestion script, so both the lookup and the raise go to the
+[`image-author`](../../agents/image-author.md) agent — it decides the value, writes it into
+`build.env`, and rebuilds to confirm the CVE is actually resolved rather than assuming it:
+
+```
+Agent(subagent_type: "image-author", prompt: "raise <image>'s manual pins for <CVE>: <pins found in step 2>")
+```
+
+Review its diff before anything is committed. What it must establish — no guessing, only
+established facts:
 
 - Whether any release or commit since the current pin fixes the CVE this image carries.
 - If so, whether that change also affects other pins (a minimum Go toolchain version, for
@@ -89,10 +131,10 @@ facts:
 
 Report, per image, "the point the pin refers to versus the current upstream point" plus a
 recommendation (leave as-is / a pin-update PR is needed / consider retiring the
-self-build). The skill does not edit `build.env` itself — by rule 4 a pin is a value a
-person reviews and commits. The one exception is the existing
-`suggest-go-upgrades.py --apply`, which may be used as-is for Go pins (that script already
-provides `--dry-run` for review).
+self-build). This skill never edits `build.env` on its own — raising a pin is delegated
+(step 4's `suggest-go-upgrades.py --apply` for Go, `image-author` in step 5 for everything
+else), and rule 4 still holds either way: **the value is reviewed by a person before it is
+committed**, so read the diff rather than trusting a report that says the pin was raised.
 
 ## Wrapping up
 
