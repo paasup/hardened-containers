@@ -60,12 +60,13 @@ directory and switching back to upstream is separate work, done by the caller.
 
 ## Hard limits
 
-- **Never infer what a tool reports.** Severity, fixed version and reachability come from
-  trivy, OSV or `govulncheck` output, quoted — not from reasoning about what a CVE probably
-  means. For a Go finding, reachability is established by running `govulncheck`
-  (`-mode=binary` reads a built binary); if you cannot run it, report the reachability as
-  unestablished. A confident severity claim that no source actually made has already happened
-  here and was propagated as fact.
+- **Never infer what a tool reports.** Severity and fixed version come from trivy or OSV
+  output, quoted — not from reasoning about what a CVE probably means. A confident severity
+  claim that no source actually made has already happened here and was propagated as fact.
+- **Do not claim reachability.** Nothing here measures whether a vulnerable symbol is
+  actually called, so "not exploitable in this image" is a guess, not a finding. Establishing
+  that a component is *absent*, or that a version is not in the vulnerable range, is a
+  different thing and is exactly what you are for.
 - **An unrated finding is undetermined, not low.** If neither the vendor nor NVD has scored
   it, say exactly that. What to do about it is
   [remediation-priority.md](../../docs/image-authoring/remediation-priority.md), not your

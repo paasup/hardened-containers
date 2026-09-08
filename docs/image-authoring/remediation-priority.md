@@ -35,9 +35,10 @@ Adding one more fix to a rebuild that is happening anyway is almost free. So:
 
 - **When a CRITICAL/HIGH forces a rebuild, that rebuild takes every fixable finding in the
   image** — MEDIUM, LOW, and unrated-with-a-fix included. Not just the blocking one.
-- **A MEDIUM, LOW or unrated finding does not earn a rebuild of its own.** The exceptions are
-  a confirmed-reachable vulnerability, or a blast radius large enough to be worth it on its
-  own (see below).
+- **A MEDIUM, LOW or unrated finding does not earn a rebuild of its own.** Two things can
+  override that: a blast radius large enough to be worth it on its own (see below), or a
+  person deciding it is, with the reason written into the commit. The second is deliberately
+  a human call and not a rule — there is no measurement here that could make it one.
 - This is what makes **Deferred** a bounded state rather than a synonym for "ignored": it
   lasts until the next blocking fix, and that rebuild collects it automatically.
 
@@ -65,16 +66,23 @@ When more than one thing could be done, rank by these, in this order:
    across all of them — the kyverno family carries an identical `GO_MODULE_UPGRADES` value in
    six images, and `google.golang.org/grpc` is pinned in nearly every Go image. A fix that
    covers six images outranks one that covers one.
-3. **Reachability.** For Go, establish it with `govulncheck` (it can read a built binary with
-   `-mode=binary`), which is also the tool that covers the Go advisory database — the source
-   that publishes no CVSS. **Do not reason about reachability instead of measuring it.**
-4. **Is a rating pending?** An unrated CVE is *undetermined*, not low. When NVD scores it, the
+3. **Is a rating pending?** An unrated CVE is *undetermined*, not low. When NVD scores it, the
    gate starts blocking on it — across every image carrying that pin, on the same day. Raising
    one value now versus handling several images at once later is a legitimate ordering
    argument.
 
 Severity is deliberately not first. Above the threshold the gate has already decided; below
-it, severity says less than the four inputs above.
+it, severity says less than the three inputs above.
+
+**Reachability is deliberately not an input.** Whether the vulnerable symbol is actually
+called would be the ideal discriminator, and it was considered. It is left out because
+measuring it needs a per-language tool (`govulncheck` for Go, nothing equivalent for the JVM,
+Node and C images here), because extracting a binary from each image to scan it is a
+procedure in its own right, and above all because it would not change the disposition of a
+single finding on the current list: a fixable finding rides along on the next rebuild whether
+or not it is reachable. The consequence is a rule rather than a gap: **nobody here claims a
+finding is or is not reachable**, because nothing in this repository measures it. An
+unmeasured reachability claim is a guess, and the evidence bar above does not allow one.
 
 ## Findings with no severity
 
