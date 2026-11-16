@@ -75,17 +75,52 @@ def version_tuple(v):
     return tuple(int(n) for n in nums) or (0,)
 
 
-def pick_fixed(raw):
-    """Extract candidates from a FixedVersion string and take the maximum.
+STABLE_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)$")
 
-    Go modules usually have a single value, but several branches are sometimes listed
-    comma-separated (stdlib's '1.24.13, 1.25.7' form). For modules, take the highest.
+
+def pick_fixed(raw, installed):
+    """The fix point to move to, out of a FixedVersion string.
+
+    Several comma-separated values are **per-branch alternatives**, exactly as for stdlib
+    (see the "Go module CVEs" section of docs/image-authoring/builder-languages.md) —
+    e.g. grpc's '1.82.2, 1.83.2, 1.84.0-dev.0.2026…-d5a4…'. Taking the overall maximum
+    lands on a pre-release pseudo-version, which is neither a release nor the minimum.
+    So: the smallest **stable** alternative above the installed version — for an install
+    on a fixed branch that is the patch release on the same branch.
+
+    Returns the version without the leading 'v', or None when no stable alternative
+    is above the installed version (left to a person).
     """
-    cands = [c.strip() for c in re.split(r"[,/]", raw or "") if c.strip()]
-    cands = [c for c in cands if re.match(r"^v?\d", c)]
-    if not cands:
+    cands = []
+    for c in re.split(r"[,\s]+", raw or ""):
+        if STABLE_RE.match(c.strip()):
+            cands.append(c.strip().lstrip("v"))
+    floor = version_tuple(installed) if installed else (0,)
+    above = [c for c in cands if version_tuple(c) > floor]
+    if not above:
         return None
-    return max(cands, key=version_tuple).lstrip("v")
+    return min(above, key=version_tuple)
+
+
+def source_repos(image):
+    """'host/owner/repo' of every git source the image's Dockerfiles fetch (ADD or git
+    clone). Used to recognise a binary's own main module, which a `replace` in go.work
+    cannot raise — that takes a SOURCE_COMMIT / version bump instead."""
+    repos = set()
+    if not image:
+        return repos
+    for df in glob.glob(os.path.join(IMAGES_DIR, image, "*.Dockerfile")):
+        for m in re.finditer(r"https://([\w.-]+/[\w.-]+/[\w.-]+?)(?:\.git)?(?=[#\s\"']|$)",
+                             pathlib.Path(df).read_text(), re.MULTILINE):
+            repos.add(m.group(1).lower())
+    return repos
+
+
+def is_own_module(module, repos):
+    """github.com/argoproj/argo-cd/v3 belongs to github.com/argoproj/argo-cd."""
+    m = module.lower()
+    base = re.sub(r"/v\d+$", "", m)
+    return any(base == r or m.startswith(r + "/") for r in repos)
 
 
 def collect_modules(paths, gate, rank, floor):
@@ -111,16 +146,43 @@ def collect_modules(paths, gate, rank, floor):
                                                gate.nvd_severity(((v.get("CVSS") or {}).get("nvd") or {}).get("V3Score")))
                 if rank.get(eff, 0) < floor:
                     continue
-                fx = pick_fixed(v.get("FixedVersion"))
-                if not fx:
-                    continue
-                e = mods.setdefault(pkg, {"fixed": fx, "cves": {}, "installed": set()})
-                if version_tuple(fx) > version_tuple(e["fixed"]):
-                    e["fixed"] = fx
-                e["cves"][v["VulnerabilityID"]] = eff
+                fx = pick_fixed(v.get("FixedVersion"), v.get("InstalledVersion"))
+                e = mods.setdefault(pkg, {"fixed": None, "cves": {}, "installed": set(),
+                                          "unfixable": set()})
                 if v.get("InstalledVersion"):
                     e["installed"].add(v["InstalledVersion"])
+                if not fx:
+                    # Fixed only in a pre-release (or nothing at all above what is installed).
+                    if v.get("FixedVersion"):
+                        e["unfixable"].add(v["VulnerabilityID"])
+                    continue
+                if e["fixed"] is None or version_tuple(fx) > version_tuple(e["fixed"]):
+                    e["fixed"] = fx
+                e["cves"][v["VulnerabilityID"]] = eff
     return mods
+
+
+def split_modules(mods, image):
+    """Separate what GO_MODULE_UPGRADES can do from what it cannot.
+
+    Returns (upgradable, notes): `upgradable` holds only modules with a stable target that
+    are not the image's own main module."""
+    repos = source_repos(image)
+    upgradable, notes = {}, []
+    for name in sorted(mods):
+        e = mods[name]
+        inst = ", ".join(sorted(e["installed"])) or "?"
+        if e["unfixable"]:
+            notes.append(f"{name} {inst}: {', '.join(sorted(e['unfixable']))} fixed only in a "
+                         "pre-release — no stable version to pin; see cve-exception-review")
+        if e["fixed"] is None:
+            continue
+        if is_own_module(name, repos):
+            notes.append(f"{name} {inst} → {e['fixed']}: this is the image's own source — "
+                         "raise SOURCE_COMMIT/APP_VERSION, GO_MODULE_UPGRADES cannot move it")
+            continue
+        upgradable[name] = e
+    return upgradable, notes
 
 
 def collect_stdlib(paths, gate, rank, floor):
@@ -220,13 +282,14 @@ def choose_builder_tag(rows, current):
 
 
 def parse_module_specs(raw):
-    """'mod@v1.2.3 mod2@v0.4.0' → {mod: (1,2,3)}"""
+    """'mod@v1.2.3 mod2@v0.4.0' → {mod: '1.2.3'} — kept as strings: rebuilding a version
+    from a numeric tuple mangles anything that is not plain X.Y.Z."""
     out = {}
     for tok in (raw or "").split():
         if "@" not in tok:
             continue
         name, ver = tok.rsplit("@", 1)
-        out[name] = version_tuple(ver)
+        out[name] = ver.lstrip("v")
     return out
 
 
@@ -246,7 +309,7 @@ def read_env(path):
     return out
 
 
-def pin_changes(paths, pins, gate, rank, floor):
+def pin_changes(paths, pins, gate, rank, floor, image=""):
     """Pins that need raising. Returns: (changes, notes)."""
     changes, notes = [], []
 
@@ -266,12 +329,14 @@ def pin_changes(paths, pins, gate, rank, floor):
                                 "required": tag,
                                 "reason": f"{len(std_alts)} blocking stdlib CVEs", "appliable": True})
 
-    mods = collect_modules(paths, gate, rank, floor)
+    mods, mod_notes = split_modules(collect_modules(paths, gate, rank, floor), image)
+    notes.extend(mod_notes)
     if mods:
         cur_raw = pins.get("GO_MODULE_UPGRADES")
         cur_mods = parse_module_specs(cur_raw)
         behind = {n: e["fixed"] for n, e in mods.items()
-                  if cur_mods.get(n) is None or cur_mods[n] < version_tuple(e["fixed"])}
+                  if cur_mods.get(n) is None
+                  or version_tuple(cur_mods[n]) < version_tuple(e["fixed"])}
         if behind:
             listing = " ".join(f"{n}@v{behind[n]}" for n in sorted(behind))
             if cur_raw is None:
@@ -282,8 +347,8 @@ def pin_changes(paths, pins, gate, rank, floor):
                              "use GO_MODULE_UPGRADES. Check its per-image FIX_VERSION manually")
             else:
                 merged = dict(cur_mods)
-                merged.update({n: version_tuple(v) for n, v in behind.items()})
-                spec = " ".join(f"{n}@v{'.'.join(map(str, merged[n]))}" for n in sorted(merged))
+                merged.update(behind)
+                spec = " ".join(f"{n}@v{merged[n]}" for n in sorted(merged))
                 changes.append({"key": "GO_MODULE_UPGRADES", "current": cur_raw,
                                 "required": spec,
                                 "reason": f"{len(behind)} modules behind", "appliable": True})
@@ -377,7 +442,7 @@ def main():
               file=sys.stderr)
         return 2
 
-    mods = collect_modules(paths, gate, rank, floor)
+    mods, mod_notes = split_modules(collect_modules(paths, gate, rank, floor), args.image)
     std_alts = collect_stdlib(paths, gate, rank, floor)
     pins = current_pins(args.image)
 
@@ -396,6 +461,8 @@ def main():
             print("#   ::warning:: no stable-release alternative — a pre-release toolchain may be required")
         print()
 
+    for n in mod_notes:
+        print(f"# ::warning:: {n}")
     if not mods and not std_alts:
         print("# No Go module upgrades suggested (no findings at or above that severity)")
         return 0
@@ -419,7 +486,7 @@ def main():
 
     build_env_path = resolve_build_env_path(args.image)
     pins = read_env(build_env_path)
-    changes, notes = pin_changes(paths, pins, gate, rank, floor)
+    changes, notes = pin_changes(paths, pins, gate, rank, floor, args.image)
 
     print()
     print(f"# --apply target: {os.path.relpath(build_env_path)}")

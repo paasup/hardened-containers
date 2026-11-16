@@ -15,7 +15,8 @@
 #     + zypper install nodejs24 (staying on the same Node major, 24)
 #   /nodejs/bin/node  →  /usr/bin/node (the actual path zypper installs to)
 
-ARG BUILDER_BASE=node:lts-bookworm-slim
+# Value comes from source.build.env (pinned by digest); no default here on purpose.
+ARG BUILDER_BASE
 ARG RUNTIME_BASE=registry.suse.com/bci/bci-base:15.7
 
 FROM ${BUILDER_BASE} AS builder

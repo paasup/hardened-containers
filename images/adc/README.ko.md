@@ -51,7 +51,7 @@ ENTRYPOINT [ "/nodejs/bin/node", "main.cjs" ]
 | 최종 베이스 | `gcr.io/distroless/nodejs24-debian13:nonroot` | `registry.suse.com/bci/bci-base:15.7` + `zypper install nodejs24` | OS 패키지 CVE 회피, 이미지 간 베이스 OS 통일 (같은 Node 24 메이저 유지 — SUSE 표준 패키지라 distroless 전용 `-devel` 문제가 없다) |
 | 엔트리포인트 경로 | `/nodejs/bin/node` | `/usr/bin/node` | zypper 가 설치하는 경로 |
 | non-root 사용자 | distroless `:nonroot` 태그로 기본 적용 | 시스템 계정 `adc` 를 명시적으로 생성 | `bci-base` 에는 nonroot 변형 태그가 없다 |
-| 빌더 스테이지 | `node:lts-bookworm-slim` (pnpm+nx 빌드) | 동일 — 정책 대상 아님 | 최종 스테이지만 스캔·배포 대상 |
+| 빌더 스테이지 | `node:lts-bookworm-slim` (pnpm+nx 빌드) | `node:24-bookworm-slim@sha256:…` — 롤링 태그 대신 다이제스트 고정 | `lts` 가 2026-10 Node 26 으로 넘어가며 corepack 이 빠져 빌드가 깨짐. 최종 스테이지(nodejs24)와 같은 메이저로 고정 |
 | 애플리케이션 코드 | `main.cjs` 번들 | 동일 | 빌더 스테이지를 그대로 재사용하므로 diff 가 최소다 |
 
 빌드 시간은 2분 이내다(대부분 pnpm install + nx build 시간).
@@ -84,7 +84,7 @@ sync)을 확인한다 — **adc 는 실제 APISIX/API7 백엔드 접속이 필�
 | --- | --- |
 | 소스 | `https://github.com/api7/adc.git` |
 | pinned commit | `source.build.env` 의 `SOURCE_COMMIT` — `v0.29.0` 태그(lightweight, peeled 커밋 없음)가 가리키는 실제 커밋 |
-| 빌더 | 업스트림과 동일한 `node:lts-bookworm-slim` — 정책 대상 아님(빌더 스테이지) |
+| 빌더 | `source.build.env` 의 `BUILDER_BASE` — `node:24-bookworm-slim` 다이제스트 고정 (빌더 스테이지라 정책 대상은 아님) |
 | 최종 베이스 | `registry.suse.com/bci/bci-base:15.7` + `nodejs24` |
 
 `SOURCE_COMMIT`은 **자동 추적하지 않는다.** 다른 자체 빌드 이미지와 동일하게, 사람이

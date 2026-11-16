@@ -287,3 +287,12 @@ the single `record` job merges them into one commit. (Job outputs cannot be used
 outputs from a matrix job are overwritten by each entry, so only the last image would
 survive.) Because just one job commits, matrix entries no longer contend with each other
 at all; the rebase-and-retry loop remains only for contention with another workflow run.
+
+**One failed image must not cost the others their record.** `attest` and `record` key off
+the `published` job, and their `if:` starts with `!cancelled()`. That prefix is not
+decoration: GitHub prepends an implicit `success() &&` to any `if:` that contains no
+status-check function, and that `success()` walks back through `published` to the
+`build` matrix, which reads "failure" as soon as any one entry fails. Without a status
+function in the expression, one red image silently skipped attestation and the
+`published.json` update for every image that did get pushed. Any new job downstream of
+the build matrix needs the same prefix.
