@@ -17,83 +17,57 @@
 
 ## 왜 자체 빌드하나
 
-업스트림 `quay.io/keycloak/keycloak:26.6.4` 는 게이트에서 **차단 17건(실효 HIGH 17,
-CRITICAL 0)** 이다. 계층별로 성격이 전혀 다르다.
+Keycloak 은 업스트림 배포본에 jar 를 정적으로 실어 내보내고, 그 버전은 Keycloak 이 따르는
+Quarkus BOM 이 고정한다. 그래서 차단 CVE 가 나오면 **계층마다 해결 수단이 다르다.**
 
-| 계층 | 건수 | 대표 CVE | 상위 태그·베이스 OS 교체로 풀리나 |
-| --- | --- | --- | --- |
-| UBI9 rpm | 5 | `java-21-openjdk-headless` ×3, `libacl`, `pcre2` | 일부. 3건은 rpm 최신화로 해소 |
-| 번들 jar | 12 | netty ×6, jackson ×3, postgresql-jdbc, mssql-jdbc, keycloak-services | **아니다** |
+| 계층 | 해결 수단 | 상위 태그·베이스 OS 교체로 풀리나 |
+| --- | --- | --- |
+| OS 패키지(JDK·glibc 등) | 재빌드 시 zypper 가 최신 패치를 설치 | 예 — 베이스 OS 쪽 문제 |
+| Keycloak 자체 코드(`keycloak-services` 등) | `KEYCLOAK_VERSION` 상향 | 예 — 상위 태그 |
+| Quarkus BOM 이 고정한 번들 jar | 다음 Keycloak 릴리스가 BOM 을 올릴 때까지 **없음** | **아니다** |
 
-이 12건은 조치 방식이 셋으로 갈린다 — 전부 자체 빌드가 "고친" 것은 아니다: netty·
-jackson·postgresql-jdbc 는 당시 아래 "업스트림과 다른 부분"의 jar 오버레이로 교체했다
-(jackson·postgresql-jdbc 는 이후 26.7.2 로 올리면서 오버레이 없이도 해소됐다 — 아래
-"그리고 26.7.2 로 올린다" 참고). keycloak-services 5건은 버전을 26.7.1 로 올려
-해소한다(아래 "그래도 버전은 26.7.1 로 올린다" 참고). **mssql-jdbc 1건은 오버레이
-대상이 아니다** — 실제로는 트리비 오탐이라 `cve-exceptions.json` 의 예외로 위험을
-수용했다(아래 "버전 관리" 참고).
-
-### 상위 태그 교체를 먼저 검토한 결과 (image-authoring/README.md 체크리스트 1)
-
-**jar 12건은 keycloak 버전을 올려도 풀리지 않는다.** keycloak `26.6.4` 와 최신
-`26.7.1` 의 `quarkus.version` 이 둘 다 `3.33.2.1` 이고, Quarkus 3.33.2.1 BOM 이
-`netty 4.1.135.Final` / `jackson-bom 2.21.2` 를 고정한다(실측: keycloak `pom.xml` 두
-태그 비교 + `quarkusio/quarkus` `bom/application/pom.xml@3.33.2.1`). 차단 CVE 의 수정
-버전은 netty `4.1.136.Final`, jackson `2.21.4` 다 — 다음 Quarkus BOM 이 올라오기 전까지
-업스트림 이미지로는 방법이 없다.
-
-**베이스 OS 교체도 jar 에는 통하지 않는다.** CVE 가 OS 패키지가 아니라 배포본에 함께
-실려 있는 jar 자체이기 때문이다 — `cloudnative-pg`/`etcd` 의 정적 링크 Go 모듈과 같은
-구조다.
-
-그래서 **jar 를 직접 교체하는 자체 빌드가 유일한 수단**이다. `etcd` 이미지가
-`go.work` 에 `replace golang.org/x/text` 한 줄을 넣어 해결한 것과 같은 성격의 의존성
-override 이며, 오케스트레이션은 동일한
+세 번째 계층이 이 이미지를 직접 빌드하는 이유다. 베이스 OS 교체는 jar 를 건드리지 못하고
+(`cloudnative-pg`/`etcd` 의 정적 링크 Go 모듈과 같은 구조), 상위 태그는 BOM 이 올라올
+때만 통한다. 그 사이를 메우는 것이 jar 오버레이 — `etcd` 이미지가 `go.work` 에
+`replace` 한 줄을 넣는 것과 같은 성격의 의존성 override 이며, 오케스트레이션은 동일한
 [scripts/build/build-hardened-image.sh](../../scripts/build/build-hardened-image.sh)
-하나를 공유한다.
+하나를 공유한다. 처음 이 결론에 이른 측정(26.6.4 / 26.7.1 의 Quarkus BOM 비교)은
+[ADR 0008](../../docs/decisions/0008-keycloak-self-build.md) 에 있다.
 
-### 그래도 버전은 26.7.1 로 올린다
+### 26.8 라인으로 옮긴다
 
-`26.6.4` 는 `26.7.1`(및 `26.6.5`)에서만 패치된 `keycloak-services` HIGH 5건에
-취약하다 — CVE-2026-16102 / 16442 / 16443 / 15572 / 15573 (+ MEDIUM 2건, GitHub
-Security Advisory 실측). 스캔 시점 trivy DB 에 아직 없어 게이트에 잡히지 않았을 뿐이다.
+Keycloak 은 현재 마이너 하나만 유지한다(`image.env` 의 `SUPPORT_NOTE`). 26.8.0 이
+나온 2026-10-01 에 26.7 이 EOL 이 됐고 `check-support-line.py` 가 매일 실패했다.
+라인 이동이므로 "핀 상향" 이 아니라 마이그레이션으로 다뤘다 — 업스트림 기준으로 실제로
+바뀐 것을 먼저 확인했다.
 
-차트(`keycloakx`)는 **7.2.2 가 최신이고 그대로 둔다.** 차트의 `appVersion: 26.6.4` 는
-`image.tag` 미지정 시의 기본값일 뿐이고(`templates/statefulset.yaml`
-— `.Values.image.tag | default .Chart.AppVersion`), 우리는 `custom-values.yaml` 에서
-태그를 명시한다. appVersion 이 26.7.1 보다 낮은 것은 codecentric 차트의 릴리스 캐던스
-지연이지 차트 결함이 아니다.
+- **컨테이너 계약은 그대로다.** 업스트림 `quarkus/container/Dockerfile` 과
+  `ubi-null.sh` 는 26.7.2 와 26.8.2 사이에 한 줄도 바뀌지 않았다(여전히
+  `java-21-openjdk-headless`). `bin/kc.sh` 도 바이트 단위로 같다. 따라서
+  `RUNTIME_PACKAGES`·`USER`·`ENTRYPOINT` 는 손대지 않았다.
+- **Quarkus 가 `3.33.3.1` → `3.40.1.1` 로 올라가면서** 기존 오버레이 대상과 rescan
+  에서 새로 잡힌 jar 대부분이 base 에서 해소됐다(26.8.2 배포본 `lib/lib/main` 실측):
 
-### 그리고 26.7.2 로 올린다
+  | jar | 26.7.2 | 26.8.2 | 결과 |
+  | --- | --- | --- | --- |
+  | netty 패밀리 | `4.1.136.Final`(오버레이로 `4.1.137.Final`) | `4.1.139.Final` | 오버레이 제거 |
+  | jackson-core/databind | `2.21.5` | `2.21.7` | 해소 |
+  | bcprov-jdk18on | `1.84` | `1.86` | 해소 |
+  | freemarker | `2.3.32` | `2.3.35` | 해소 |
+  | mssql-jdbc | `13.2.1.jre11` | `13.4.0.jre11` | 아래 "버전 관리" 참고 |
+  | opentelemetry-api | `1.57.0`(오버레이로 `1.62.0`) | `1.62.0` | 수정 버전 `1.67.0` 미달 — 오버레이 제거, **보류** (아래 "업스트림과 다른 부분") |
+  | guava | `33.5.0-jre` | `33.6.0-jre` | 수정 버전 `33.7.2-jre` 미달 — **새 오버레이** |
+  | mariadb-java-client | `3.5.9` | `3.5.10` | 수정 버전 `3.5.11` 미달 — **새 오버레이** |
 
-MEDIUM 5건(jackson-databind ×3, netty-codec-http, opentelemetry-api)이 rescan 에서
-새로 잡혀 실측했다(모두 2026년 CVE — Keycloak 26.7.2 릴리스 시점 이후 공개).
+- **26.8.2 자체가 Keycloak 코드 CVE 를 대량으로 고친다**(릴리스 노트의 Security fixes
+  — SAML 파서 DoS, 계정 탈취, DCR 클레임 위조 등). 이 CVE 들은 trivy DB 대상이 아니라
+  게이트에 잡히지 않지만 실제 위험이며, 26.7 라인에는 더 이상 백포트되지 않는다.
 
-**Keycloak 26.7.2 자체가 CVE-2026-45292/59888/59889 를 "고쳤다"고 발표하지만, 실제
-jar 버전으로 확인하면 절반만 맞다.** Quarkus 를 `3.33.2.1` → `3.33.3.1` 로 올리면서:
-
-- **jackson-bom 이 `2.21.5` 로 올라 jackson-databind/jackson-core CVE 3건이 진짜로
-  해소된다** — 오버레이 없이도 base 에서 이미 수정 버전을 배포한다.
-- **postgresql-jdbc 도 `42.7.13` 으로 올라 있어**(기존 오버레이 목표였던 `42.7.12` 보다
-  높음) 오버레이가 필요 없어졌다.
-- **micrometer 도 `1.16.6` 으로 올라 있어**(기존 오버레이 목표와 정확히 일치) 오버레이가
-  필요 없어졌다.
-- **netty 는 그대로 `4.1.136.Final`** 이라 CVE-2026-59903(netty-codec-http 의 CORS
-  Vary 헤더 캐시 포이즈닝, 수정 버전 `4.1.137.Final`)은 26.7.2 로 올려도 안 풀린다 —
-  오버레이 목표를 `4.1.136.Final` → `4.1.137.Final` 로 다시 잡아야 한다.
-- **opentelemetry-api 는 아예 안 올라간다.** Keycloak 의 실제 수정(PR #50869,
-  `SizeLimitedBaggagePropagator`)은 의존성 버전을 올리는 게 아니라 baggage 파싱
-  크기를 애플리케이션 코드로 제한하는 우회 패치다 — jar 자체는 `1.57.0` 그대로 배포되고,
-  trivy 는 SBOM 의 jar 버전으로 판정하므로 CVE-2026-45292 는 계속 잡힌다. 그래서
-  `opentelemetry-api` 하나만 `1.57.0` → `1.62.0` 오버레이 대상으로 새로 추가했다
-  (sdk/context/exporter-\* 등 같은 그룹의 나머지 jar 는 CVE 가 없어 그대로 두었다 —
-  api 는 인터페이스 위주 모듈이라 netty/micrometer 처럼 "패밀리 버전 혼용 비지원"
-  규칙을 적용하지 않았다).
-
-그럼에도 26.7.2 로 올리는 이유는 jackson 외에도 Keycloak 자체 CVE 5건(세분화 관리자
-권한 우회, 그룹 계층 노출, vault 로 해석된 회전된 client secret 유출, 예측 가능한 계정
-연결 해시, reset-credentials 흐름 우회를 통한 미인증 계정 탈취)을 함께 없애기
-때문이다 — 이 CVE 들은 trivy DB 대상이 아니라 게이트에 잡히지 않지만 실제 위험이다.
+guava 는 차단(HIGH) 대상이고 mariadb 는 MEDIUM/LOW 지만, 차단 CVE 로 재빌드를 하는
+김에 수정 가능한 항목을 함께 가져간다
+([remediation-priority.md](../../docs/image-authoring/remediation-priority.md) "재빌드
+단위로 비용을 센다"). opentelemetry-api(MEDIUM)도 같은 이유로 시도했지만 실기동이 깨져
+보류했다 — 아래 참고.
 
 ## 유형과 베이스 OS
 
@@ -115,17 +89,12 @@ jar 버전으로 확인하면 절반만 맞다.** Quarkus 를 `3.33.2.1` → `3.
 패키지 주입 재스캔)로 양성 대조 확인돼 있어, **"업스트림과 최대한 동일하게" 보다
 이미지 간 일관성을 우선**했다.
 
-**BCI 16.0 이 나와 있지만 15.7 을 쓴다 — 최신이 이 이미지에는 더 낡았다.** 필요한
-나머지 패키지는 16.0 에도 전부 있지만 JDK 가 뒤처져 있다.
-
-| BCI | `java-21-openjdk-headless` |
-| --- | --- |
-| 15.7 | `21.0.12.0-150600.3.29.1` |
-| 16.0 | `21.0.11.0-160000.2.1` |
-
-`21.0.12` 가 CVE-2026-41254·CVE-2026-47063 의 수정 버전이라, 16.0 으로 갔으면 이
-이미지가 없애려는 차단 CVE 2건이 그대로 남았다. **16.0 의 JDK 가 15.7 을 따라잡으면
-그때 올린다** — 재측정 방법은 `suse.build.env` 주석에 있다.
+**BCI 16.0 이 나와 있지만 15.7 을 쓴다.** 채택 당시 16.0 의 `java-21-openjdk-headless`
+가 15.7 보다 뒤처져 있었다(비교는 ADR 0008). 2026-11 재측정에서는 둘 다
+`21.0.12.1`(15.7: `21.0.12.1-150600.3.32.1`, 16.0: `21.0.12.1-160000.1.1`)로
+따라잡았으므로, **16.0 으로의 이동은 이제 검토 대상이다** — 다만 이 마이그레이션에는
+섞지 않았다. 베이스 OS 이동은 나머지 패키지 이름·태그 슬러그(`TAG_SLUG`)·ADR 0008 갱신을
+함께 수반하는 별도 결정이다. 재측정 방법은 `suse.build.env` 주석에 있다.
 
 ### rootfs 를 왜 "씨앗" 방식으로 만드나
 
@@ -142,7 +111,9 @@ jar 버전으로 확인하면 절반만 맞다.** Quarkus 를 `3.33.2.1` → `3.
 ## 업스트림과 다른 부분
 
 업스트림 [`quarkus/container/Dockerfile`](https://github.com/keycloak/keycloak/blob/main/quarkus/container/Dockerfile)
-대비 차이는 셋뿐이다.
+대비 차이는 셋뿐이다. (배포본 tar.gz 를 업스트림처럼 `ADD` 로 바로 받지 않고
+`suse.build.env` 에 커밋한 `KEYCLOAK_SHA256` 로 `sha256sum -c` 검증한 뒤 푸는 것은 공급망
+규칙(CLAUDE.md 설계 원칙 7)에 따른 것으로, 결과물은 같다.)
 
 1. **런타임 rootfs 가 SUSE BCI** — 위 참조. 패키지 목록(`RUNTIME_PACKAGES`)은 업스트림
    이미지 SBOM 의 rpm 44종을 근거로 정했다. `sed`·`grep` 은 **없으면 안 된다** —
@@ -154,23 +125,36 @@ jar 버전으로 확인하면 절반만 맞다.** Quarkus 를 `3.33.2.1` → `3.
 
    | 그룹 | 대상 | 버전 |
    | --- | --- | --- |
-   | `io.netty` | 패밀리 전체 17종 | `4.1.136.Final` → `4.1.137.Final` |
-   | `io.opentelemetry` | `opentelemetry-api` 만 | `1.57.0` → `1.62.0` |
+   | `com.google.guava` | `guava` | `33.6.0-jre` → `33.7.2-jre` |
+   | `org.mariadb.jdbc` | `mariadb-java-client` | `3.5.10` → `3.5.11` |
 
-   netty 는 CVE 가 붙은 아티팩트만이 아니라 **패밀리 전체**를 함께 올린다 — 아티팩트 간
-   버전 혼용이 비지원이기 때문이다. opentelemetry-api 는 CVE 가 있는 그 아티팩트 하나만
-   올린다 — api 는 인터페이스 위주 모듈이라 sdk/context/exporter-\* 등 나머지 패밀리와
-   버전이 달라도 실제 기동(`verify.sh`)으로 확인된다.
+   둘 다 단일 아티팩트이고 같은 메이저 안의 상향이다 — guava `33.7.2-jre` 가 요구하는
+   `failureaccess` 는 `33.6.0-jre` 와 같은 `1.0.3` 이다.
 
-   jackson-core/jackson-databind·postgresql-jdbc·micrometer 는 한때 여기서 오버레이
-   대상이었지만, Keycloak 26.7.2(Quarkus 3.33.3.1)가 이미 수정 버전을 배포해 제거됐다 —
-   자세한 내용은 위 "그리고 26.7.2 로 올린다" 참고.
+   **opentelemetry 는 오버레이하지 않는다(보류).** `opentelemetry-api` 의 수정 버전은
+   `1.67.0` 이고, 그 POM 이 `context 1.67.0` 을, `context` 가 `common 1.67.0` 을 요구해
+   세 개를 함께 올려 빌드했다. augmentation(`kc.sh build`)은 통과했지만 **tracing 을 켠
+   실기동이 `io/opentelemetry/api/internal/ConfigUtil` 을 찾지 못해 죽었다** — 1.67 에서
+   이 클래스는 `io.opentelemetry.common.impl` 로 옮겨졌고 `InstrumentationUtil` 도
+   `api.internal` 에서 빠졌는데, Quarkus 3.40.1.1 이 배포한 SDK·exporter(`1.62.0`)와
+   `opentelemetry-instrumentation-api 2.28.1` 이 바로 이 `api.internal` 클래스들에 링크돼
+   있다(배포본 jar 바이트코드 실측). 고치려면 SDK·exporter·instrumentation 스택 전체를
+   Quarkus 확장이 빌드된 기준보다 올려야 하는데, MEDIUM 하나를 위해 그 위험을 지는 것은
+   맞지 않다 — "차단 수정은 인질로 잡히지 않는다"(remediation-priority.md)에 따라 차단
+   수정만으로 내보내고 이 CVE 는 **보류**한다. 다음 Keycloak 릴리스가 Quarkus BOM 으로
+   OpenTelemetry 를 `1.67.0` 이상으로 올리면 해소된다. (26.7.x 의 `api` 단독 오버레이는
+   tracing 을 끈 기동으로만 검증됐다 — 그래서 `verify.sh` 가 이제 tracing 을 켜고
+   기동한다.)
+
+   netty·jackson-core/jackson-databind·postgresql-jdbc·micrometer 는 한때 여기서
+   오버레이 대상이었지만 Keycloak 이 Quarkus BOM 을 올리면서 base 배포본이 이미 수정
+   버전을 싣게 돼 제거됐다(netty 는 26.8.2 에서, 나머지는 26.7.2 에서).
 
    위장이 아니다 — trivy 는 jar 내부 `META-INF/maven/**/pom.properties`(없으면 sha1↔GAV
    인덱스)로 버전을 판정하므로 SBOM 에는 새 버전이 정확히 잡히고, 실제 내용도 새 버전이다.
-3. **`bin/client/` 제거** — `keycloak-admin-cli-<ver>.jar` 는 jackson 을 shade 로 품은
-   uber-jar 라 jar 교체로 고칠 수 없다(SBOM 실측: `jackson-databind@2.21.2` 의
-   FilePath 가 이 파일). 서버 JVM 이 로드하지 않는 독립 CLI(`kcadm.sh`/`kcreg.sh`)이므로
+3. **`bin/client/` 제거** — `keycloak-admin-cli-<ver>.jar` 는 의존성(jackson 등)을
+   shade 로 품은 uber-jar 라 jar 교체로 고칠 수 없다(채택 당시 SBOM 실측:
+   `jackson-databind@2.21.2` 의 FilePath 가 이 파일). 서버 JVM 이 로드하지 않는 독립 CLI(`kcadm.sh`/`kcreg.sh`)이므로
    하드닝 이미지에서는 제거했다. **업스트림 대비 유일한 기능적 차이다** — 운영에서
    `kcadm` 이 필요하면 업스트림 이미지를 별도 컨테이너로 쓴다.
 
@@ -180,34 +164,46 @@ jar 버전으로 확인하면 절반만 맞다.** Quarkus 를 `3.33.2.1` → `3.
 
 ## 버전 관리
 
-`APP_VERSION`/`KEYCLOAK_VERSION` 과 `*_OLD`/`*_VERSION` jar 버전은 **자동 추적하지
-않는다.** 사람이 업스트림 릴리스를 보고 `suse.build.env` 를 고쳐 PR 을 여는 것 자체가
-갱신 트리거다.
+다음 값은 **자동 추적하지 않는다** — 사람이 업스트림 릴리스를 보고 `suse.build.env` 를
+고쳐 PR 을 여는 것 자체가 갱신 트리거다.
+
+| 값 | 비고 |
+| --- | --- |
+| `APP_VERSION`·`KEYCLOAK_VERSION` | 둘은 항상 같다. 라인은 `image.env` 의 `SUPPORT_LINE`(`26.8`)과 맞아야 한다 |
+| `KEYCLOAK_SHA256` | 버전을 올릴 때 함께 바꾼다. 내려받은 tar.gz 로 계산하고 업스트림 릴리스의 `.sha1` 자산과 교차 확인한다 |
+| `GUAVA_OLD`/`GUAVA_VERSION`, `MARIADB_OLD`/`MARIADB_VERSION` | 오버레이 쌍 |
+| `BUILDER_BASE`·`MICRO_BASE` | BCI 버전 — 위 "베이스 OS 결정 배경" |
+
+`check-support-line.py` 는 라인이 EOL 인지(종료 코드 2), 라인 안에서 뒤처졌는지(1)만
+알려준다. 라인 안의 패치 릴리스를 따라가는 것도 사람이 한다.
 
 `overlay-jars.sh` 는 `*_OLD` 버전 jar 를 하나도 못 찾으면 **빌드를 실패시킨다.**
 업스트림이 의존성을 올렸는데 스크립트가 조용히 아무것도 안 해서 "CVE 는 그대로인데
-빌드는 성공" 하는 상태를 막기 위함이다.
+빌드는 성공" 하는 상태를 막기 위함이다. `KEYCLOAK_VERSION` 을 올리면 대개 이 실패가 먼저
+난다 — 그때 해당 jar 의 새 base 버전이 수정 버전 이상이면 spec 을 지우고, 아니면 `*_OLD`
+만 옮긴다.
 
-**mssql-jdbc CVE 는 이 오버레이 대상이 아니다.** 위 "왜 자체 빌드하나"의 12건 집계에
-들어 있지만, 실제로는 트리비가 `mssql-jdbc-13.2.1.jre11.jar` 하나를 파일명 잘림으로
-컴포넌트 두 개로 잘못 분해한 오탐이다 — 설치본은 이미 수정 버전이다. 이미지 쪽에서
-없앨 방법이 없어(mssql 드라이버는 Quarkus augmentation 에 포함돼 파일을 지우면
-클래스패스가 깨진다) 레포 루트 `cve-exceptions.json` 의 `CVE-2025-59250` 예외로 위험을
-수용했다 — **자체 빌드로 고친 것이 아니다.** 이 예외는 만료일이 되면 게이트가 다시
-막고 재검토를 강제한다.
+**조치 내역을 섞지 않는다.** 이 이미지의 CVE 는 네 갈래로 처리된다.
 
-집계표(위 "왜 자체 빌드하나")와 오버레이 대상(위 "업스트림과 다른 부분")의 합이 항상
-맞아야 한다 — 새 CVE 를 막을 때마다 양쪽을 함께 갱신한다.
+- **오버레이로 고친 것** — 위 "업스트림과 다른 부분" 표의 jar.
+- **Keycloak 버전 상향으로 고친 것** — 위 "26.8 라인으로 옮긴다" 표에서 base 가 해소한
+  jar 와 Keycloak 자체 코드 CVE.
+- **보류한 것** — opentelemetry-api 의 MEDIUM(수정 버전 `1.67.0`). 위 "업스트림과 다른
+  부분" 에 이유가 있다. 다음 Keycloak 릴리스로 BOM 이 올라올 때 회수한다.
+- **예외로 위험을 수용한 것** — `cve-exceptions.json` 의 `CVE-2025-59250`(mssql-jdbc).
+  **자체 빌드로 고친 것이 아니다.** 트리비가 `mssql-jdbc-13.2.1.jre11.jar` 하나를
+  파일명 잘림으로 컴포넌트 두 개(`13.2.1.jre11` / `13.2.1`)로 분해한 오탐이었다 —
+  설치본은 이미 수정 버전이었다. 26.8.2 는 `13.4.0.jre11` 을 싣고, 26.8.2 빌드의
+  게이트에서 이 CVE 는 **더 이상 매칭되지 않는다** — 트리비는 여전히 컴포넌트 두 개
+  (`13.4.0.jre11` / `13.4.0`)로 분해하지만 둘 다 취약 범위 밖이다. 따라서 이 이미지에는
+  예외가 필요 없다(예외 항목 정리는 예외 관리 절차의 몫이다). 분해 버릇 자체는 남아 있으니
+  mssql-jdbc 버전이 바뀌면 다시 확인한다.
 
-**jackson-databind/jackson-core·postgresql-jdbc·micrometer 도 이 오버레이 대상이
-아니다** — mssql-jdbc 처럼 트리비 오탐은 아니고, 실제로 Keycloak 26.7.2 가 이미
-수정 버전을 배포하기 때문이다(위 "그리고 26.7.2 로 올린다" 참고). `KEYCLOAK_VERSION`
-을 올릴 때마다 세 그룹 모두 재확인한다 — 다음 Quarkus BOM 이 다시 뒤처지면 오버레이를
-되살려야 한다.
-
-**권장 점검 주기**: 게이트가 이 이미지의 차단 CVE 를 다시 보고할 때, 또는 Keycloak 이
-Quarkus BOM 을 올린 릴리스를 낼 때 — **BOM 이 올라가 오버레이가 불필요해지면 해당
-spec 을 제거하는 것이 이 자체 빌드를 유지하는 것보다 항상 우선이다.**
+**자체 빌드를 그만둘 조건**: Keycloak 릴리스의 Quarkus BOM 이 모든 오버레이 대상을 수정
+버전 이상으로 올리면 오버레이가 비고, 남는 차이는 SUSE BCI rootfs 와 `bin/client`
+제거뿐이다. **BOM 이 올라가 오버레이가 불필요해지면 해당 spec 을 지우는 것이 이 자체
+빌드를 유지하는 것보다 항상 우선이다.** 점검 시점은 게이트가 이 이미지의 차단 CVE 를
+다시 보고할 때, 또는 Keycloak 이 Quarkus BOM 을 올린 릴리스를 낼 때다.
 
 ## 빌드
 
@@ -239,9 +235,17 @@ IMAGE=keycloak BASE_OS=suse REGISTRY=<나의-레지스트리> \
 
 `verify.sh` 가 확인하는 것: kc.sh 가 쓰는 셸 도구·java 21·`en_US.UTF-8` 로케일·
 `Asia/Seoul` 타임존, `bin/client` 제거, **오버레이한 jar 의 내부
-`pom.properties` 버전**(파일명이 아니라 내용 — trivy 와 같은 근거), 그리고 실제
-`start-dev` 기동 후 OIDC discovery 응답·admin 토큰 발급·`GET /admin/realms` 까지.
-외부 postgres·ingress·클러스터링은 이 스모크 테스트 범위 밖이다 — 실제 배포 검증은
+`pom.properties` 버전**(파일명이 아니라 내용 — trivy 와 같은 근거), 그리고
+`--tracing-enabled=true` 로 실제 `start-dev` 기동 후 OIDC discovery 응답·admin 토큰
+발급·`GET /admin/realms` 까지. tracing 을 켜 두므로 기동과 이 요청들이 OpenTelemetry
+스택을 실제로 로드하며, 마지막에 서버 로그에 클래스 링크 오류(`NoSuchMethodError`·
+`NoClassDefFoundError` 등)가 없는지 확인한다 — tracing 이 꺼진 기동은 이 스택을 건드리지
+않아, 위 opentelemetry 오버레이 같은 비호환을 놓친다.
+OTLP 수집기는 띄우지 않는다 — 내보내기 실패 경고는 정상이다.
+
+확인하지 **않는** 것: mariadb 드라이버로 실제 DB 에 연결하는 경로(dev-file DB 로
+기동하므로 mariadb 드라이버는 로드되지 않는다 — 오버레이한 jar 의 내용 버전과
+augmentation 통과까지만 확인한다), 외부 postgres·ingress·클러스터링. 실제 배포 검증은
 별도 절차를 따른다.
 
 ### 파일 구성
@@ -252,13 +256,13 @@ IMAGE=keycloak BASE_OS=suse REGISTRY=<나의-레지스트리> \
 | `suse.build.env` | keycloak 버전·베이스 이미지·런타임 패키지·jar 오버레이 버전. `BUILD_ARGS` 에 나열한 이름만 `--build-arg` 로 전달된다 |
 | `overlay-jars.sh` | 취약 jar 교체 + `bin/client` 제거. builder 스테이지 전용(호스트에서 직접 쓰지 않는다) |
 | `verify.sh` | 기능 검증. 호스트에서 bash 로 실행되며 게스트 셸 주입 + 호스트 python3 jar 검사 + 실기동을 조합한다 |
-| `image.env` | 빌드 기본 변종 — `DEFAULT_BASE_OS=suse` 하나만 담는다 |
+| `image.env` | 빌드 기본 변종(`DEFAULT_BASE_OS=suse`)·루트 README 분류(`CATEGORY`)·업스트림 지원 라인(`SUPPORT_*`) |
 
 베이스 변종이 하나뿐이라 파일명이 `suse.*` 로 고정돼 있다.
 
 ### 태그
 
 ```
-docker.io/paasup/keycloak:26.7.2-bci15.7-hardened-20260826
-                           └ app ┘└ 슬러그 ┘└ 하드닝 ┘└ 빌드일 ┘
+<registry>/keycloak:26.8.2-bci15.7-hardened-20261117
+                     └ app ┘└ 슬러그 ┘└ 하드닝 ┘└ 빌드일 ┘
 ```

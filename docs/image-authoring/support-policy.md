@@ -50,7 +50,7 @@ Current declarations:
 | `argocd` | endoflife.date | `argo-cd` | 3.5 |
 | `cnpg-postgresql` | endoflife.date | `postgresql` | 18 |
 | `etcd` | endoflife.date | `etcd` | 3.7 |
-| `keycloak` | endoflife.date | `keycloak` | 26.7 |
+| `keycloak` | endoflife.date | `keycloak` | 26.8 |
 | `adc` | manual | — | upstream releases page |
 | `apisix-ingress-controller` | manual | — | upstream releases page |
 | `cloudnative-pg` | manual | — | the operator's own supported-releases page |

@@ -101,6 +101,13 @@ ARG NETTY_VERSION                          # the version to swap in
   break rather than silently doing nothing.
 - **A jar pinned by a BOM cannot be fixed by changing tags or base OS** — which is
   exactly why the image is built here.
+- **A successful augmentation (`kc.sh build`) does not prove an overlay links.** Code that
+  loads only when a feature is on is never touched by a plain startup. keycloak measured
+  this: overlaying opentelemetry-api 1.67.0 onto the shipped SDK 1.62.0 built cleanly, but
+  startup with tracing on died with `NoClassDefFoundError: io/opentelemetry/api/internal/ConfigUtil`
+  — 1.67 moved that class, and the SDK links against it. So `verify.sh` has to switch on
+  every feature whose jars are overlaid and fail on linkage errors in the log, and an API
+  jar cannot be raised ahead of the SDK built against it.
 - `tzdata-java` does not exist in SLE_BCI (the JDK's bundled tzdb is used). See the SLE
   package-name table in [base-os-policy.md](base-os-policy.md).
 

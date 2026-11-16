@@ -11,14 +11,16 @@
 #   3. The internal version of each overlaid jar (META-INF/maven/**/pom.properties) —
 #      filenames are preserved, so this is checked by content
 #   4. That bin/client was removed
-#   5. A real startup — realm creation and admin token issuance
+#   5. A real startup with tracing enabled — realm creation, admin token issuance, and no
+#      class-linkage errors in the log (tracing loads the OTel stack, which an otherwise
+#      quiet startup never touches)
 set -e
 
 TAG="${TAG:?TAG environment variable is required}"
 PLATFORM="${PLATFORM:-linux/amd64}"
 KEYCLOAK_VERSION="${KEYCLOAK_VERSION:?must be passed from build.env}"
-NETTY_OLD="${NETTY_OLD:?}"     ; NETTY_VERSION="${NETTY_VERSION:?}"
-OTEL_OLD="${OTEL_OLD:?}"       ; OTEL_VERSION="${OTEL_VERSION:?}"
+GUAVA_OLD="${GUAVA_OLD:?}"     ; GUAVA_VERSION="${GUAVA_VERSION:?}"
+MARIADB_OLD="${MARIADB_OLD:?}" ; MARIADB_VERSION="${MARIADB_VERSION:?}"
 
 WORK="$(mktemp -d)"
 CID=""
@@ -34,7 +36,7 @@ LIBDIR=/opt/keycloak/lib/lib/main
 
 # ------------------------------------------------------------------ steps 1-2 and 4
 docker run --rm -i --platform "$PLATFORM" -e TZ=Asia/Seoul \
-  -e NETTY_OLD="$NETTY_OLD" --entrypoint sh "$TAG" <<'GUEST'
+  --entrypoint sh "$TAG" <<'GUEST'
 set -e
 LIB=/opt/keycloak/lib/lib/main
 
@@ -69,9 +71,8 @@ echo "   absent (as expected)"
 
 echo "== distribution layout =="
 [ -d "$LIB" ] || { echo "FAIL: $LIB is missing"; exit 1; }
-n=0; for f in "$LIB"/io.netty.*-"$NETTY_OLD"*.jar; do [ -e "$f" ] && n=$((n+1)); done
-echo "   ${n} netty jar files (preserved filenames are expected — contents verified on the host)"
-[ "$n" -gt 0 ] || { echo "FAIL: there are no netty jars"; exit 1; }
+[ -f /opt/keycloak/lib/quarkus-run.jar ] || { echo "FAIL: lib/quarkus-run.jar is missing"; exit 1; }
+echo "   $(ls "$LIB" | wc -l) jars in lib/lib/main"
 GUEST
 
 # ------------------------------------------------------------------ step 3
@@ -116,15 +117,14 @@ PY
   echo "   $name -> embedded version=$got"
 }
 
-check_jar "io.netty.netty-codec-http-${NETTY_OLD}.jar"                          "$NETTY_VERSION"
-check_jar "io.netty.netty-codec-${NETTY_OLD}.jar"                               "$NETTY_VERSION"
-check_jar "io.opentelemetry.opentelemetry-api-${OTEL_OLD}.jar"                  "$OTEL_VERSION"
+check_jar "com.google.guava.guava-${GUAVA_OLD}.jar"                             "$GUAVA_VERSION"
+check_jar "org.mariadb.jdbc.mariadb-java-client-${MARIADB_OLD}.jar"             "$MARIADB_VERSION"
 
 docker rm -f "$CCID" >/dev/null 2>&1 || true
 CCID=""
 
 # ------------------------------------------------------------------ step 5
-echo "== real startup (start-dev, the built-in dev-file DB) =="
+echo "== real startup (start-dev, the built-in dev-file DB, tracing enabled) =="
 ADMIN_USER="verify-admin"
 ADMIN_PASS="verify-$$-$RANDOM"
 
@@ -134,7 +134,7 @@ CID="$(docker run -d --platform "$PLATFORM" \
   -e KC_BOOTSTRAP_ADMIN_USERNAME="$ADMIN_USER" \
   -e KC_BOOTSTRAP_ADMIN_PASSWORD="$ADMIN_PASS" \
   -e TZ=Asia/Seoul \
-  "$TAG" start-dev)"
+  "$TAG" start-dev --tracing-enabled=true)"
 HOSTPORT="$(docker port "$CID" 8080/tcp | head -1 | rev | cut -d: -f1 | rev)"
 BASE="http://127.0.0.1:${HOSTPORT}"
 echo "   container=${CID:0:12}  base=$BASE"
@@ -189,6 +189,16 @@ assert "master" in realms, f"no master realm: {realms}"
 print(f"   realms={realms}")
 PY
 
-# Evidence that the netty/jackson overlay works in the real HTTP stack — every request above
-# was handled on Quarkus (netty) and serialised to JSON by jackson.
+# With tracing enabled every request above created spans through the OTel API and SDK, so a
+# binary incompatibility between overlaid and shipped jars surfaces as a linkage error.
+# (The OTLP exporter has no collector to reach; its connection warnings are expected.)
+echo "== class-linkage errors in the server log =="
+docker logs "$CID" > "$WORK/server.log" 2>&1
+if grep -nE 'NoClassDefFoundError|NoSuchMethodError|NoSuchFieldError|AbstractMethodError|IncompatibleClassChangeError|ClassNotFoundException' "$WORK/server.log"; then
+  echo "FAIL: linkage errors in the server log — an overlaid jar is incompatible with its neighbours"
+  exit 1
+fi
+grep -qi 'opentelemetry' "$WORK/server.log" && echo "   (opentelemetry appears in the log — tracing is active)"
+echo "   none"
+
 echo "VERIFY-OK"
