@@ -153,12 +153,20 @@ Run it by hand the same way when working locally; `--dry-run` shows what it woul
 The branch is bot-owned and rebuilt from the default branch every rescan, so do not commit
 to it by hand.
 
-Two traps show up in practice.
+Three traps show up in practice.
 
 - **Multiple `FixedVersion` values are per-branch alternatives, not "a higher
   version".** For stdlib, `1.25.13, 1.26.6, 1.27.0-rc.3` are the fix points on three
   separate branches. Taking the overall maximum misreads a pre-release as a stable
-  release. The script handles this rule.
+  release. **The same holds for modules** — grpc's `1.82.2, 1.83.2,
+  1.85.0-dev.0.2026…-93e3…` means "1.83.2 on the 1.83 branch", not the pseudo-version. The
+  script takes the smallest stable alternative above the installed version, and skips
+  (with a note) a CVE fixed only in a pre-release.
+- **A CVE in the binary's own main module is not a `GO_MODULE_UPGRADES` problem.**
+  `github.com/argoproj/argo-cd/v3` inside the argocd binary is the source being built; a
+  `replace` cannot move it. Raise `SOURCE_COMMIT`/`APP_VERSION` instead. The script
+  recognises a module that belongs to a git repository the image's Dockerfile fetches
+  and reports it as a note rather than writing it.
 - **A suggestion is the minimum the CVE requires.** Inter-module constraints may force
   it higher — a module may require a specific minimum of another module, so the
   suggested value fails the build with `requires <module>@vX, not vY`. Raise it to the

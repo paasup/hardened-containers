@@ -487,7 +487,15 @@ jobs:
     # `needs.<job>.result` reports that job's own actual conclusion with no implicit
     # chain-walking and no ambiguity between "skipped" and "ran with an empty list" — it is
     # 'success' only when `published` itself really ran and completed successfully.
-    if: needs.published.result == 'success' && needs.published.outputs.images != '[]'
+    #   But that alone still is not enough: GitHub prepends the implicit `success() &&` to
+    #   any `if:` that contains no status-check function at all, so the chain walk came
+    #   back. `!cancelled()` is a status function — its presence suppresses the implicit
+    #   success() — while still letting a cancelled run stop here. (Measured: run
+    #   43767931377 published apisix and cnpg-postgresql, `published` succeeded with
+    #   ["apisix","cnpg-postgresql"], and attest/record were still skipped.)
+    if: >-
+      !cancelled() && needs.published.result == 'success' &&
+      needs.published.outputs.images != '[]'
     strategy:
       fail-fast: false
       matrix:
@@ -548,8 +556,10 @@ jobs:
   # registry secrets there. Unlike an `if:`, that cannot be edited away in a pull request.
   record:
     needs: published
-    # See the comment on `attest`'s `if:` — same two failure modes, same fix.
-    if: needs.published.result == 'success' && needs.published.outputs.images != '[]'
+    # See the comment on `attest`'s `if:` — same failure modes, same fix.
+    if: >-
+      !cancelled() && needs.published.result == 'success' &&
+      needs.published.outputs.images != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: production

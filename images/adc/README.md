@@ -54,7 +54,7 @@ as-is.
 | Final base | `gcr.io/distroless/nodejs24-debian13:nonroot` | `registry.suse.com/bci/bci-base:15.7` + `zypper install nodejs24` | Avoids the OS package CVEs and standardises the base OS across images (the same Node 24 major is kept — being a standard SUSE package, there is no distroless-specific `-devel` problem) |
 | Entrypoint path | `/nodejs/bin/node` | `/usr/bin/node` | Where zypper installs it |
 | Non-root user | Provided by the distroless `:nonroot` tag | A system account `adc` created explicitly | `bci-base` has no nonroot variant tag |
-| Builder stage | `node:lts-bookworm-slim` (pnpm + nx build) | Identical — out of policy scope | Only the final stage is scanned and shipped |
+| Builder stage | `node:lts-bookworm-slim` (pnpm + nx build) | `node:24-bookworm-slim@sha256:…` — pinned by digest instead of the rolling tag | `lts` moved to Node 26 in 2026-10, which dropped corepack and broke the build. Pinned to the final stage's major (nodejs24) |
 | Application code | The `main.cjs` bundle | Identical | Reusing the builder stage as-is keeps the diff minimal |
 
 Build time is under two minutes (mostly pnpm install plus nx build).
@@ -88,7 +88,7 @@ failing to read this base, and the gate withholds a pass.
 | --- | --- |
 | Source | `https://github.com/api7/adc.git` |
 | Pinned commit | `SOURCE_COMMIT` in `source.build.env` — the actual commit the `v0.29.0` tag points at (a lightweight tag, with no peeled commit) |
-| Builder | `node:lts-bookworm-slim`, same as upstream — out of policy scope (builder stage) |
+| Builder | `BUILDER_BASE` in `source.build.env` — `node:24-bookworm-slim` pinned by digest (builder stage, so out of policy scope) |
 | Final base | `registry.suse.com/bci/bci-base:15.7` + `nodejs24` |
 
 `SOURCE_COMMIT` is **not tracked automatically.** As with the other self-built images,
