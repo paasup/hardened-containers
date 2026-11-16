@@ -41,6 +41,7 @@ PGDG-rpm). The detailed correspondence is in the comment at the top of that file
 | Base | `standard-trixie` family (Debian) | `registry.suse.com/bci/bci-base:15.7` | Different vendor CVE verdicts, plus gid hygiene |
 | Package manager | apt + PGDG deb | zypper + PGDG rpm | An unavoidable consequence of the base OS change |
 | `pg-failover-slots` extension | Included | Excluded | No package in the PGDG zypp repository |
+| `pg_textsearch` extension (Timescale, BM25) | Absent | Included (built from source) | For databases that need BM25 keyword search. The PGDG zypp repository has no package, so pinned, checksum-verified source is built. Other databases are unaffected unless they create or preload it |
 | uid/gid | 26 (forced with `usermod`) | 26 (created by the PGDG RPM) | RPM-family convention — no adjustment needed |
 | Binary path | `/usr/lib/postgresql/18/bin` | `/usr/pgsql-18/bin` (with a compatibility symlink alongside) | In case any code hardcodes the path |
 
@@ -68,6 +69,11 @@ repository and editing `suse.build.env` to open a PR is itself the update trigge
 `PG_VERSION` must not be bumped by looking at major.minor alone — the whole EVR (for
 example `18.4-4200001PGDG.sles15.7`) has to match exactly what the PGDG repository
 actually publishes, or `zypper install` will not fetch that version.
+
+`PG_TEXTSEARCH_VERSION` and `PG_TEXTSEARCH_SHA256` are also bumped by hand. If a database using
+this extension also runs pg_textsearch elsewhere, keep the version equal to that one so the
+index format does not diverge. When bumping, recompute the SHA256 of the GitHub tag
+archive and commit it alongside.
 
 Whether to follow a change in the upstream build recipe itself (new extensions, new
 hardening steps) is covered in the section above — that is a case of re-porting the

@@ -32,7 +32,7 @@ determination** — each image contains many transitive dependencies not listed 
 | apisix-ingress-controller | Apache APISIX Ingress Controller | Apache-2.0 |
 | argocd | Argo CD (CNCF) | Apache-2.0 |
 | cloudnative-pg | CloudNativePG (CNCF) | Apache-2.0 |
-| cnpg-postgresql | PostgreSQL + PGDG packages | PostgreSQL License and others |
+| cnpg-postgresql | PostgreSQL + PGDG packages, pg_textsearch (Timescale) | PostgreSQL License and others |
 | etcd | etcd (CNCF) | Apache-2.0 |
 | keycloak | Keycloak (CNCF) | Apache-2.0 |
 
