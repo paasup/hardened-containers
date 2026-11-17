@@ -1,10 +1,10 @@
 {
   "images": {
     "adc": {
-      "digest": "sha256:f78aa19d4e99d39d810b692e9a10f567883c79b24ffa0a4f0ea508dbf4dfc1d1",
+      "digest": "sha256:4d3618daab7865717954ee9e45c54c06e9576000dd1d644e3383fc77ee89be86",
       "gate": "pass",
-      "ref": "docker.io/paasup/adc:0.29.0-security-hardened-20260908",
-      "tag": "0.29.0-security-hardened-20260908"
+      "ref": "docker.io/paasup/adc:0.29.0-security-hardened-20261116",
+      "tag": "0.29.0-security-hardened-20261116"
     },
     "apisix": {
       "digest": "sha256:f1f9ca1446cc8e88e19ca53139545d3167610788d80605687b2db2dc31eda58c",
@@ -43,10 +43,10 @@
       "tag": "1.30.0-security-hardened-20260904"
     },
     "cnpg-postgresql": {
-      "digest": "sha256:3675849bb63c5115ae70aef216a29b4ddfd6e2e64ca64d810a993795bad4ec7d",
+      "digest": "sha256:4d7fd5f2c032712cbf5170a09fd03d29c552c3908454f28b2d0f18058be6df74",
       "gate": "pass",
-      "ref": "docker.io/paasup/cnpg-postgresql:18.4-bci15.7-hardened-20260908",
-      "tag": "18.4-bci15.7-hardened-20260908"
+      "ref": "docker.io/paasup/cnpg-postgresql:18.4-bci15.7-hardened-20261116",
+      "tag": "18.4-bci15.7-hardened-20261116"
     },
     "etcd": {
       "digest": "sha256:f79b0c3bed652e4c19963449b11dcdcde4c014bd1994412ca2c6c3ca6ebfe53f",

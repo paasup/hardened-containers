@@ -2,10 +2,10 @@
   "$schema": "http://cyclonedx.org/schema/bom-1.7.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.7",
-  "serialNumber": "urn:uuid:0a64876a-19da-4c89-88e2-3cea842f848f",
+  "serialNumber": "urn:uuid:28c113c2-a623-42ad-a8f2-1aa5b458203f",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-09-08T05:02:58+00:00",
+    "timestamp": "2026-11-17T00:00:29+00:00",
     "tools": {
       "components": [
         {
@@ -20,21 +20,17 @@
       ]
     },
     "component": {
-      "bom-ref": "a8d7e91f-95d9-40a2-b88c-799360965160",
+      "bom-ref": "65781beb-8958-48b0-91db-511883297bf9",
       "type": "container",
       "name": "/home/runner/work/hardened-containers/hardened-containers/build-out/image.tar",
       "properties": [
         {
           "name": "aquasecurity:trivy:DiffID",
-          "value": "sha256:21d3cc8e59bdab3b72b7b5ee7ace33bae29bdaa5228d1095f5bbe6865181133d"
+          "value": "sha256:414770724e98b6ea930ac9eb08dfc06d0c3d2e09a59bca9b80889f4feab0034d"
         },
         {
           "name": "aquasecurity:trivy:DiffID",
-          "value": "sha256:2ebc4cbcaa130607871468b651ef8a3984b8adac40c05b932c867c793e3d239b"
-        },
-        {
-          "name": "aquasecurity:trivy:DiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:5aa89de8786b3f887e80db3649e3d585c243036f12f56973e7ce65fc3f1a20b2"
         },
         {
           "name": "aquasecurity:trivy:DiffID",
@@ -42,11 +38,15 @@
         },
         {
           "name": "aquasecurity:trivy:DiffID",
-          "value": "sha256:d02022dccb430edcaf95da03ec97a39d1ed78d3b76a0e888bfa51b3aef176d85"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:DiffID",
+          "value": "sha256:f1c750a1eb4f79ea1053d1aca3055f2a0076820ee2151fa8cc4579ed13475774"
         },
         {
           "name": "aquasecurity:trivy:ImageID",
-          "value": "sha256:c3e48ac6c0bed68610e1870e4c646e7c10c9503fbcc2d79b037a4ce41c7d787d"
+          "value": "sha256:02deabf5ca23c27df3f274fe2ad940fa3130797369454cc3799695e46af2bdda"
         },
         {
           "name": "aquasecurity:trivy:Labels:com.suse.bci.base.authors",
@@ -54,7 +54,7 @@
         },
         {
           "name": "aquasecurity:trivy:Labels:com.suse.bci.base.created",
-          "value": "2026-09-07T18:38:41.410328462Z"
+          "value": "2026-11-12T20:37:37.169994961Z"
         },
         {
           "name": "aquasecurity:trivy:Labels:com.suse.bci.base.description",
@@ -74,11 +74,11 @@
         },
         {
           "name": "aquasecurity:trivy:Labels:com.suse.bci.base.name",
-          "value": "15.7-5.23.27"
+          "value": "15.7-5.23.70"
         },
         {
           "name": "aquasecurity:trivy:Labels:com.suse.bci.base.reference",
-          "value": "registry.suse.com/bci/bci-base:15.7-5.23.27"
+          "value": "registry.suse.com/bci/bci-base:15.7-5.23.70"
         },
         {
           "name": "aquasecurity:trivy:Labels:com.suse.bci.base.release-stage",
@@ -110,7 +110,7 @@
         },
         {
           "name": "aquasecurity:trivy:Labels:com.suse.bci.base.version",
-          "value": "15.7-5.23.27"
+          "value": "15.7-5.23.70"
         },
         {
           "name": "aquasecurity:trivy:Labels:com.suse.eula",
@@ -150,7 +150,7 @@
         },
         {
           "name": "aquasecurity:trivy:Labels:org.opencontainers.image.created",
-          "value": "2026-09-07T18:38:41.410328462Z"
+          "value": "2026-11-12T20:37:37.169994961Z"
         },
         {
           "name": "aquasecurity:trivy:Labels:org.opencontainers.image.description",
@@ -158,7 +158,7 @@
         },
         {
           "name": "aquasecurity:trivy:Labels:org.opencontainers.image.ref.name",
-          "value": "15.7-5.23.27"
+          "value": "15.7-5.23.70"
         },
         {
           "name": "aquasecurity:trivy:Labels:org.opencontainers.image.source",
@@ -178,19 +178,19 @@
         },
         {
           "name": "aquasecurity:trivy:Labels:org.opencontainers.image.version",
-          "value": "15.7-5.23.27"
+          "value": "15.7-5.23.70"
         },
         {
           "name": "aquasecurity:trivy:Labels:org.opensuse.reference",
-          "value": "registry.suse.com/bci/bci-base:15.7-5.23.27"
+          "value": "registry.suse.com/bci/bci-base:15.7-5.23.70"
         },
         {
           "name": "aquasecurity:trivy:Reference",
-          "value": "paasup/adc:0.29.0-security-hardened-20260908"
+          "value": "paasup/adc:0.29.0-security-hardened-20261116"
         },
         {
           "name": "aquasecurity:trivy:RepoTag",
-          "value": "paasup/adc:0.29.0-security-hardened-20260908"
+          "value": "paasup/adc:0.29.0-security-hardened-20261116"
         },
         {
           "name": "aquasecurity:trivy:SchemaVersion",
@@ -198,14 +198,14 @@
         },
         {
           "name": "aquasecurity:trivy:Size",
-          "value": "243462144"
+          "value": "245204480"
         }
       ]
     }
   },
   "components": [
     {
-      "bom-ref": "09879ce7-e343-4c79-b4ea-2ff9e41f20a7",
+      "bom-ref": "238afc56-13f6-4132-8da6-107aa618ccaa",
       "type": "operating-system",
       "name": "sles",
       "version": "15.7",
@@ -245,7 +245,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -270,17 +274,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/bash-sh@4.4-150400.27.6.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/bash-sh@4.4-150400.27.13.3?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "bash-sh",
-      "version": "4.4-150400.27.6.1",
+      "version": "4.4-150400.27.13.3",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "227dfed6a820233c9f9c7e33490d708b"
+          "content": "6f64feb11cb8667bdbf8da3eb61e52bf"
         }
       ],
       "licenses": [
@@ -290,15 +294,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/bash-sh@4.4-150400.27.6.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/bash-sh@4.4-150400.27.13.3?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "bash-sh@4.4-150400.27.6.1.x86_64"
+          "value": "bash-sh@4.4-150400.27.13.3.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -310,7 +318,7 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150400.27.6.1"
+          "value": "150400.27.13.3"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
@@ -319,17 +327,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/bash@4.4-150400.27.6.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/bash@4.4-150400.27.13.3?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "bash",
-      "version": "4.4-150400.27.6.1",
+      "version": "4.4-150400.27.13.3",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "4141fd1d7e3afdc7201166c9f1ad93ee"
+          "content": "63f89717b74d534dadedc4464da6db77"
         }
       ],
       "licenses": [
@@ -339,15 +347,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/bash@4.4-150400.27.6.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/bash@4.4-150400.27.13.3?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "bash@4.4-150400.27.6.1.x86_64"
+          "value": "bash@4.4-150400.27.13.3.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -359,7 +371,7 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150400.27.6.1"
+          "value": "150400.27.13.3"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
@@ -392,7 +404,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -441,7 +457,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -466,17 +486,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/ca-certificates-mozilla@2.84-150200.44.1?arch=noarch&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/ca-certificates-mozilla@2.92-150200.50.2?arch=noarch&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "ca-certificates-mozilla",
-      "version": "2.84-150200.44.1",
+      "version": "2.92-150200.50.2",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "246ed49c3c977e2c13c7ec827d4d0548"
+          "content": "59ec047abd0f4642728caee841257201"
         }
       ],
       "licenses": [
@@ -486,15 +506,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/ca-certificates-mozilla@2.84-150200.44.1?arch=noarch&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/ca-certificates-mozilla@2.92-150200.50.2?arch=noarch&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "ca-certificates-mozilla@2.84-150200.44.1.noarch"
+          "value": "ca-certificates-mozilla@2.92-150200.50.2.noarch"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -506,11 +530,11 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150200.44.1"
+          "value": "150200.50.2"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
-          "value": "2.84"
+          "value": "2.92"
         }
       ]
     },
@@ -539,7 +563,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -564,17 +592,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/container-suseconnect@2.6.0-150700.4.97.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/container-suseconnect@2.6.0-150700.4.101.2?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "container-suseconnect",
-      "version": "2.6.0-150700.4.97.1",
+      "version": "2.6.0-150700.4.101.2",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "a7b99fb74321cf5de4bb42c4300d5fc9"
+          "content": "fb48b8d2a8974dea6db1f2c583c7cb81"
         }
       ],
       "licenses": [
@@ -584,15 +612,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/container-suseconnect@2.6.0-150700.4.97.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/container-suseconnect@2.6.0-150700.4.101.2?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "container-suseconnect@2.6.0-150700.4.97.1.x86_64"
+          "value": "container-suseconnect@2.6.0-150700.4.101.2.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -604,7 +636,7 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150700.4.97.1"
+          "value": "150700.4.101.2"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
@@ -637,7 +669,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -686,7 +722,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -735,7 +775,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -784,7 +828,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -809,17 +857,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/crypto-policies@20230920.570ea89-150600.3.19.1?arch=noarch&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/crypto-policies@20250714.cd6043a-150700.6.7.1?arch=noarch&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "crypto-policies",
-      "version": "20230920.570ea89-150600.3.19.1",
+      "version": "20250714.cd6043a-150700.6.7.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "2497ddf4e23819c464743af3746f21ce"
+          "content": "33d5497d2e49f3420bb5834247fbdca1"
         }
       ],
       "licenses": [
@@ -829,15 +877,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/crypto-policies@20230920.570ea89-150600.3.19.1?arch=noarch&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/crypto-policies@20250714.cd6043a-150700.6.7.1?arch=noarch&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "crypto-policies@20230920.570ea89-150600.3.19.1.noarch"
+          "value": "crypto-policies@20250714.cd6043a-150700.6.7.1.noarch"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -849,26 +901,26 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150600.3.19.1"
+          "value": "150700.6.7.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
-          "value": "20230920.570ea89"
+          "value": "20250714.cd6043a"
         }
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/curl@8.14.1-150700.7.26.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/curl@8.22.0-150700.7.33.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "curl",
-      "version": "8.14.1-150700.7.26.1",
+      "version": "8.22.0-150700.7.33.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "30dde28abc319c20d830e110d5278cea"
+          "content": "9fbfb04703daccec3fec0586d879a640"
         }
       ],
       "licenses": [
@@ -878,15 +930,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/curl@8.14.1-150700.7.26.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/curl@8.22.0-150700.7.33.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "curl@8.14.1-150700.7.26.1.x86_64"
+          "value": "curl@8.22.0-150700.7.33.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -898,11 +954,11 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150700.7.26.1"
+          "value": "150700.7.33.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
-          "value": "8.14.1"
+          "value": "8.22.0"
         }
       ]
     },
@@ -929,7 +985,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -978,7 +1038,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1027,7 +1091,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1076,7 +1144,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1125,7 +1197,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1150,17 +1226,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "glibc",
-      "version": "2.38-150600.14.52.1",
+      "version": "2.38-150600.14.61.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "3d021702539e275842b01129622c0b4c"
+          "content": "edf847d78969d569b6e0ac9b161759be"
         }
       ],
       "licenses": [
@@ -1168,15 +1244,19 @@
           "expression": "GPL-2.0-or-later AND LGPL-2.1-or-later AND LGPL-2.1-or-later WITH GCC-exception-2.0"
         }
       ],
-      "purl": "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "glibc@2.38-150600.14.52.1.x86_64"
+          "value": "glibc@2.38-150600.14.61.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -1188,7 +1268,7 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150600.14.52.1"
+          "value": "150600.14.61.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
@@ -1212,7 +1292,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1240,7 +1324,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1268,7 +1356,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1296,7 +1388,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1324,7 +1420,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1352,7 +1452,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1389,7 +1493,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1438,7 +1546,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1487,7 +1599,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1536,7 +1652,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1585,7 +1705,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1632,7 +1756,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1657,17 +1785,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/libacl1@2.2.52-4.3.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/libacl1@2.4.0-150000.4.6.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "libacl1",
-      "version": "2.2.52-4.3.1",
+      "version": "2.4.0-150000.4.6.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "88298f8be6d0a6fdc190913475582aed"
+          "content": "caee79a179a4449fb6f4af8796c868f2"
         }
       ],
       "licenses": [
@@ -1675,15 +1803,19 @@
           "expression": "GPL-2.0-or-later AND LGPL-2.1-or-later"
         }
       ],
-      "purl": "pkg:rpm/suse/libacl1@2.2.52-4.3.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/libacl1@2.4.0-150000.4.6.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "libacl1@2.2.52-4.3.1.x86_64"
+          "value": "libacl1@2.4.0-150000.4.6.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -1695,11 +1827,11 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "4.3.1"
+          "value": "150000.4.6.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
-          "value": "2.2.52"
+          "value": "2.4.0"
         }
       ]
     },
@@ -1726,7 +1858,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1751,17 +1887,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/libattr1@2.4.47-2.19?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/libattr1@2.6.0-150000.4.3.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "libattr1",
-      "version": "2.4.47-2.19",
+      "version": "2.6.0-150000.4.3.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "4076970e6f886b0720829e01446863d6"
+          "content": "e02fca0d01b2cd3cddb9d6b618a2f02a"
         }
       ],
       "licenses": [
@@ -1769,15 +1905,19 @@
           "expression": "GPL-2.0-or-later AND LGPL-2.1-or-later"
         }
       ],
-      "purl": "pkg:rpm/suse/libattr1@2.4.47-2.19?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/libattr1@2.6.0-150000.4.3.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "libattr1@2.4.47-2.19.x86_64"
+          "value": "libattr1@2.6.0-150000.4.3.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -1789,11 +1929,11 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "2.19"
+          "value": "150000.4.3.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
-          "value": "2.4.47"
+          "value": "2.6.0"
         }
       ]
     },
@@ -1822,7 +1962,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1871,7 +2015,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1920,7 +2068,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -1969,7 +2121,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -2018,7 +2174,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -2043,17 +2203,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/libbrotlicommon1@1.0.7-150200.3.5.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/libbrotlicommon1@1.0.7-150200.3.8.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "libbrotlicommon1",
-      "version": "1.0.7-150200.3.5.1",
+      "version": "1.0.7-150200.3.8.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "466acef412a5ae225cd1f761b59aa325"
+          "content": "cd638c84bda2b320f934b93b2b06b1cb"
         }
       ],
       "licenses": [
@@ -2063,15 +2223,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/libbrotlicommon1@1.0.7-150200.3.5.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/libbrotlicommon1@1.0.7-150200.3.8.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "libbrotlicommon1@1.0.7-150200.3.5.1.x86_64"
+          "value": "libbrotlicommon1@1.0.7-150200.3.8.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -2083,7 +2247,7 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150200.3.5.1"
+          "value": "150200.3.8.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
@@ -2092,17 +2256,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/libbrotlidec1@1.0.7-150200.3.5.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/libbrotlidec1@1.0.7-150200.3.8.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "libbrotlidec1",
-      "version": "1.0.7-150200.3.5.1",
+      "version": "1.0.7-150200.3.8.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "ddfa384c2e58dc2e3ee798f2062ab8a7"
+          "content": "1b01bd6b084ab2cafad628b34f1d880e"
         }
       ],
       "licenses": [
@@ -2112,15 +2276,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/libbrotlidec1@1.0.7-150200.3.5.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/libbrotlidec1@1.0.7-150200.3.8.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "libbrotlidec1@1.0.7-150200.3.5.1.x86_64"
+          "value": "libbrotlidec1@1.0.7-150200.3.8.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -2132,7 +2300,7 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150200.3.5.1"
+          "value": "150200.3.8.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
@@ -2165,7 +2333,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -2214,7 +2386,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -2261,7 +2437,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -2310,7 +2490,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -2359,7 +2543,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -2408,7 +2596,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -2433,17 +2625,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/libcurl4@8.14.1-150700.7.26.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/libcurl4@8.22.0-150700.7.33.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "libcurl4",
-      "version": "8.14.1-150700.7.26.1",
+      "version": "8.22.0-150700.7.33.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "32826c554cc76b444e838c1014eb89b3"
+          "content": "cd5565bf53223194e6fc1960324a787a"
         }
       ],
       "licenses": [
@@ -2453,15 +2645,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/libcurl4@8.14.1-150700.7.26.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/libcurl4@8.22.0-150700.7.33.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "libcurl4@8.14.1-150700.7.26.1.x86_64"
+          "value": "libcurl4@8.22.0-150700.7.33.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -2473,11 +2669,11 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150700.7.26.1"
+          "value": "150700.7.33.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
-          "value": "8.14.1"
+          "value": "8.22.0"
         }
       ]
     },
@@ -2504,7 +2700,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -2553,7 +2753,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -2600,7 +2804,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -2649,7 +2857,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -2698,7 +2910,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -2747,7 +2963,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -2772,17 +2992,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/libgcc_s1@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/libgcc_s1@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "libgcc_s1",
-      "version": "15.3.0+git11272-150000.1.12.1",
+      "version": "16.2.0+git9497-150000.1.3.3",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "8753cd6f16cb685ca41c98c3873c8352"
+          "content": "2dcba90b3eb7c504189cdef1aee5f27c"
         }
       ],
       "licenses": [
@@ -2790,15 +3010,19 @@
           "expression": "GPL-3.0-or-later WITH GCC-exception-3.1"
         }
       ],
-      "purl": "pkg:rpm/suse/libgcc_s1@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/libgcc_s1@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "libgcc_s1@15.3.0+git11272-150000.1.12.1.x86_64"
+          "value": "libgcc_s1@16.2.0+git9497-150000.1.3.3.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -2806,15 +3030,15 @@
         },
         {
           "name": "aquasecurity:trivy:SrcName",
-          "value": "gcc15"
+          "value": "gcc16"
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150000.1.12.1"
+          "value": "150000.1.3.3"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
-          "value": "15.3.0+git11272"
+          "value": "16.2.0+git9497"
         }
       ]
     },
@@ -2841,7 +3065,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -2866,17 +3094,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/libglib-2_0-0@2.78.6-150600.4.38.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/libglib-2_0-0@2.78.6-150600.4.41.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "libglib-2_0-0",
-      "version": "2.78.6-150600.4.38.1",
+      "version": "2.78.6-150600.4.41.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "40ea6994998ae991bbaa668c5f7ac49a"
+          "content": "5282926d2e8d709319369d1bf6f0fffa"
         }
       ],
       "licenses": [
@@ -2886,15 +3114,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/libglib-2_0-0@2.78.6-150600.4.38.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/libglib-2_0-0@2.78.6-150600.4.41.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "libglib-2_0-0@2.78.6-150600.4.38.1.x86_64"
+          "value": "libglib-2_0-0@2.78.6-150600.4.41.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -2906,7 +3138,7 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150600.4.38.1"
+          "value": "150600.4.41.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
@@ -2937,7 +3169,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -2984,7 +3220,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3031,7 +3271,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3080,7 +3324,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:d02022dccb430edcaf95da03ec97a39d1ed78d3b76a0e888bfa51b3aef176d85"
+          "value": "sha256:5aa89de8786b3f887e80db3649e3d585c243036f12f56973e7ce65fc3f1a20b2"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:219c0d0f96ca7a3ca09b7adada00d55d4557262797e39c3485f39cfbf96b1562"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3129,7 +3377,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:d02022dccb430edcaf95da03ec97a39d1ed78d3b76a0e888bfa51b3aef176d85"
+          "value": "sha256:5aa89de8786b3f887e80db3649e3d585c243036f12f56973e7ce65fc3f1a20b2"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:219c0d0f96ca7a3ca09b7adada00d55d4557262797e39c3485f39cfbf96b1562"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3176,7 +3428,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3223,7 +3479,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3272,7 +3532,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3319,7 +3583,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3368,7 +3636,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3417,7 +3689,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3466,7 +3742,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3515,7 +3795,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3564,7 +3848,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3613,7 +3901,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3662,7 +3954,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3711,7 +4007,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3760,7 +4060,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3809,7 +4113,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3834,17 +4142,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/libopenssl-3-fips-provider@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/libopenssl-3-fips-provider@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "libopenssl-3-fips-provider",
-      "version": "3.5.0-150700.5.50.1",
+      "version": "3.5.0-150700.5.56.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "eea205162611e14c3933305ea24905d6"
+          "content": "9fe153adcd7bac531afddf1fe56ee530"
         }
       ],
       "licenses": [
@@ -3854,15 +4162,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/libopenssl-3-fips-provider@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/libopenssl-3-fips-provider@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "libopenssl-3-fips-provider@3.5.0-150700.5.50.1.x86_64"
+          "value": "libopenssl-3-fips-provider@3.5.0-150700.5.56.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -3874,7 +4186,7 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150700.5.50.1"
+          "value": "150700.5.56.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
@@ -3883,17 +4195,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "libopenssl3",
-      "version": "3.5.0-150700.5.50.1",
+      "version": "3.5.0-150700.5.56.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "f262bc1b22809e220c275dda7c01e078"
+          "content": "123605f2bb7106b26465a36fc9226d89"
         }
       ],
       "licenses": [
@@ -3903,15 +4215,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "libopenssl3@3.5.0-150700.5.50.1.x86_64"
+          "value": "libopenssl3@3.5.0-150700.5.56.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -3923,7 +4239,7 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150700.5.50.1"
+          "value": "150700.5.56.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
@@ -3956,7 +4272,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -3981,17 +4301,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/libpcre2-8-0@10.42-150600.1.26?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/libpcre2-8-0@10.42-150600.3.3.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "libpcre2-8-0",
-      "version": "10.42-150600.1.26",
+      "version": "10.42-150600.3.3.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "6f42503a14650a7bc4e0b8f0b9fee6ca"
+          "content": "4098828848ab4a73a2ae515c5dcb133b"
         }
       ],
       "licenses": [
@@ -4001,15 +4321,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/libpcre2-8-0@10.42-150600.1.26?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/libpcre2-8-0@10.42-150600.3.3.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "libpcre2-8-0@10.42-150600.1.26.x86_64"
+          "value": "libpcre2-8-0@10.42-150600.3.3.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -4021,7 +4345,7 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150600.1.26"
+          "value": "150600.3.3.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
@@ -4054,7 +4378,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -4101,7 +4429,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -4126,17 +4458,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/libreadline7@7.0-150400.27.6.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/libreadline7@7.0-150400.27.13.3?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "libreadline7",
-      "version": "7.0-150400.27.6.1",
+      "version": "7.0-150400.27.13.3",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "ed85f9f1ede88f54b4be2f81068fb8d7"
+          "content": "627dbaa0a79e42c679f27863cfea7abf"
         }
       ],
       "licenses": [
@@ -4146,15 +4478,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/libreadline7@7.0-150400.27.6.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/libreadline7@7.0-150400.27.13.3?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "libreadline7@7.0-150400.27.6.1.x86_64"
+          "value": "libreadline7@7.0-150400.27.13.3.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -4166,7 +4502,7 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150400.27.6.1"
+          "value": "150400.27.13.3"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
@@ -4175,17 +4511,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/libsasl2-3@2.1.28-150600.7.14.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/libsasl2-3@2.1.28-150600.7.17.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "libsasl2-3",
-      "version": "2.1.28-150600.7.14.1",
+      "version": "2.1.28-150600.7.17.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "26394b32a667d043380eeea758cb5f49"
+          "content": "74c1527691c748bd6fab18f7491a7f5f"
         }
       ],
       "licenses": [
@@ -4195,15 +4531,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/libsasl2-3@2.1.28-150600.7.14.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/libsasl2-3@2.1.28-150600.7.17.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "libsasl2-3@2.1.28-150600.7.14.1.x86_64"
+          "value": "libsasl2-3@2.1.28-150600.7.17.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -4215,7 +4555,7 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150600.7.14.1"
+          "value": "150600.7.17.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
@@ -4248,7 +4588,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -4297,7 +4641,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -4346,7 +4694,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -4395,7 +4747,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -4444,7 +4800,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -4493,7 +4853,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -4518,17 +4882,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/libsolv-tools-base@0.7.39-150700.11.10.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/libsolv-tools-base@0.7.40-150700.11.13.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "libsolv-tools-base",
-      "version": "0.7.39-150700.11.10.1",
+      "version": "0.7.40-150700.11.13.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "82849ecab0129ef1d6ec038d9f539e62"
+          "content": "7ac20dd9b75962a60e1684cfb7aefda6"
         }
       ],
       "licenses": [
@@ -4538,15 +4902,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/libsolv-tools-base@0.7.39-150700.11.10.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/libsolv-tools-base@0.7.40-150700.11.13.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "libsolv-tools-base@0.7.39-150700.11.10.1.x86_64"
+          "value": "libsolv-tools-base@0.7.40-150700.11.13.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -4558,11 +4926,11 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150700.11.10.1"
+          "value": "150700.11.13.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
-          "value": "0.7.39"
+          "value": "0.7.40"
         }
       ]
     },
@@ -4591,7 +4959,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -4640,7 +5012,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -4689,7 +5065,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -4714,17 +5094,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/libstdc%2B%2B6@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/libstdc%2B%2B6@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "libstdc++6",
-      "version": "15.3.0+git11272-150000.1.12.1",
+      "version": "16.2.0+git9497-150000.1.3.3",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "182e07754ceca83c1038b7874339c22c"
+          "content": "150ff03cb40fc0ce56b5b0b3fbf4d5d9"
         }
       ],
       "licenses": [
@@ -4732,15 +5112,19 @@
           "expression": "GPL-3.0-or-later WITH GCC-exception-3.1"
         }
       ],
-      "purl": "pkg:rpm/suse/libstdc%2B%2B6@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/libstdc%2B%2B6@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "libstdc++6@15.3.0+git11272-150000.1.12.1.x86_64"
+          "value": "libstdc++6@16.2.0+git9497-150000.1.3.3.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -4748,15 +5132,15 @@
         },
         {
           "name": "aquasecurity:trivy:SrcName",
-          "value": "gcc15"
+          "value": "gcc16"
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150000.1.12.1"
+          "value": "150000.1.3.3"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
-          "value": "15.3.0+git11272"
+          "value": "16.2.0+git9497"
         }
       ]
     },
@@ -4783,7 +5167,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -4830,7 +5218,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -4877,7 +5269,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -4926,7 +5322,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -4975,7 +5375,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -5024,7 +5428,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -5071,7 +5479,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -5120,7 +5532,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -5169,7 +5585,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -5218,7 +5638,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -5267,7 +5691,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -5316,7 +5744,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -5365,7 +5797,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -5414,7 +5850,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -5439,17 +5879,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/libzck1@1.5.1-150700.1.2?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/libzck1@1.5.1-150700.3.3.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "libzck1",
-      "version": "1.5.1-150700.1.2",
+      "version": "1.5.1-150700.3.3.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "48d98a4317f809de364a3c701091ba75"
+          "content": "57d4d0ebcb399f0dff8febffea5af994"
         }
       ],
       "licenses": [
@@ -5457,15 +5897,19 @@
           "expression": "BSD-2-Clause AND MIT"
         }
       ],
-      "purl": "pkg:rpm/suse/libzck1@1.5.1-150700.1.2?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/libzck1@1.5.1-150700.3.3.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "libzck1@1.5.1-150700.1.2.x86_64"
+          "value": "libzck1@1.5.1-150700.3.3.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -5477,7 +5921,7 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150700.1.2"
+          "value": "150700.3.3.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
@@ -5510,7 +5954,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -5557,7 +6005,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -5582,17 +6034,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/libzypp@17.38.13-150700.6.13.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/libzypp@17.38.16-150700.6.19.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "libzypp",
-      "version": "17.38.13-150700.6.13.1",
+      "version": "17.38.16-150700.6.19.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "f7574e6f10a3501005c2ee3d2a4ff72f"
+          "content": "acae34db53a1f3550de1c58074450984"
         }
       ],
       "licenses": [
@@ -5602,15 +6054,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/libzypp@17.38.13-150700.6.13.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/libzypp@17.38.16-150700.6.19.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "libzypp@17.38.13-150700.6.13.1.x86_64"
+          "value": "libzypp@17.38.16-150700.6.19.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -5622,11 +6078,11 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150700.6.13.1"
+          "value": "150700.6.19.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
-          "value": "17.38.13"
+          "value": "17.38.16"
         }
       ]
     },
@@ -5653,7 +6109,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -5702,7 +6162,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -5751,7 +6215,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -5800,7 +6268,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:d02022dccb430edcaf95da03ec97a39d1ed78d3b76a0e888bfa51b3aef176d85"
+          "value": "sha256:5aa89de8786b3f887e80db3649e3d585c243036f12f56973e7ce65fc3f1a20b2"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:219c0d0f96ca7a3ca09b7adada00d55d4557262797e39c3485f39cfbf96b1562"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -5825,17 +6297,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/nodejs24@24.18.1-150700.15.18.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/nodejs24@24.22.1-150700.15.21.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "nodejs24",
-      "version": "24.18.1-150700.15.18.1",
+      "version": "24.22.1-150700.15.21.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "06d18b3f8174364f8722157fcd3a20a6"
+          "content": "7bcba0166ae1f94672394e0540d8bb5c"
         }
       ],
       "licenses": [
@@ -5845,15 +6317,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/nodejs24@24.18.1-150700.15.18.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/nodejs24@24.22.1-150700.15.21.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:d02022dccb430edcaf95da03ec97a39d1ed78d3b76a0e888bfa51b3aef176d85"
+          "value": "sha256:5aa89de8786b3f887e80db3649e3d585c243036f12f56973e7ce65fc3f1a20b2"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:219c0d0f96ca7a3ca09b7adada00d55d4557262797e39c3485f39cfbf96b1562"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "nodejs24@24.18.1-150700.15.18.1.x86_64"
+          "value": "nodejs24@24.22.1-150700.15.21.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -5865,26 +6341,26 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150700.15.18.1"
+          "value": "150700.15.21.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
-          "value": "24.18.1"
+          "value": "24.22.1"
         }
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/openssl-3@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/openssl-3@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "openssl-3",
-      "version": "3.5.0-150700.5.50.1",
+      "version": "3.5.0-150700.5.56.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "c9c8e288cc1d8bddcfc1b81862c4343b"
+          "content": "f8886ae5535a0d92410201d78440d984"
         }
       ],
       "licenses": [
@@ -5894,15 +6370,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/openssl-3@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/openssl-3@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "openssl-3@3.5.0-150700.5.50.1.x86_64"
+          "value": "openssl-3@3.5.0-150700.5.56.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -5914,7 +6394,7 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150700.5.50.1"
+          "value": "150700.5.56.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
@@ -5947,7 +6427,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -5996,7 +6480,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6045,7 +6533,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6092,7 +6584,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6141,7 +6637,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6190,7 +6690,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6237,7 +6741,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6262,17 +6770,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/permissions@20240826-150700.14.4?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/permissions@20250826-150700.16.5.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "permissions",
-      "version": "20240826-150700.14.4",
+      "version": "20250826-150700.16.5.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "9b18c306b62be2f7d3088c30114477db"
+          "content": "ca6d0ecae11ec96dc0974a5957894224"
         }
       ],
       "licenses": [
@@ -6282,15 +6790,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/permissions@20240826-150700.14.4?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/permissions@20250826-150700.16.5.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "permissions@20240826-150700.14.4.x86_64"
+          "value": "permissions@20250826-150700.16.5.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -6302,11 +6814,11 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150700.14.4"
+          "value": "150700.16.5.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
-          "value": "20240826"
+          "value": "20250826"
         }
       ]
     },
@@ -6335,7 +6847,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6384,7 +6900,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6433,7 +6953,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6482,7 +7006,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6529,7 +7057,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6578,7 +7110,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6627,7 +7163,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6676,7 +7216,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6725,7 +7269,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6774,7 +7322,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6823,7 +7375,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6872,7 +7428,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6921,7 +7481,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -6970,7 +7534,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -7019,7 +7587,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -7044,17 +7616,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/tar@1.34-150000.3.42.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/tar@1.34-150000.3.45.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "tar",
-      "version": "1.34-150000.3.42.1",
+      "version": "1.34-150000.3.45.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "992db17d10b20187941a448285a2de5f"
+          "content": "083a1ea2ee60226414181e8da6dd9c49"
         }
       ],
       "licenses": [
@@ -7064,15 +7636,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/tar@1.34-150000.3.42.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/tar@1.34-150000.3.45.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "tar@1.34-150000.3.42.1.x86_64"
+          "value": "tar@1.34-150000.3.45.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -7084,7 +7660,7 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150000.3.42.1"
+          "value": "150000.3.45.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
@@ -7117,7 +7693,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -7142,17 +7722,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/timezone@2026c-150600.91.12.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/timezone@2026e-150600.91.15.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "timezone",
-      "version": "2026c-150600.91.12.1",
+      "version": "2026e-150600.91.15.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "b8f058671845ce668e0371b72095fa43"
+          "content": "fcef1019efba337055fba0d461d5d121"
         }
       ],
       "licenses": [
@@ -7162,15 +7742,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/timezone@2026c-150600.91.12.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/timezone@2026e-150600.91.15.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "timezone@2026c-150600.91.12.1.x86_64"
+          "value": "timezone@2026e-150600.91.15.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -7182,11 +7766,11 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150600.91.12.1"
+          "value": "150600.91.15.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
-          "value": "2026c"
+          "value": "2026e"
         }
       ]
     },
@@ -7215,7 +7799,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:d02022dccb430edcaf95da03ec97a39d1ed78d3b76a0e888bfa51b3aef176d85"
+          "value": "sha256:5aa89de8786b3f887e80db3649e3d585c243036f12f56973e7ce65fc3f1a20b2"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:219c0d0f96ca7a3ca09b7adada00d55d4557262797e39c3485f39cfbf96b1562"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -7264,7 +7852,11 @@
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
@@ -7289,17 +7881,17 @@
       ]
     },
     {
-      "bom-ref": "pkg:rpm/suse/zypper@1.14.98-150700.13.6.1?arch=x86_64&distro=sles-15.7",
+      "bom-ref": "pkg:rpm/suse/zypper@1.14.101-150700.13.12.1?arch=x86_64&distro=sles-15.7",
       "type": "library",
       "supplier": {
         "name": "SUSE LLC <https://www.suse.com/>"
       },
       "name": "zypper",
-      "version": "1.14.98-150700.13.6.1",
+      "version": "1.14.101-150700.13.12.1",
       "hashes": [
         {
           "alg": "MD5",
-          "content": "911fb792429a99df63e1f13345a765d1"
+          "content": "f6fd1146fcb62da16cf175acdc94a67e"
         }
       ],
       "licenses": [
@@ -7309,15 +7901,19 @@
           }
         }
       ],
-      "purl": "pkg:rpm/suse/zypper@1.14.98-150700.13.6.1?arch=x86_64&distro=sles-15.7",
+      "purl": "pkg:rpm/suse/zypper@1.14.101-150700.13.12.1?arch=x86_64&distro=sles-15.7",
       "properties": [
         {
           "name": "aquasecurity:trivy:LayerDiffID",
-          "value": "sha256:5c9075da66f63c59ba8acb6eac9ff881977032067094912c9d158b6c79ef586a"
+          "value": "sha256:d7181bd75e361b44677b3286df4fc6484515b47fcf5908a3bb4d9d76a739aae3"
+        },
+        {
+          "name": "aquasecurity:trivy:LayerDigest",
+          "value": "sha256:6d5f33006bde501d009a6f4b79418811bc5457b962e533e902fcb9e28c3f96bc"
         },
         {
           "name": "aquasecurity:trivy:PkgID",
-          "value": "zypper@1.14.98-150700.13.6.1.x86_64"
+          "value": "zypper@1.14.101-150700.13.12.1.x86_64"
         },
         {
           "name": "aquasecurity:trivy:PkgType",
@@ -7329,24 +7925,24 @@
         },
         {
           "name": "aquasecurity:trivy:SrcRelease",
-          "value": "150700.13.6.1"
+          "value": "150700.13.12.1"
         },
         {
           "name": "aquasecurity:trivy:SrcVersion",
-          "value": "1.14.98"
+          "value": "1.14.101"
         }
       ]
     }
   ],
   "dependencies": [
     {
-      "ref": "09879ce7-e343-4c79-b4ea-2ff9e41f20a7",
+      "ref": "238afc56-13f6-4132-8da6-107aa618ccaa",
       "dependsOn": [
         "pkg:rpm/suse/aaa_base@84.87%2Bgit20180409.04c9dae-150300.10.28.2?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/bash-sh@4.4-150400.27.6.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/ca-certificates-mozilla@2.84-150200.44.1?arch=noarch&distro=sles-15.7",
-        "pkg:rpm/suse/container-suseconnect@2.6.0-150700.4.97.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/curl@8.14.1-150700.7.26.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/bash-sh@4.4-150400.27.13.3?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/ca-certificates-mozilla@2.92-150200.50.2?arch=noarch&distro=sles-15.7",
+        "pkg:rpm/suse/container-suseconnect@2.6.0-150700.4.101.2?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/curl@8.22.0-150700.7.33.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/gpg-pubkey@09d9ea69-68595a8c?arch=None&distro=sles-15.7",
         "pkg:rpm/suse/gpg-pubkey@39db7c82-66c5d91a?arch=None&distro=sles-15.7",
         "pkg:rpm/suse/gpg-pubkey@3fa1d6ce-67c856ee?arch=None&distro=sles-15.7",
@@ -7355,7 +7951,7 @@
         "pkg:rpm/suse/gpg-pubkey@d588dc46-63c939db?arch=None&distro=sles-15.7",
         "pkg:rpm/suse/gzip@1.10-150200.16.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/kubic-locale-archive@2.38-150600.18.3?arch=noarch&distro=sles-15.7",
-        "pkg:rpm/suse/libopenssl-3-fips-provider@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libopenssl-3-fips-provider@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/ncurses-utils@6.1-150000.5.33.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/netcfg@11.6-150000.3.6.1?arch=noarch&distro=sles-15.7",
         "pkg:rpm/suse/patterns-base-fips@20200124-150700.36.1?arch=x86_64&distro=sles-15.7",
@@ -7367,16 +7963,16 @@
         "pkg:rpm/suse/sle-module-python3-release@15.7-150700.28.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/sle-module-server-applications-release@15.7-150700.28.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/system-user-nobody@20170617-150400.24.2.1?arch=noarch&distro=sles-15.7",
-        "pkg:rpm/suse/tar@1.34-150000.3.42.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/tar@1.34-150000.3.45.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/update-alternatives@1.19.0.4-150000.4.7.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/util-linux@2.40.4-150700.4.18.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/zypper@1.14.98-150700.13.6.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/zypper@1.14.101-150700.13.12.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "a8d7e91f-95d9-40a2-b88c-799360965160",
+      "ref": "65781beb-8958-48b0-91db-511883297bf9",
       "dependsOn": [
-        "09879ce7-e343-4c79-b4ea-2ff9e41f20a7"
+        "238afc56-13f6-4132-8da6-107aa618ccaa"
       ]
     },
     {
@@ -7385,21 +7981,21 @@
         "pkg:rpm/suse/cpio@2.13-150400.3.10.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/filesystem@15.0-11.8.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/fillup@1.42-2.18?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/sles-release@15.7-150700.67.6.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/bash-sh@4.4-150400.27.6.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/bash-sh@4.4-150400.27.13.3?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/bash@4.4-150400.27.6.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/bash@4.4-150400.27.13.3?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/bash@4.4-150400.27.6.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/bash@4.4-150400.27.13.3?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libreadline7@7.0-150400.27.6.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libreadline7@7.0-150400.27.13.3?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
@@ -7411,7 +8007,7 @@
       "dependsOn": []
     },
     {
-      "ref": "pkg:rpm/suse/ca-certificates-mozilla@2.84-150200.44.1?arch=noarch&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/ca-certificates-mozilla@2.92-150200.50.2?arch=noarch&distro=sles-15.7",
       "dependsOn": [
         "pkg:rpm/suse/ca-certificates@2%2Bgit20240416.98ae794-150300.4.3.3?arch=noarch&distro=sles-15.7"
       ]
@@ -7427,18 +8023,18 @@
       ]
     },
     {
-      "ref": "pkg:rpm/suse/container-suseconnect@2.6.0-150700.4.97.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/container-suseconnect@2.6.0-150700.4.101.2?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libzypp@17.38.13-150700.6.13.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libzypp@17.38.16-150700.6.19.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/coreutils@8.32-150400.9.12.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libacl1@2.2.52-4.3.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libattr1@2.4.47-2.19?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libacl1@2.4.0-150000.4.6.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libattr1@2.6.0-150000.4.3.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libcap2@2.63-150400.3.6.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libgmp10@6.1.2-4.9.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libselinux1@3.5-150600.3.3.1?arch=x86_64&distro=sles-15.7"
@@ -7447,7 +8043,7 @@
     {
       "ref": "pkg:rpm/suse/cpio@2.13-150400.3.10.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
@@ -7458,26 +8054,26 @@
       "ref": "pkg:rpm/suse/cracklib@2.9.11-150600.1.90?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
         "pkg:rpm/suse/cracklib-dict-small@2.9.11-150600.1.90?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libcrack2@2.9.11-150600.1.90?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/crypto-policies@20230920.570ea89-150600.3.19.1?arch=noarch&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/crypto-policies@20250714.cd6043a-150700.6.7.1?arch=noarch&distro=sles-15.7",
       "dependsOn": []
     },
     {
-      "ref": "pkg:rpm/suse/curl@8.14.1-150700.7.26.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/curl@8.22.0-150700.7.33.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libcurl4@8.14.1-150700.7.26.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libcurl4@8.22.0-150700.7.33.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libz1@1.2.13-150500.4.6.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/diffutils@3.6-4.3.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/info@6.5-4.17?arch=x86_64&distro=sles-15.7"
       ]
     },
@@ -7494,18 +8090,18 @@
     {
       "ref": "pkg:rpm/suse/fillup@1.42-2.18?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/findutils@4.10.0-150700.2.6?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libselinux1@3.5-150600.3.3.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
         "pkg:rpm/suse/filesystem@15.0-11.8.1?arch=x86_64&distro=sles-15.7"
       ]
@@ -7537,14 +8133,14 @@
     {
       "ref": "pkg:rpm/suse/gpg2@2.4.4-150600.3.18.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libassuan0@2.5.5-150000.4.7.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libbz2-1@1.0.8-150400.3.4.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libgcrypt20@1.11.0-150700.5.10.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libgpg-error0@1.50-150700.1.8?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libksba8@1.6.4-150600.1.2?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libnpth0@1.5-2.11?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libreadline7@7.0-150400.27.6.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libreadline7@7.0-150400.27.13.3?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libsqlite3-0@3.53.2-150000.3.42.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libusb-1_0-0@1.0.24-150400.3.6.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libz1@1.2.13-150500.4.6.1?arch=x86_64&distro=sles-15.7",
@@ -7554,22 +8150,22 @@
     {
       "ref": "pkg:rpm/suse/grep@3.11-150700.1.8?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/info@6.5-4.17?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libpcre2-8-0@10.42-150600.1.26?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/libpcre2-8-0@10.42-150600.3.3.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/gzip@1.10-150200.16.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/info@6.5-4.17?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/info@6.5-4.17?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libncurses6@6.1-150000.5.33.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libzio1@1.06-2.20?arch=x86_64&distro=sles-15.7"
       ]
@@ -7577,11 +8173,11 @@
     {
       "ref": "pkg:rpm/suse/krb5@1.20.1-150600.11.19.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/crypto-policies@20230920.570ea89-150600.3.19.1?arch=noarch&distro=sles-15.7",
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/crypto-policies@20250714.cd6043a-150700.6.7.1?arch=noarch&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libcom_err2@1.47.0-150600.4.6.2?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libkeyutils1@1.6.3-5.6.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libselinux1@3.5-150600.3.3.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libverto1@0.2.6-3.20?arch=x86_64&distro=sles-15.7"
       ]
@@ -7589,39 +8185,38 @@
     {
       "ref": "pkg:rpm/suse/kubic-locale-archive@2.38-150600.18.3?arch=noarch&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/libacl1@2.2.52-4.3.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/libacl1@2.4.0-150000.4.6.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libattr1@2.4.47-2.19?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libassuan0@2.5.5-150000.4.7.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libgpg-error0@1.50-150700.1.8?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/libattr1@2.4.47-2.19?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/libattr1@2.6.0-150000.4.3.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libaudit1@3.0.6-150400.4.16.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libaugeas0@1.14.1-150600.3.3.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libfa1@1.14.1-150600.3.3.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libxml2-2@2.12.10-150700.4.14.1?arch=x86_64&distro=sles-15.7"
       ]
@@ -7629,7 +8224,7 @@
     {
       "ref": "pkg:rpm/suse/libblkid1@2.40.4-150700.4.18.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libeconf0@0.5.2-150400.3.6.1?arch=x86_64&distro=sles-15.7"
       ]
     },
@@ -7637,82 +8232,82 @@
       "ref": "pkg:rpm/suse/libboost_system1_66_0@1.66.0-150200.12.7.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
         "pkg:rpm/suse/boost-license1_66_0@1.66.0-150200.12.7.1?arch=noarch&distro=sles-15.7",
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libgcc_s1@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libstdc%2B%2B6@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libgcc_s1@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libstdc%2B%2B6@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libboost_thread1_66_0@1.66.0-150200.12.7.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
         "pkg:rpm/suse/boost-license1_66_0@1.66.0-150200.12.7.1?arch=noarch&distro=sles-15.7",
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libboost_system1_66_0@1.66.0-150200.12.7.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libgcc_s1@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libstdc%2B%2B6@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/libgcc_s1@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libstdc%2B%2B6@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/libbrotlicommon1@1.0.7-150200.3.5.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/libbrotlicommon1@1.0.7-150200.3.8.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/libbrotlidec1@1.0.7-150200.3.5.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/libbrotlidec1@1.0.7-150200.3.8.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libbrotlicommon1@1.0.7-150200.3.5.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libbrotlicommon1@1.0.7-150200.3.8.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libbz2-1@1.0.8-150400.3.4.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libcap-ng0@0.7.9-4.37?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libcap2@2.63-150400.3.6.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libcom_err2@1.47.0-150600.4.6.2?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libcrack2@2.9.11-150600.1.90?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
         "pkg:rpm/suse/cracklib@2.9.11-150600.1.90?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libz1@1.2.13-150500.4.6.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libcrypt1@4.4.15-150300.4.7.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/libcurl4@8.14.1-150700.7.26.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/libcurl4@8.22.0-150700.7.33.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/krb5@1.20.1-150600.11.19.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libbrotlidec1@1.0.7-150200.3.5.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libbrotlidec1@1.0.7-150200.3.8.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libidn2-0@2.2.0-3.6.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libldap-2_4-2@2.4.46-150600.25.3.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libnghttp2-14@1.64.0-150700.3.6.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libpsl5@0.20.1-150000.3.3.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libssh4@0.9.8-150600.11.15.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libz1@1.2.13-150500.4.6.1?arch=x86_64&distro=sles-15.7",
@@ -7722,7 +8317,7 @@
     {
       "ref": "pkg:rpm/suse/libdw1@0.185-150400.5.8.3?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libbz2-1@1.0.8-150400.3.4.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libelf1@0.185-150400.5.8.3?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/liblzma5@5.4.1-150600.3.6.1?arch=x86_64&distro=sles-15.7",
@@ -7733,26 +8328,26 @@
     {
       "ref": "pkg:rpm/suse/libeconf0@0.5.2-150400.3.6.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libelf1@0.185-150400.5.8.3?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libz1@1.2.13-150500.4.6.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libfa1@1.14.1-150600.3.3.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libfdisk1@2.40.4-150700.4.18.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libblkid1@2.40.4-150700.4.18.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libuuid1@2.40.4-150700.4.18.1?arch=x86_64&distro=sles-15.7"
       ]
@@ -7760,46 +8355,46 @@
     {
       "ref": "pkg:rpm/suse/libffi7@3.2.1.git259-10.8?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/libgcc_s1@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/libgcc_s1@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libgcrypt20@1.11.0-150700.5.10.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libgpg-error0@1.50-150700.1.8?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libjitterentropy3@3.4.1-150000.1.12.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/libglib-2_0-0@2.78.6-150600.4.38.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/libglib-2_0-0@2.78.6-150600.4.41.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libpcre2-8-0@10.42-150600.1.26?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libpcre2-8-0@10.42-150600.3.3.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libgmp10@6.1.2-4.9.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libgpg-error0@1.50-150700.1.8?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libgpgme11@1.23.0-150600.3.5.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/gpg2@2.4.4-150600.3.18.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libassuan0@2.5.5-150000.4.7.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libgpg-error0@1.50-150700.1.8?arch=x86_64&distro=sles-15.7"
@@ -7812,46 +8407,46 @@
     {
       "ref": "pkg:rpm/suse/libicu73_2@73.2-150000.1.7.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libgcc_s1@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libgcc_s1@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libicu73_2-ledata@73.2-150000.1.7.1?arch=noarch&distro=sles-15.7",
-        "pkg:rpm/suse/libstdc%2B%2B6@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/timezone@2026c-150600.91.12.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/libstdc%2B%2B6@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/timezone@2026e-150600.91.15.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libidn2-0@2.2.0-3.6.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libunistring2@0.9.10-1.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libjitterentropy3@3.4.1-150000.1.12.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libkeyutils1@1.6.3-5.6.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libksba8@1.6.4-150600.1.2?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libgpg-error0@1.50-150700.1.8?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libldap-2_4-2@2.4.46-150600.25.3.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libldap-data@2.4.46-150600.25.3.1?arch=noarch&distro=sles-15.7",
-        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libsasl2-3@2.1.28-150600.7.14.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libsasl2-3@2.1.28-150600.7.17.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
@@ -7861,27 +8456,27 @@
     {
       "ref": "pkg:rpm/suse/liblua5_3-5@5.3.6-3.6.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/liblzma5@5.4.1-150600.3.6.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libmagic1@5.32-7.14.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
         "pkg:rpm/suse/file-magic@5.32-7.14.1?arch=noarch&distro=sles-15.7",
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libz1@1.2.13-150500.4.6.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libmount1@2.40.4-150700.4.18.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libblkid1@2.40.4-150700.4.18.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libselinux1@3.5-150600.3.3.1?arch=x86_64&distro=sles-15.7"
       ]
@@ -7889,44 +8484,44 @@
     {
       "ref": "pkg:rpm/suse/libncurses6@6.1-150000.5.33.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libgcc_s1@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libstdc%2B%2B6@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libgcc_s1@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libstdc%2B%2B6@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/terminfo-base@6.1-150000.5.33.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libnghttp2-14@1.64.0-150700.3.6.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libnpth0@1.5-2.11?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libnsl2@1.2.0-2.44?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libtirpc3@1.3.4-150300.3.26.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/libopenssl-3-fips-provider@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/libopenssl-3-fips-provider@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libjitterentropy3@3.4.1-150000.1.12.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/crypto-policies@20230920.570ea89-150600.3.19.1?arch=noarch&distro=sles-15.7",
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/crypto-policies@20250714.cd6043a-150700.6.7.1?arch=noarch&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libjitterentropy3@3.4.1-150000.1.12.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libz1@1.2.13-150500.4.6.1?arch=x86_64&distro=sles-15.7"
       ]
@@ -7934,48 +8529,48 @@
     {
       "ref": "pkg:rpm/suse/libp11-kit0@0.23.22-150500.8.3.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libffi7@3.2.1.git259-10.8?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/libpcre2-8-0@10.42-150600.1.26?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/libpcre2-8-0@10.42-150600.3.3.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libpopt0@1.16-3.22?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libpsl5@0.20.1-150000.3.3.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libidn2-0@2.2.0-3.6.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libunistring2@0.9.10-1.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/libreadline7@7.0-150400.27.6.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/libreadline7@7.0-150400.27.13.3?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libncurses6@6.1-150000.5.33.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/libsasl2-3@2.1.28-150600.7.14.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/libsasl2-3@2.1.28-150600.7.17.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libselinux1@3.5-150600.3.3.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libpcre2-8-0@10.42-150600.1.26?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libpcre2-8-0@10.42-150600.3.3.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
@@ -7985,7 +8580,7 @@
     {
       "ref": "pkg:rpm/suse/libsemanage2@3.5-150600.1.48?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libaudit1@3.0.6-150400.4.16.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libbz2-1@1.0.8-150400.3.4.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libselinux1@3.5-150600.3.3.1?arch=x86_64&distro=sles-15.7",
@@ -7996,27 +8591,27 @@
     {
       "ref": "pkg:rpm/suse/libsepol2@3.5-150600.1.49?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libsigc-2_0-0@2.12.1-150600.1.2?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libgcc_s1@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libstdc%2B%2B6@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libgcc_s1@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libstdc%2B%2B6@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libsmartcols1@2.40.4-150700.4.18.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/libsolv-tools-base@0.7.39-150700.11.10.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/libsolv-tools-base@0.7.40-150700.11.13.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libbz2-1@1.0.8-150400.3.4.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/liblzma5@5.4.1-150600.3.6.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libxml2-2@2.12.10-150700.4.14.1?arch=x86_64&distro=sles-15.7",
@@ -8028,7 +8623,7 @@
     {
       "ref": "pkg:rpm/suse/libsqlite3-0@3.53.2-150000.3.42.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
@@ -8038,26 +8633,26 @@
     {
       "ref": "pkg:rpm/suse/libssh4@0.9.8-150600.11.15.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/krb5@1.20.1-150600.11.19.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libssh-config@0.9.8-150600.11.15.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libz1@1.2.13-150500.4.6.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/libstdc%2B%2B6@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/libstdc%2B%2B6@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libgcc_s1@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libgcc_s1@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libsubid5@4.17.2-150600.17.24.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libacl1@2.2.52-4.3.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libattr1@2.4.47-2.19?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libacl1@2.4.0-150000.4.6.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libattr1@2.6.0-150000.4.3.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libaudit1@3.0.6-150400.4.16.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libcrypt1@4.4.15-150300.4.7.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libeconf0@0.5.2-150400.3.6.1?arch=x86_64&distro=sles-15.7",
@@ -8069,14 +8664,14 @@
     {
       "ref": "pkg:rpm/suse/libtasn1-6@4.13-150000.4.14.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libtasn1@4.13-150000.4.14.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libtasn1@4.13-150000.4.14.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/info@6.5-4.17?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libtasn1-6@4.13-150000.4.14.1?arch=x86_64&distro=sles-15.7"
       ]
@@ -8088,7 +8683,7 @@
     {
       "ref": "pkg:rpm/suse/libtirpc3@1.3.4-150300.3.26.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/krb5@1.20.1-150600.11.19.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libtirpc-netconfig@1.3.4-150300.3.26.1?arch=x86_64&distro=sles-15.7"
       ]
@@ -8096,47 +8691,47 @@
     {
       "ref": "pkg:rpm/suse/libudev1@254.27-150600.4.71.2?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libcap2@2.63-150400.3.6.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libunistring2@0.9.10-1.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libusb-1_0-0@1.0.24-150400.3.6.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libudev1@254.27-150600.4.71.2?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libutempter0@1.1.6-3.42?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/permissions@20240826-150700.14.4?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/permissions@20250826-150700.16.5.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/system-group-hardware@20170617-150400.24.2.1?arch=noarch&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libuuid1@2.40.4-150700.4.18.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libverto1@0.2.6-3.20?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libxml2-2@2.12.10-150700.4.14.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/liblzma5@5.4.1-150600.3.6.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libz1@1.2.13-150500.4.6.1?arch=x86_64&distro=sles-15.7"
       ]
@@ -8144,29 +8739,29 @@
     {
       "ref": "pkg:rpm/suse/libyaml-cpp0_6@0.6.3-150400.4.3.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libgcc_s1@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libstdc%2B%2B6@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libgcc_s1@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libstdc%2B%2B6@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libz1@1.2.13-150500.4.6.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/libzck1@1.5.1-150700.1.2?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/libzck1@1.5.1-150700.3.3.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libzstd1@1.5.7-150700.1.2?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/libzio1@1.06-2.20?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libbz2-1@1.0.8-150400.3.4.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/liblzma5@5.4.1-150600.3.6.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libz1@1.2.13-150500.4.6.1?arch=x86_64&distro=sles-15.7"
@@ -8175,29 +8770,29 @@
     {
       "ref": "pkg:rpm/suse/libzstd1@1.5.7-150700.1.2?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/libzypp@17.38.13-150700.6.13.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/libzypp@17.38.16-150700.6.19.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libboost_thread1_66_0@1.66.0-150200.12.7.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libbz2-1@1.0.8-150400.3.4.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libcurl4@8.14.1-150700.7.26.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libgcc_s1@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libglib-2_0-0@2.78.6-150600.4.38.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libcurl4@8.22.0-150700.7.33.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libgcc_s1@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libglib-2_0-0@2.78.6-150600.4.41.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libgpgme11@1.23.0-150600.3.5.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/liblzma5@5.4.1-150600.3.6.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libsigc-2_0-0@2.12.1-150600.1.2?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libsolv-tools-base@0.7.39-150700.11.10.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libstdc%2B%2B6@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libsolv-tools-base@0.7.40-150700.11.13.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libstdc%2B%2B6@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libudev1@254.27-150600.4.71.2?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libxml2-2@2.12.10-150700.4.14.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libyaml-cpp0_6@0.6.3-150400.4.3.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libz1@1.2.13-150500.4.6.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libzck1@1.5.1-150700.1.2?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libzck1@1.5.1-150700.3.3.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libzstd1@1.5.7-150700.1.2?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/rpm-ndb@4.14.3-150400.59.19.1?arch=x86_64&distro=sles-15.7"
       ]
@@ -8209,7 +8804,7 @@
     {
       "ref": "pkg:rpm/suse/ncurses-utils@6.1-150000.5.33.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libncurses6@6.1-150000.5.33.1?arch=x86_64&distro=sles-15.7"
       ]
     },
@@ -8222,42 +8817,42 @@
     {
       "ref": "pkg:rpm/suse/nodejs-common@6.1-150700.1.4?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/nodejs24@24.18.1-150700.15.18.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/nodejs24@24.22.1-150700.15.21.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/nodejs24@24.18.1-150700.15.18.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/nodejs24@24.22.1-150700.15.21.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libgcc_s1@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libgcc_s1@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libicu73_2@73.2-150000.1.7.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libstdc%2B%2B6@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libstdc%2B%2B6@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libz1@1.2.13-150500.4.6.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libzstd1@1.5.7-150700.1.2?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/nodejs-common@6.1-150700.1.4?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/openssl-3@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/openssl-3@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/crypto-policies@20230920.570ea89-150600.3.19.1?arch=noarch&distro=sles-15.7",
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/crypto-policies@20250714.cd6043a-150700.6.7.1?arch=noarch&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libopenssl3@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/openssl@3.5.0-150700.3.4.1?arch=noarch&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/openssl@3.5.0-150700.3.4.1?arch=noarch&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/openssl-3@3.5.0-150700.5.50.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/openssl-3@3.5.0-150700.5.56.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/p11-kit-tools@0.23.22-150500.8.3.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libp11-kit0@0.23.22-150500.8.3.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libtasn1-6@4.13-150000.4.14.1?arch=x86_64&distro=sles-15.7"
       ]
@@ -8265,7 +8860,7 @@
     {
       "ref": "pkg:rpm/suse/p11-kit@0.23.22-150500.8.3.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libp11-kit0@0.23.22-150500.8.3.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libtasn1-6@4.13-150000.4.14.1?arch=x86_64&distro=sles-15.7"
       ]
@@ -8273,14 +8868,14 @@
     {
       "ref": "pkg:rpm/suse/pam@1.3.0-150000.6.89.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libaudit1@3.0.6-150400.4.16.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libcrack2@2.9.11-150600.1.90?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libcrypt1@4.4.15-150300.4.7.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libnsl2@1.2.0-2.44?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libselinux1@3.5-150600.3.3.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libtirpc3@1.3.4-150300.3.26.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/permissions@20240826-150700.14.4?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/permissions@20250826-150700.16.5.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/system-user-root@20190513-3.3.1?arch=noarch&distro=sles-15.7"
       ]
     },
@@ -8300,17 +8895,17 @@
     {
       "ref": "pkg:rpm/suse/perl-base@5.26.1-150300.17.23.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libcrypt1@4.4.15-150300.4.7.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/permissions@20240826-150700.14.4?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/permissions@20250826-150700.16.5.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
         "pkg:rpm/suse/coreutils@8.32-150400.9.12.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/diffutils@3.6-4.3.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/fillup@1.42-2.18?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/grep@3.11-150700.1.8?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libcap2@2.63-150400.3.6.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/system-user-root@20190513-3.3.1?arch=noarch&distro=sles-15.7"
@@ -8319,7 +8914,7 @@
     {
       "ref": "pkg:rpm/suse/pinentry@1.1.0-4.3.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/info@6.5-4.17?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libassuan0@2.5.5-150000.4.7.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libgpg-error0@1.50-150700.1.8?arch=x86_64&distro=sles-15.7",
@@ -8338,9 +8933,9 @@
         "pkg:rpm/suse/coreutils@8.32-150400.9.12.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/diffutils@3.6-4.3.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/fillup@1.42-2.18?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/grep@3.11-150700.1.8?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libacl1@2.2.52-4.3.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libacl1@2.4.0-150000.4.6.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libbz2-1@1.0.8-150400.3.4.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libcap2@2.63-150400.3.6.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libdw1@0.185-150400.5.8.3?arch=x86_64&distro=sles-15.7",
@@ -8359,17 +8954,17 @@
     {
       "ref": "pkg:rpm/suse/sed@4.9-150600.3.3.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libacl1@2.2.52-4.3.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libacl1@2.4.0-150000.4.6.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libselinux1@3.5-150600.3.3.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/shadow@4.17.2-150600.17.24.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libacl1@2.2.52-4.3.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libattr1@2.4.47-2.19?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libacl1@2.4.0-150000.4.6.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libattr1@2.6.0-150000.4.3.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libaudit1@3.0.6-150400.4.16.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libcrypt1@4.4.15-150300.4.7.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libeconf0@0.5.2-150400.3.6.1?arch=x86_64&distro=sles-15.7",
@@ -8378,7 +8973,7 @@
         "pkg:rpm/suse/libsubid5@4.17.2-150600.17.24.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/login_defs@4.17.2-150600.17.24.1?arch=noarch&distro=sles-15.7",
         "pkg:rpm/suse/pam@1.3.0-150000.6.89.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/permissions@20240826-150700.14.4?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/permissions@20250826-150700.16.5.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/system-user-root@20190513-3.3.1?arch=noarch&distro=sles-15.7"
       ]
     },
@@ -8409,7 +9004,7 @@
     {
       "ref": "pkg:rpm/suse/sles-release@15.7-150700.67.6.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
@@ -8440,10 +9035,10 @@
       "dependsOn": []
     },
     {
-      "ref": "pkg:rpm/suse/tar@1.34-150000.3.42.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/tar@1.34-150000.3.45.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libacl1@2.2.52-4.3.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libacl1@2.4.0-150000.4.6.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libselinux1@3.5-150600.3.3.1?arch=x86_64&distro=sles-15.7"
       ]
     },
@@ -8454,21 +9049,21 @@
       ]
     },
     {
-      "ref": "pkg:rpm/suse/timezone@2026c-150600.91.12.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/timezone@2026e-150600.91.15.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/update-alternatives@1.19.0.4-150000.4.7.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
       "ref": "pkg:rpm/suse/util-linux@2.40.4-150700.4.18.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libaudit1@3.0.6-150400.4.16.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libblkid1@2.40.4-150700.4.18.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libcap-ng0@0.7.9-4.37?arch=x86_64&distro=sles-15.7",
@@ -8477,26 +9072,26 @@
         "pkg:rpm/suse/libfdisk1@2.40.4-150700.4.18.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libmount1@2.40.4-150700.4.18.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libncurses6@6.1-150000.5.33.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libreadline7@7.0-150400.27.6.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libreadline7@7.0-150400.27.13.3?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libselinux1@3.5-150600.3.3.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libsmartcols1@2.40.4-150700.4.18.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libutempter0@1.1.6-3.42?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libuuid1@2.40.4-150700.4.18.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libz1@1.2.13-150500.4.6.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/pam@1.3.0-150000.6.89.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/permissions@20240826-150700.14.4?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/permissions@20250826-150700.16.5.1?arch=x86_64&distro=sles-15.7"
       ]
     },
     {
-      "ref": "pkg:rpm/suse/zypper@1.14.98-150700.13.6.1?arch=x86_64&distro=sles-15.7",
+      "ref": "pkg:rpm/suse/zypper@1.14.101-150700.13.12.1?arch=x86_64&distro=sles-15.7",
       "dependsOn": [
-        "pkg:rpm/suse/glibc@2.38-150600.14.52.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/glibc@2.38-150600.14.61.1?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libaugeas0@1.14.1-150600.3.3.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libgcc_s1@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libreadline7@7.0-150400.27.6.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libstdc%2B%2B6@15.3.0%2Bgit11272-150000.1.12.1?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libgcc_s1@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libreadline7@7.0-150400.27.13.3?arch=x86_64&distro=sles-15.7",
+        "pkg:rpm/suse/libstdc%2B%2B6@16.2.0%2Bgit9497-150000.1.3.3?arch=x86_64&distro=sles-15.7",
         "pkg:rpm/suse/libxml2-2@2.12.10-150700.4.14.1?arch=x86_64&distro=sles-15.7",
-        "pkg:rpm/suse/libzypp@17.38.13-150700.6.13.1?arch=x86_64&distro=sles-15.7"
+        "pkg:rpm/suse/libzypp@17.38.16-150700.6.19.1?arch=x86_64&distro=sles-15.7"
       ]
     }
   ],
