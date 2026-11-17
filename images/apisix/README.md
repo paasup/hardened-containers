@@ -39,7 +39,10 @@ below). The apiseven pipeline that ships this combination
 | Compile from source rather than reinstalling the Debian/RHEL prebuilt RPM/DEB on SUSE | Mismatched glibc/openssl symbol versions risk breaking the ABI, and there is no equivalent package in SUSE's own repositories, so "reinstall within the same distribution family" does not apply. |
 | Rust toolchain installed from SLE_BCI packages (`rust`, `cargo`) | Upstream pipes the rustup bootstrap script into a shell, which executes an unverified remote script on every build — replaced with distribution packages (design rule 7). |
 | cpanm bootstrap removed | Upstream installs `IPC::Cmd` (required by OpenSSL's Configure) via cpanm, but SLE_BCI's stock perl already has it (5.26.1 / IPC::Cmd 0.96 — a core module). This removes an unnecessary remote execution. |
-| Source tarball integrity verification added | zlib, PCRE, OpenSSL, OpenResty, lua-resty-limit-traffic, and the luarocks install script are verified by SHA256 (the `*_SHA256` values in `source.build.env`). This is the only image that fetches tarballs, so it has no equivalent of a git commit SHA guarantee. |
+| Source tarball integrity verification added | zlib, PCRE, OpenSSL, OpenResty, lua-resty-limit-traffic, the wasmtime C API, and the luarocks install script are verified by SHA256 (the `*_SHA256` values in `source.build.env`), because a tarball has no equivalent of a git commit SHA guarantee. |
+| git sources pinned by commit, not tag | Upstream's build scripts `git clone` the APISIX source and the seven nginx modules by tag — and a tag can move. Here each tag's commit SHA is committed in `source.build.env` and fetched through BuildKit's git context (`ADD <repo>.git#<sha>`), so BuildKit guarantees the tree is exactly that commit (design rule 7). |
+| wasmtime fetched and verified directly instead of via `install-wasmtime.sh` | `wasm-nginx-module`'s `install-wasmtime.sh` downloads the wasmtime C API tarball with no checksum. The script is not run; the Dockerfile fetches the same tarball (same version) itself and verifies its SHA256. If the `VER=` hardcoded in the script differs from `WASMTIME_VERSION`, the build fails, so a module bump cannot silently leave this value behind. |
+| `openssl3/lib` added to the bundled `openssl` CLI's rpath | With upstream's rpath (zlib only), `/usr/local/openresty/openssl3/bin/openssl` loaded the base OS libopenssl3 (3.5.0) rather than this build's libcrypto (3.5.9). nginx was unaffected — its own rpath already linked it correctly. |
 | Application code and module versions | 100% identical to upstream (the minimal-diff principle) — apiseven's official build scripts (`api7/apisix-build-tools`, tag `apisix-runtime/1.4.2`) are reproduced as-is. |
 
 ## Three stages
@@ -64,7 +67,7 @@ below). The apiseven pipeline that ships this combination
   no other build). See the comment on that RUN step in `source.Dockerfile`.
 - **`ui/` (the Admin dashboard frontend) does not exist in the `apache/apisix` repository
   itself.** apiseven's packaging pipeline inserts it separately (a Node.js/yarn build), so
-  a git clone alone cannot reproduce it — this deployment does not use that UI, so it is
+  a source checkout alone cannot reproduce it — this deployment does not use that UI, so it is
   replaced with an empty directory and skipped.
 - **The `/usr/bin/apisix` wrapper script uses `awk` internally.** It parses the OpenResty
   version with it, so without `gawk` installed in the `final` stage even `apisix version`
@@ -87,18 +90,53 @@ below). The apiseven pipeline that ships this combination
   for a dependency or version problem and change pins; rebuild. Likewise, when the
   `runtime` stage's `zypper install` fails on a dropped public-dl.suse.com transfer (curl
   error 56), retry rather than change the Dockerfile.
+- **When OpenSSL is built here, an rpath without `openssl3/lib` makes the bundled `openssl`
+  CLI load the base OS libopenssl3.** The build succeeds and nginx is fine (its own
+  `--with-ld-opt` rpath names `openssl3/lib`), so nothing stands out — `openssl version`
+  merely prints `OpenSSL 3.5.9 ... (Library: OpenSSL 3.5.0 ...)`, a build version that
+  differs from the library it loaded. `verify.sh` now fails on that mismatch.
 
 ## Source and version management
 
 | Item | Value |
 | --- | --- |
-| APISIX source | `https://github.com/apache/apisix.git` (tag `3.20.0`, commit `bc1e687f`) |
+| APISIX source | `https://github.com/apache/apisix.git` tag `3.20.0` → `SOURCE_COMMIT=bc1e687fdb82883f86d1bca9fa4fbd6bb433682b` |
 | OpenResty | `1.31.8.1` |
 | OpenSSL | `3.5.9` |
 | zlib / PCRE | `1.3.1` / `8.45` |
-| Custom modules | `apisix-nginx-module 1.20.3`, `wasm-nginx-module 0.7.0`, `lua-var-nginx-module v0.5.3`, `lua-resty-events 0.2.0`, `ngx_multi_upstream_module 1.4.1`, `mod_dubbo 1.0.2`, `ngx_http_ffi_client v0.1.3` |
 | APISIX_RUNTIME_VER | `1.4.2` (the apiseven build script version tag) |
+| wasmtime C API | `v0.38.1` (`WASMTIME_VERSION`, with `WASMTIME_C_API_SHA256_*` for x86_64 and aarch64) |
 | Final base | `registry.suse.com/bci/bci-base:15.7` |
+
+Each custom module is pinned by two values: the tag (`*_VER` — the directory name, and the
+record of which tag was resolved) and the commit (`*_COMMIT` — what is actually fetched):
+
+| Module | Tag | Commit |
+| --- | --- | --- |
+| `api7/apisix-nginx-module` | `1.20.3` | `fa0559cd8916427183e50db8e5e12a6acf671ac2` |
+| `api7/wasm-nginx-module` | `0.7.0` | `0b4b31d6ecfdbc587e8ea455ed6e920a98aadff1` |
+| `api7/lua-var-nginx-module` | `v0.5.3` | `dc04c71e14e8a0407831f9019043d7e6da61b3c3` |
+| `Kong/lua-resty-events` | `0.2.0` | `8448a92cec36ac04ea522e78f6496ba03c9b1fd8` |
+| `api7/ngx_multi_upstream_module` | `1.4.1` | `1271391a52e947b576ecbfced05d8bedcd22d04f` |
+| `api7/mod_dubbo` | `1.0.2` | `4aabf9448fe4a49ca71009af8e03645ee5dadd15` |
+| `api7/ngx_http_ffi_client` | `v0.1.3` | `ea8374ddf416ee2553a8aff60189310ca1b6b0c0` |
+
+A commit is resolved with `git ls-remote --tags <repo>.git 'refs/tags/<tag>' 'refs/tags/<tag>^{}'`,
+taking the peeled `^{}` entry when there is one (for an annotated tag, the commit rather than
+the tag object). All eight tags above are lightweight — there is no `^{}` entry — and each
+SHA was confirmed to be a commit object through the GitHub API. APISIX's `SOURCE_COMMIT` is
+checked against the `APP_VERSION` tag by `repo-checks.sh` ("tag matches the pinned source"),
+but **the module commits have no such automatic check** — raise `*_VER` and `*_COMMIT`
+together when a module tag moves. Upstream publishes no checksum for this wasmtime release,
+so the pin was cross-checked by matching the x86_64 tarball's `lib/libwasmtime.so` against
+the same file inside `apache/apisix:3.20.0-debian` by sha256 (identical).
+
+**A fetch that is still unverified**: `luarocks make` downloads the rockspec's ~50
+dependency rocks over HTTPS from luarocks.org (and from each rock's `source.url`, mostly
+GitHub tags). luarocks resolves version constraints and downloads — it pins neither commits
+nor checksums — so this step has no integrity guarantee beyond TLS. Fixing it means
+replacing it with a local rocks server (or `luarocks pack` output) built from pre-fetched,
+checksum-pinned rocks; that is a large change and is left for now.
 
 The module set is not ours to choose. APISIX declares the runtime it needs in
 `.requirements` (`APISIX_RUNTIME=1.4.2` at tag `3.20.0`), and `api7/apisix-build-tools`
@@ -130,7 +168,8 @@ daemonized, but this image's entrypoint, like upstream `apache/apisix-docker`, r
 openresty in the foreground with `daemon off;`, so it is unaffected.
 Deployment configuration must be checked against the 3.19.0 and 3.20.0 entries in upstream `CHANGELOG.md`.
 
-All of these live in `source.build.env` and are **not tracked automatically.** As with the
+All of these (including `SOURCE_COMMIT`, the `*_COMMIT`, `WASMTIME_*` and `*_SHA256` values)
+live in `source.build.env` and are **not tracked automatically.** As with the
 other self-built images, someone reading a new upstream release (or a version that already
 resolves the CVE set above) and editing `source.build.env` to open a PR is itself the
 update trigger.
@@ -167,7 +206,10 @@ IMAGE=apisix BASE_OS=source REGISTRY=<your-registry> \
 ```
 
 The order is **build → functional verification (`verify.sh`) → SBOM → all-severity scan →
-gate verdict.** Beyond `apisix version` output and the nginx config syntax check
+gate verdict.** Beyond `apisix version` output, a check that nginx and the bundled
+`openssl` CLI are both built with the pinned `OPENSSL_VERSION` and load that library at run
+time (no `running with` on nginx -V's `built with OpenSSL` line, no `Library:` mismatch in
+`openssl version`), and the nginx config syntax check
 (`nginx -t`), `verify.sh` **starts a real nginx worker** with a standalone YAML
 configuration and confirms that the APISIX router responds to an HTTP request (no route →
 404), that a configured route matches, and that two plugins in different phases

@@ -5,6 +5,8 @@
 # What it checks, in order:
 #   1. `apisix version` reports the version this build claims (read from APP_VERSION, never
 #      hardcoded — a literal here silently outlives the next version bump)
+#   1b. nginx and the bundled openssl CLI are both built with, and load at run time, the
+#      pinned OPENSSL_VERSION (read from build.env) — not the base OS libopenssl3
 #   2. `apisix init` + `nginx -t` produce a config nginx accepts
 #   3. A real openresty worker starts, proving the compiled-in nginx modules load and the
 #      Lua plugin set parses
@@ -23,6 +25,7 @@ set -e
 TAG="${TAG:?TAG environment variable is required}"
 PLATFORM="${PLATFORM:-linux/amd64}"
 APP_VERSION="${APP_VERSION:?must be passed from build.env}"
+OPENSSL_VERSION="${OPENSSL_VERSION:?must be passed from build.env}"
 
 echo "== apisix version (expecting $APP_VERSION) =="
 OUT="$(docker run --rm --platform "$PLATFORM" --entrypoint sh "$TAG" -c '
@@ -33,6 +36,36 @@ echo "   $OUT"
 case "$OUT" in
   *"$APP_VERSION"*) ;;
   *) echo "FAIL: apisix version output does not contain $APP_VERSION"; exit 1 ;;
+esac
+
+echo "== OpenSSL is the pinned build (expecting $OPENSSL_VERSION) =="
+# nginx -V prints "built with OpenSSL <ver> ..." and, only when the library it loads at run
+# time differs, appends "(running with OpenSSL <other>)". Both must be ours: a match on the
+# build line alone would pass an nginx that resolved the base OS libssl at run time.
+# OpenSSL 3's `openssl version` always prints "<built> (Library: <loaded>)", so both halves
+# are compared — the CLI shipped in openssl3/bin once loaded the system libopenssl3 that way.
+SSL_OUT="$(docker run --rm --platform "$PLATFORM" --entrypoint sh "$TAG" -c '
+/usr/local/openresty/nginx/sbin/nginx -V 2>&1 | grep "^built with OpenSSL"
+echo "--- cli"
+/usr/local/openresty/openssl3/bin/openssl version
+')"
+printf '%s\n' "$SSL_OUT" | sed 's/^/   /'
+NGINX_SSL="$(printf '%s\n' "$SSL_OUT" | grep '^built with OpenSSL' || true)"
+case "$NGINX_SSL" in
+  "built with OpenSSL $OPENSSL_VERSION "*) ;;
+  *) echo "FAIL: nginx is not built with OpenSSL $OPENSSL_VERSION"; exit 1 ;;
+esac
+case "$NGINX_SSL" in
+  *"running with"*) echo "FAIL: nginx loads a different OpenSSL at run time than it was built with"; exit 1 ;;
+esac
+CLI_SSL="$(printf '%s\n' "$SSL_OUT" | sed -n '/^--- cli$/{n;p;}')"
+case "$CLI_SSL" in
+  "OpenSSL $OPENSSL_VERSION "*) ;;
+  *) echo "FAIL: the bundled openssl CLI was not built from OpenSSL $OPENSSL_VERSION"; exit 1 ;;
+esac
+case "$CLI_SSL" in
+  *"(Library: OpenSSL $OPENSSL_VERSION "*) ;;
+  *) echo "FAIL: the bundled openssl CLI loads a libcrypto other than $OPENSSL_VERSION"; exit 1 ;;
 esac
 
 echo "== nginx configuration syntax check (init + nginx -t) =="
