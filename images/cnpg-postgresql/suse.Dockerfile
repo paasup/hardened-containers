@@ -44,9 +44,42 @@ RUN set -eux; \
 USER 26
 
 
+# pg_textsearch (Timescale, BM25 full-text index) — compiled from source.
+# Why: the PGDG zypp repository has no package for it. It is added on top of upstream's
+# standard extension set for databases that need BM25 keyword search; other databases are
+# unaffected unless they CREATE EXTENSION / preload it.
+# The builder stays on the same BCI base as the final image (dynamic linking, no static glibc).
+# `with_llvm=no` skips JIT bitcode — this image does not install the llvmjit package either.
+# For the same reason postgresql-devel is installed with --nodeps: its only unmet requirement on
+# BCI is clang/llvm (for that bitcode), which BCI's repositories do not carry. The devel EVR is
+# pinned to PG_VERSION so the headers match the server in the final image. Builder stage only.
+FROM minimal AS pg-textsearch-build
+ARG PG_MAJOR=18
+ARG PG_VERSION=18.4-4200001PGDG.sles15.7
+ARG PG_TEXTSEARCH_VERSION
+ARG PG_TEXTSEARCH_SHA256
+USER 0
+RUN set -eux; \
+    zypper --non-interactive install -y --no-recommends gcc make tar gzip gawk; \
+    zypper --non-interactive --pkg-cache-dir /tmp/rpms download "postgresql${PG_MAJOR}-devel=${PG_VERSION}"; \
+    rpm -i --nodeps $(find /tmp/rpms -name "postgresql${PG_MAJOR}-devel-*.rpm"); \
+    curl -fsSL -o /tmp/pg_textsearch.tar.gz \
+      "https://github.com/timescale/pg_textsearch/archive/refs/tags/v${PG_TEXTSEARCH_VERSION}.tar.gz"; \
+    echo "${PG_TEXTSEARCH_SHA256}  /tmp/pg_textsearch.tar.gz" | sha256sum -c -; \
+    mkdir /tmp/src; \
+    tar -xzf /tmp/pg_textsearch.tar.gz -C /tmp/src --strip-components=1; \
+    cd /tmp/src; \
+    # The Makefile reads the version with awk inside $(shell ...), which fails silently and
+    # compiles an empty version string; the extension then refuses to install. Fail here instead.
+    test "$(awk -F"'" '/default_version/ {print $2}' pg_textsearch.control)" = "${PG_TEXTSEARCH_VERSION}"; \
+    make with_llvm=no; \
+    make with_llvm=no install DESTDIR=/out
+
+
 FROM minimal AS standard
 ARG PG_MAJOR=18
-# Equivalent to upstream's standard: pgaudit, pgvector, contrib (pg_stat_statements), all locales.
+# Equivalent to upstream's standard: pgaudit, pgvector, contrib (pg_stat_statements), all locales,
+# plus pg_textsearch built above (not in upstream).
 # pg-failover-slots is excluded because the PGDG zypp repository has no package for it
 # (a difference from upstream's Debian standard).
 ARG EXTENSIONS="pgaudit_${PG_MAJOR} pgvector_${PG_MAJOR}"
@@ -58,6 +91,8 @@ RUN set -eux; \
       ${EXTENSIONS}; \
     zypper clean --all; \
     rm -rf /var/log/zypp /var/cache/zypp
+# Only the compiled extension files — no toolchain reaches the final image.
+COPY --from=pg-textsearch-build /out/usr/pgsql-${PG_MAJOR}/ /usr/pgsql-${PG_MAJOR}/
 USER 26
 
 

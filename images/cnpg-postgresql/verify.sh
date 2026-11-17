@@ -47,13 +47,30 @@ done
 echo "== initdb + startup =="
 initdb -D "$PGDATA" -A trust >/dev/null
 pg_ctl -D "$PGDATA" -w start >/dev/null \
-  -o "-c shared_preload_libraries=pgaudit,pg_stat_statements -c unix_socket_directories=/tmp"
+  -o "-c shared_preload_libraries=pgaudit,pg_stat_statements,pg_textsearch -c unix_socket_directories=/tmp"
 psql -h /tmp -U postgres -Atc "SELECT version();" | sed 's/^/   /'
 
 echo "== creating extensions =="
 # The same list the chart (cnpg-cluster) declares through the Database CRD.
 psql -h /tmp -U postgres -q -c \
   "CREATE EXTENSION pgaudit; CREATE EXTENSION vector; CREATE EXTENSION pg_stat_statements;"
+# The keyword-search set: pg_textsearch is built here from source; ltree and btree_gist come
+# from contrib.
+psql -h /tmp -U postgres -q -c \
+  "CREATE EXTENSION pg_textsearch; CREATE EXTENSION ltree; CREATE EXTENSION btree_gist;"
+
+echo "== pg_textsearch BM25 index + query =="
+# Creating the extension only proves the SQL files load — build an index and run a ranked
+# query so the .so is actually exercised.
+hits=$(psql -h /tmp -U postgres -Atq <<'SQL'
+CREATE TABLE _bm25 (id int, body text);
+INSERT INTO _bm25 VALUES (1, 'hardened postgres image'), (2, 'cloudnative operator'), (3, 'postgres full text search');
+CREATE INDEX _bm25_idx ON _bm25 USING bm25 (body) WITH (text_config = 'english');
+SELECT count(*) FROM (SELECT id FROM _bm25 ORDER BY body <@> to_bm25query('postgres', '_bm25_idx') LIMIT 2) t;
+SQL
+)
+echo "   ranked hits: ${hits}"
+[ "$hits" = "2" ] || { echo "FAIL: pg_textsearch query returned '${hits}', expected 2"; exit 1; }
 psql -h /tmp -U postgres -Atc \
   "SELECT extname||' '||extversion FROM pg_extension ORDER BY 1;" | sed 's/^/   /'
 

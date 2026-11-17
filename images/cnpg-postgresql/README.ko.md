@@ -37,6 +37,7 @@ Ubuntu 기반 자체 빌드도 후보였으나 gid 26 이 `tape` 그룹에 선�
 | 베이스 | `standard-trixie` 계열 (Debian) | `registry.suse.com/bci/bci-base:15.7` | 벤더 CVE 판정 차이 + gid 위생 |
 | 패키지 관리자 | apt + PGDG deb | zypper + PGDG rpm | 베이스 OS 전환에 따른 필연적 차이 |
 | `pg-failover-slots` 확장 | 포함 | 제외 | PGDG zypp 저장소에 패키지가 없음 |
+| `pg_textsearch` 확장 (Timescale, BM25) | 없음 | 포함 (소스 빌드) | BM25 키워드 검색이 필요한 DB 용. PGDG zypp 저장소에 패키지가 없어 고정한 소스를 검증해 빌드한다. 다른 DB는 확장을 만들거나 preload하지 않으면 영향이 없다 |
 | uid/gid | 26 (`usermod` 로 강제) | 26 (PGDG RPM 이 기본 생성) | RPM 계열 관례 — 별도 조정 불필요 |
 | 바이너리 경로 | `/usr/lib/postgresql/18/bin` | `/usr/pgsql-18/bin` (호환용 심볼릭 링크 병행) | 경로를 하드코딩하는 코드가 있을 경우를 대비 |
 
@@ -61,6 +62,10 @@ diff 를 낼 수 없다 — **권장 점검 주기는 CNPG 마이너 릴리스�
 고쳐 PR 을 여는 것 자체가 갱신 트리거다. `PG_VERSION` 은 메이저.마이너만 보고 올리면
 안 된다 — EVR 전체(예: `18.4-4200001PGDG.sles15.7`)가 PGDG 저장소가 실제로 배포한
 값과 정확히 일치해야 `zypper install` 이 그 버전을 받는다.
+
+`PG_TEXTSEARCH_VERSION`·`PG_TEXTSEARCH_SHA256` 도 사람이 올린다. 이 확장을 쓰는 DB 가
+다른 환경에서도 pg_textsearch 를 쓰고 있다면 버전을 그쪽과 같게 맞춘다 — 인덱스 형식이 갈라지지
+않게 하려는 것이다. 올릴 때는 GitHub 태그 아카이브의 SHA256을 다시 계산해 함께 커밋한다.
 
 업스트림 빌드 레시피 자체의 변경(새 확장, 새 하드닝 단계)을 따라가야 하는지는 위
 "업스트림 빌드 레시피 변경 점검" 절 참고 — 그건 값이 아니라 `suse.Dockerfile` 구조
