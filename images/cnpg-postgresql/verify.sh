@@ -17,8 +17,11 @@ set -e
 TAG="${TAG:?TAG environment variable is required}"
 PLATFORM="${PLATFORM:-linux/amd64}"
 PG_MAJOR="${PG_MAJOR:?PG_MAJOR environment variable is required (build-hardened-image.sh passes it from build.env)}"
+APP_VERSION="${APP_VERSION:?must be passed from build.env}"
+PG_VERSION="${PG_VERSION:?must be passed from build.env}"
 
-docker run --rm -i --platform "$PLATFORM" -e PG_MAJOR="$PG_MAJOR" --entrypoint sh "$TAG" <<'GUEST'
+docker run --rm -i --platform "$PLATFORM" -e PG_MAJOR="$PG_MAJOR" \
+  -e APP_VERSION="$APP_VERSION" -e PG_VERSION="$PG_VERSION" --entrypoint sh "$TAG" <<'GUEST'
 set -e
 
 export PGDATA=/tmp/_verify
@@ -37,6 +40,18 @@ echo "   uid=$uid gid=$gid($gname)"
 if [ "$gname" != "postgres" ]; then
   echo "   WARN: the group name for gid $gid is '$gname' (not postgres)"
 fi
+
+# The tag is built from APP_VERSION, so the server in the image has to be that version — a
+# `zypper update` once moved it from the pinned 18.4 to 18.7 under an 18.4 tag.
+echo "== server version matches the tag =="
+got=$(postgres --version); got=${got##* }   # "postgres (PostgreSQL) 18.7" — BCI has no awk
+echo "   postgres --version = $got   (APP_VERSION=$APP_VERSION)"
+[ "$got" = "$APP_VERSION" ] || { echo "FAIL: server is $got, the tag says $APP_VERSION"; exit 1; }
+for p in postgresql${PG_MAJOR} postgresql${PG_MAJOR}-libs postgresql${PG_MAJOR}-server postgresql${PG_MAJOR}-contrib; do
+  evr=$(rpm -q --qf '%{VERSION}-%{RELEASE}' "$p") || { echo "FAIL: $p is not installed"; exit 1; }
+  [ "$evr" = "$PG_VERSION" ] || { echo "FAIL: $p is $evr, PG_VERSION is $PG_VERSION"; exit 1; }
+done
+echo "   all postgresql${PG_MAJOR} packages at $PG_VERSION"
 
 echo "== locating binaries (via PATH) =="
 for b in initdb pg_ctl postgres psql; do

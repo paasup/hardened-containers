@@ -16,7 +16,7 @@ ARG BASE=registry.suse.com/bci/bci-base:15.7
 FROM $BASE AS minimal
 
 ARG PG_MAJOR=18
-ARG PG_VERSION=18.4-4200001PGDG.sles15.7
+ARG PG_VERSION
 ARG SLE_REPO=sles-15.7-x86_64
 ARG PGDG_KEY=PGDG-RPM-GPG-KEY-SLES15
 
@@ -29,8 +29,17 @@ RUN set -eux; \
     zypper --non-interactive addrepo --refresh \
       "https://download.postgresql.org/pub/repos/zypp/${PG_MAJOR}/suse/${SLE_REPO}/" pgdg; \
     zypper --non-interactive refresh; \
+    # Every postgresql package pinned to the one EVR, contrib included, and then locked: the
+    # `patched` stage below runs `zypper update`, which would otherwise move the server past
+    # PG_VERSION and leave the tag naming a version the image does not contain.
     zypper --non-interactive install -y --no-recommends \
-      "postgresql${PG_MAJOR}-server=${PG_VERSION}"; \
+      "postgresql${PG_MAJOR}=${PG_VERSION}" \
+      "postgresql${PG_MAJOR}-libs=${PG_VERSION}" \
+      "postgresql${PG_MAJOR}-server=${PG_VERSION}" \
+      "postgresql${PG_MAJOR}-contrib=${PG_VERSION}"; \
+    zypper --non-interactive addlock \
+      "postgresql${PG_MAJOR}" "postgresql${PG_MAJOR}-libs" \
+      "postgresql${PG_MAJOR}-server" "postgresql${PG_MAJOR}-contrib"; \
     zypper clean --all; \
     rm -rf /var/log/zypp /var/cache/zypp
 
@@ -55,7 +64,7 @@ USER 26
 # pinned to PG_VERSION so the headers match the server in the final image. Builder stage only.
 FROM minimal AS pg-textsearch-build
 ARG PG_MAJOR=18
-ARG PG_VERSION=18.4-4200001PGDG.sles15.7
+ARG PG_VERSION
 ARG PG_TEXTSEARCH_VERSION
 ARG PG_TEXTSEARCH_SHA256
 USER 0
@@ -78,7 +87,8 @@ RUN set -eux; \
 
 FROM minimal AS standard
 ARG PG_MAJOR=18
-# Equivalent to upstream's standard: pgaudit, pgvector, contrib (pg_stat_statements), all locales,
+# Equivalent to upstream's standard: pgaudit, pgvector, contrib (pg_stat_statements — installed
+# and locked in `minimal`), all locales,
 # plus pg_textsearch built above (not in upstream).
 # pg-failover-slots is excluded because the PGDG zypp repository has no package for it
 # (a difference from upstream's Debian standard).
@@ -87,7 +97,6 @@ USER 0
 RUN set -eux; \
     zypper --non-interactive install -y --no-recommends \
       glibc-locale \
-      "postgresql${PG_MAJOR}-contrib" \
       ${EXTENSIONS}; \
     zypper clean --all; \
     rm -rf /var/log/zypp /var/cache/zypp
