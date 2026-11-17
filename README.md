@@ -82,7 +82,7 @@ approved exceptions ([cve-exceptions.json](cve-exceptions.json)).
 <tr><td>ArgoCD</td><td><code>argocd</code></td><td><code>3.5.1-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
 <tr><td rowspan="2">CloudNativePG</td><td><code>cloudnative-pg</code></td><td><code>1.30.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
 <tr><td><code>cnpg-postgresql</code></td><td><code>18.7-bci15.7-hardened-20261117</code></td><td>0</td><td>0</td></tr>
-<tr><td>etcd</td><td><code>etcd</code></td><td><code>3.7.1-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td>etcd</td><td><code>etcd</code></td><td><code>3.7.1-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
 <tr><td rowspan="2">Infisical</td><td><code>infisical</code></td><td><code>v0.164.1-security-hardened-20260907</code></td><td>0</td><td>0</td></tr>
 <tr><td><code>infisical-secrets-operator</code></td><td><code>v0.11.8-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
 <tr><td>Keycloak</td><td><code>keycloak</code></td><td><code>26.8.2-bci15.7-hardened-20261117</code></td><td>0</td><td>0</td></tr>
