@@ -67,10 +67,10 @@
       "tag": "v0.11.8-security-hardened-20260904"
     },
     "keycloak": {
-      "digest": "sha256:73c6d7c0f3628d61b3e0f3a17e27e5c79bf9cb35b3fcb9680252791c00391674",
+      "digest": "sha256:c409e80577c1890dbf0d6fbdfa19230b964c92f961bb0756d69368761321da5c",
       "gate": "pass",
-      "ref": "docker.io/paasup/keycloak:26.7.2-bci15.7-hardened-20260908",
-      "tag": "26.7.2-bci15.7-hardened-20260908"
+      "ref": "docker.io/paasup/keycloak:26.8.2-bci15.7-hardened-20261117",
+      "tag": "26.8.2-bci15.7-hardened-20261117"
     },
     "kyverno": {
       "digest": "sha256:ab5bf448f3a63d34c5f44005b75f612c3025f8a7e6e67d3f3ea86eb34b022c58",

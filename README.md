@@ -85,7 +85,7 @@ approved exceptions ([cve-exceptions.json](cve-exceptions.json)).
 <tr><td>etcd</td><td><code>etcd</code></td><td><code>3.7.1-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
 <tr><td rowspan="2">Infisical</td><td><code>infisical</code></td><td><code>v0.164.1-security-hardened-20260907</code></td><td>0</td><td>0</td></tr>
 <tr><td><code>infisical-secrets-operator</code></td><td><code>v0.11.8-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
-<tr><td>Keycloak</td><td><code>keycloak</code></td><td><code>26.7.2-bci15.7-hardened-20260908</code></td><td>0</td><td>0</td></tr>
+<tr><td>Keycloak</td><td><code>keycloak</code></td><td><code>26.8.2-bci15.7-hardened-20261117</code></td><td>0</td><td>0</td></tr>
 <tr><td rowspan="7">Kyverno</td><td><code>background-controller</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
 <tr><td><code>cleanup-controller</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
 <tr><td><code>kyverno</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
