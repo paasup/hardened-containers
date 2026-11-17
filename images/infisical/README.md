@@ -15,25 +15,25 @@ The decision, the candidates compared, and the costs accepted are in
 [ADR 0011](../../docs/decisions/0011-infisical-self-build.md); image selection rules
 and the build framework generally are owned by
 [image-authoring/](../../docs/image-authoring/README.md).
-
 ## Why we build this ourselves
 
-`infisical/infisical` was in use at `v0.158.0` — six minor versions
-behind upstream's latest (`v0.164.1`) — so a tag bump alone already does a lot of the
-work. This image targets the latest tag (`v0.164.1`).
+`infisical/infisical` was in use at `v0.158.0`, and upstream's newest tag when this
+self-build started was `v0.164.1`. Measured against that tag, the blocking CVEs split into
+two layers, and that structure still holds:
 
-Measured against that latest tag, the blocking CVEs split into two layers:
+- **OS-package layer (Debian, `node:*-trixie-slim`).** Upstream itself fights this inside
+  `Dockerfile.standalone-infisical` with version-pinned manual upgrades of specific Debian
+  packages (`apt-get install ... libc6=... libssl3t64=...`, a list that grows every
+  release). Swapping the base to SUSE BCI removes this entire layer — the Debian packages
+  simply no longer exist in the image.
+- **Application-dependency layer (Node/Go/Rust).** Following upstream's newest tag is the
+  biggest lever — upstream raises its dependencies often, so only what is left gets forced
+  up with npm (see "Differences from upstream"). The Go sidecar is removed by dropping it
+  (table below).
 
-- **OS-package layer (Debian 13.3, `node:22.22.0-trixie-slim`) — 273 effective
-  HIGH/CRITICAL.** Upstream itself is fighting this same problem inside
-  `Dockerfile.standalone-infisical` with manual point-patches (`apt-get install
-  --only-upgrade libgnutls30t64=... libc6=... ...`). Swapping the base to SUSE BCI
-  removes this entire layer — the Debian packages simply no longer exist in the image.
-- **Application-dependency layer (Node/Go/Rust) — 81 effective HIGH/CRITICAL.** Most of
-  it (26 node-pkg packages) is resolved by force-upgrading via npm `overrides` (see
-  "Differences from upstream" below). The Go sidecar's and the Rust native addon's CVEs
-  went away by dropping those components entirely (see below) — with one exception,
-  `@infisical/quic`.
+This image tracks the newest tag on the support line (`APP_VERSION`, currently
+`v0.167.11`) — upstream supports only its newest tag, with no maintenance branch
+(`SUPPORT_NOTE` in `image.env`).
 
 The exact CVE list and counts are re-produced by `scan-image.sh` and `image-gate.py` on
 every build — see "Building and verifying" below.
@@ -44,7 +44,7 @@ every build — see "Building and verifying" below.
 
 | Item | Why it's safe to drop |
 | --- | --- |
-| Oracle Instant Client | `oracledb` ^6.4.0 defaults to thin mode (pure JS, no client needed). `initOracleClient()` is only called for the OracleDB wallet-mTLS connection method, and its failure is caught, not fatal (`sql-connection-fns.ts`) |
+| Oracle Instant Client | `oracledb` defaults to thin mode (pure JS, no client needed). `initOracleClient()` is only called for the OracleDB wallet-mTLS connection method, and its failure is caught, not fatal (`sql-connection-fns.ts`) |
 | smbclient | Not an npm dependency — shelled out to via `child_process` only when that specific feature actually runs (`lib/smb-rpc/smb-rpc-client.ts`). Unrelated to server boot |
 | Bundled `infisical` CLI | Upstream installs it by piping a remote setup script straight into a shell (this repo's rule 7 forbids that pattern regardless). A separate tool, unrelated to the server process |
 | From-source PQC (post-quantum) OpenSSL build | `pqc-openssl.ts` only reaches `/opt/openssl-pqc/bin/openssl` through a lazy `spawn()` — unrelated to boot, only that one feature degrades |
@@ -61,118 +61,137 @@ to resolve. Without it, the server fails to boot at all. So unixODBC's runtime
 `odbcinst.ini` points at) is only touched on an actual connection attempt, so it is
 dropped.
 
+Upstream itself stopped shipping the Go sidecar in `v0.167.0` — that row of the table is
+now the same state as upstream rather than a difference from it.
+
+### Runtime Node — upstream runs 26, this image runs SLE's `nodejs24`
+
+| Item | Upstream | This image |
+| --- | --- | --- |
+| Runtime Node | Node 26 from `node:26.12.1-trixie-slim` (`backend/package.json` declares `engines.node >=26.0.0`) | SLE_BCI 15.7's OS package `nodejs24` (24.22.1) |
+| `npm` for the backend build | Node 26's bundled npm | SLE's `npm24` (11.19.1 — satisfies upstream's `engines.npm >=11.10.0`) |
+
+Upstream moved to Node 26 in `v0.166.1`, but **SLE_BCI has no `nodejs26` package on either
+15.7 or 16.0** (both stop at `nodejs22`/`nodejs24`, measured 2026-11-17). Candidates
+compared:
+
+- **Run on SLE's `nodejs24` — chosen.** Keeps the runtime Node on the OS-package path the
+  vendor patches ([builder-languages.md](../../docs/image-authoring/builder-languages.md)
+  "Node"). The `engines` mismatch is only an `EBADENGINE` warning from `npm install`, not
+  an error. The Node 26 upgrade commit (`6409dce`) changed build tooling (tsup -> tsdown,
+  ts-node -> tsx) and typings; no Node-26-only runtime API showed up in it — but that is
+  a reading, and the actual evidence is `verify.sh` running this image from admin
+  bootstrap through a secret write and read-back and passing.
+- **Install nodejs.org's Node 26 tarball on BCI — rejected.** Checksum verification is
+  possible, but the runtime Node then leaves the OS-package update path, its pin has to be
+  raised by hand indefinitely, and the scanner sees it as a binary rather than an OS
+  package.
+- **Stay on a Node 22-era tag (`v0.164.1`) — rejected.** It is off the support line (only
+  the newest tag is supported), and it keeps the three unfixable `@infisical/quic` CVEs
+  (below) on exceptions.
+
+**Condition for switching**: when SLE_BCI ships `nodejs26`, move `NODEJS_PKG`,
+`NODEJS_DEVEL_PKG` and `NPM_PKG` to it. If upstream starts using an API Node 24 lacks
+before then, `verify.sh` is what must catch it — if it breaks there, this decision is
+reopened. Decision record: [ADR 0013](../../docs/decisions/0013-infisical-runtime-node24.md).
+
 ### Builder stages — only the backend uses SUSE BCI
 
 | Stage | Upstream | This image | Reason |
 | --- | --- | --- | --- |
 | Frontend builder | Official `node` image | Same (official `node` image, matching upstream's own pin) | Output is static Vite assets only — no native binaries, no ABI concern, so it keeps the normal default (official language image) |
-| Backend builder | Official `node` image (Debian) | `registry.suse.com/bci/bci-base` (same base as the final stage) | The backend's production dependencies include native Node addons (`argon2`, `bcrypt`, `odbc`). Compiling on Debian and running on SUSE BCI risks a glibc ABI mismatch — the same principle as the C/Lua rule in [builder-languages.md](../../docs/image-authoring/builder-languages.md) ("keep the builder stage and the final stage on the same base and link dynamically"), extended to native Node addons |
+| Backend builder | Official `node` image (Debian) | `registry.suse.com/bci/bci-base` (same base as the final stage) + `gcc14-c++` | The backend's production dependencies include native Node addons (`argon2`, `bcrypt`, `odbc`, `pkcs11js`). Compiling on Debian and running on SUSE BCI risks a glibc ABI mismatch — the C/Lua rule in [builder-languages.md](../../docs/image-authoring/builder-languages.md) ("keep the builder stage and the final stage on the same base and link dynamically"), applied to native Node addons |
 
-### Force-upgraded Node dependencies (37, `NPM_DIRECT_UPGRADES` + `NPM_OVERRIDES`)
+Two measured traps in the backend builder:
 
-Like `golang.org/x/*` modules, most `node-pkg` findings are **transitive** dependencies.
-npm's equivalent of `go get` is the `overrides` field (`npm pkg set
-overrides[<pkg>]=<version>`, then `npm install`). Values are not hand-picked — they come
-from trivy's `FixedVersion`, taking the minimum version **on the same major line already
-installed** (three exceptions forced onto a newer major because no same-major fix exists:
-`ip-address` -> 10.x, `sigstore` -> 4.x, `toml` -> 4.x). Exact values and the CVEs behind
-them are in `source.build.env`.
+- **SLE_BCI's `python3` package (3.6.15) is too old for `node-gyp`** — `node-gyp`'s
+  bundled `gyp` fails with a `SyntaxError` on the walrus operator. `python313` is
+  installed and symlinked to `/usr/bin/python3` (SLE_BCI has no `update-alternatives`).
+- **SLE 15's default `gcc-c++` is GCC 7, which does not know the `-std=gnu++20` Node 24's
+  headers require** (`pkcs11js` fails with `unrecognized command line option
+  '-std=gnu++20'`). This never surfaced under Node 22. `gcc14-c++` is installed and
+  selected through `CC`/`CXX` (`BUILDER_GCC_VERSION`). The runtime `libstdc++6` is 16.x,
+  so the addons GCC 14 produces resolve their symbols against it.
 
-Three things this repository's Go-based force-upgrades never have to handle, all
-measured by an actual build failing:
+### Force-upgraded Node dependencies (`NPM_DIRECT_UPGRADES` + `NPM_OVERRIDES`)
+
+At `v0.167.11`, upstream's own lockfile already carries fixed versions of most packages
+this image used to force up. So the lists were rebuilt from empty and re-measured — left
+as they were, `NPM_OVERRIDES`' exact versions would have **pulled packages back down**
+below what upstream already ships (e.g. the old pin `undici@7.29.0` against upstream's
+lockfile `7.30.1`). What remains is three same-major fixes for MEDIUM/LOW findings
+(values and reasons in `source.build.env`).
+
+| Package | Upstream lockfile | This image |
+| --- | --- | --- |
+| `node-forge` | 1.4.2 | 1.4.3 |
+| `fast-xml-parser` | 5.7.2 | 5.12.x |
+| `@opentelemetry/instrumentation-http` | 0.220.0 | 0.222.0 |
+
+Values come from trivy's `FixedVersion`, taking the minimum fixed version **on the
+installed major line**. npm traps Go's force-upgrades never hit, each measured by a build
+failing:
 
 - **npm refuses to `overrides` a package that is also a direct dependency**
-  (`npm error EOVERRIDE`) — 14 of the 37 (`@fastify/static`, `@simplewebauthn/server`,
-  `axios`, `dd-trace`, `dompurify`, `fastify`, `mysql2`, `nanoid`, `nodemailer`,
-  `oci-common`, `qs`, `re2`, `scim-patch`, `uuid`) are direct dependencies of
-  `backend/package.json` (or, `dompurify`, of `frontend/package.json`), so they go
-  through `NPM_DIRECT_UPGRADES` instead (bumps
-  `dependencies` itself, plus a matching self-referencing `overrides[pkg]["."]` entry to
-  also dedupe every *nested* copy other packages pull in — npm's EOVERRIDE check is a
-  **textual** comparison against `dependencies`, not a semver one, so the two values
-  must match character-for-character, `^` included). `npm ci` was replaced with
-  `npm install` in both build stages for the same reason: `npm ci` refuses to proceed
-  once `npm pkg set` has put `package.json` out of sync with the committed
-  `package-lock.json`, by design.
-- **Both variables apply identically to both stages — direct in only one of them still
-  means `NPM_DIRECT_UPGRADES`.** `dompurify` is transitive in `backend/package.json` but
-  a direct dependency (`^3.2.4`) of `frontend/package.json`. Listing it under
-  `NPM_OVERRIDES` passes the backend stage but kills the frontend stage with
-  `EOVERRIDE` — one package can need opposite treatment depending on which stage's
-  `package.json` is being patched, so it goes in `NPM_DIRECT_UPGRADES` if it is direct
-  in *either* one (the frontend build output is static Vite assets only, invisible to
-  the final image's SBOM, but a failed frontend build still fails the whole image before
-  the gate is ever reached).
-- **Forcing a nested dependency can break a *different* package that pins it on
-  purpose.** `oci-common@2.108.0` (direct, the OCI Vault integration) pins
-  `uuid@3.3.3` and imports uuid's legacy `uuid/v1` subpath — removed entirely from
-  uuid's `package.json` `exports` map starting with uuid 9. Forcing `uuid` to 11.1.1
-  without also bumping `oci-common` crashed the server at boot
-  (`ERR_PACKAGE_PATH_NOT_EXPORTED`, caught by `verify.sh`, not by the gate). Bumping
-  `oci-common` to its own latest (2.140.0, which already uses modern `uuid` itself)
-  resolved both the crash and the nested CVE at once — this is why `oci-common` is in
-  `NPM_DIRECT_UPGRADES` even though nothing scanned it directly.
-- **SLE_BCI's `python3` package (3.6.15) is too old for `node-gyp`** — compiling the
-  native addons (`odbc`, `argon2`, `bcrypt`) needs Python 3.8+; 3.6 fails with a
-  `SyntaxError` on the walrus operator inside `node-gyp`'s bundled `gyp`.
-  `source.Dockerfile`'s backend builder installs `python313` and symlinks it to
-  `/usr/bin/python3` (SLE_BCI has no `update-alternatives` to do this automatically).
+  (`npm error EOVERRIDE`). Hence two lists — `NPM_DIRECT_UPGRADES` bumps `dependencies`
+  itself, and to also dedupe *nested* copies adds a self-referencing
+  `overrides[pkg]["."]` with the same range (the EOVERRIDE check is a **textual** match,
+  not a semver one, so the `^` must match too). `npm ci` refuses to run once `npm pkg set`
+  has put `package.json` out of sync with the lockfile (`EUSAGE`), so `npm install` is used.
+- **Where upstream's `package.json` already overrides the package with a plain string,
+  `overrides[pkg]["."]` cannot be set** (`npm error EOVERRIDEVALUE` — `fast-xml-parser` is
+  one). That string override is replaced with the same range instead. The loops run under
+  `set -e` — before, an `npm pkg set` failing mid-loop could be swallowed silently.
+- **Forcing a nested dependency can break a different package that pins it on purpose**
+  (measured on an earlier tag: raising `uuid` alone broke `oci-common`'s legacy `uuid/v1`
+  subpath import with `ERR_PACKAGE_PATH_NOT_EXPORTED` at boot — caught by `verify.sh`).
+- Both lists apply **only to the two backend stages**. The frontend runs `npm ci` against
+  upstream's lockfile as-is; its output is static assets that do not show up in the final
+  image's SBOM.
 
-### Exception — `@infisical/quic` (Rust native addon)
+### Resolved exception — `@infisical/quic` (Rust native addon)
 
-A genuine production dependency for the Gateway/QUIC transport, shipped as a prebuilt
-platform binary via npm `optionalDependencies` (no Rust toolchain needed to consume
-it). The problem: it's already pinned to its **latest published version** (1.0.8,
-released 2025-03), and that version still carries 3 CVEs (1 CRITICAL, 2 HIGH —
-`shlex`, `quiche`) — there's no newer version to move to.
+At `v0.164.1`, the prebuilt `@infisical/quic` 1.0.8 (the QUIC transport of Gateway v1)
+bundled `quiche` 0.18.0 and `shlex` 1.1.0, carrying three CVEs that could not be fixed
+(CVE-2024-58266 CRITICAL, CVE-2025-7054 and CVE-2024-1765 HIGH) and were accepted as
+`cve-exceptions.json` exceptions (it was that package's newest version, and moving
+`js-quic` to `quiche` 0.24 needed a Rust source patch — the investigation is in
+[ADR 0011](../../docs/decisions/0011-infisical-self-build.md) and this file's git
+history).
 
-**"No Rust build pipeline" is not the whole reason — an actual build was attempted, and
-the result is recorded here so the next review of this exception doesn't have to
-re-investigate from scratch.** The source is public
-(`github.com/Infisical/js-quic`, MIT, not archived, napi-rs-based). Pulled the `v1.0.8`
-tag, bumped `Cargo.toml`'s `quiche` from `0.18.0` to `0.24.5` (resolved to `0.24.9`),
-and actually ran `cargo check` (`rust:1-bookworm` plus `cmake`, `pkg-config`,
-`libssl-dev`, `libclang-dev`, `clang` — matching the toolchain `js-quic`'s own
-`flake.nix` requires).
+**Upstream dropped that dependency in `v0.165.13` when it deprecated Gateway v1** ("deprecate
+gateway v1"). Neither `v0.167.11`'s lockfile nor this image's SBOM contains
+`@infisical/quic`, `quiche` or `shlex`. So these three were not accepted as exceptions;
+they were **actually resolved by the release bump**. The corresponding exception entries,
+which expired on 2026-11-07, have no reason to be renewed.
 
-- **First barrier — a `boring` crate version conflict.** `quiche 0.24.5` requires
-  `boring ^4.3`, but `js-quic`'s own `Cargo.toml` also directly depends on
-  `boring = "3"`. Two crates linking the same native library (`boringssl`) can't
-  disagree on version (a `links = "boringssl"` conflict, Cargo's EOVERRIDE-like check),
-  so `js-quic`'s own `boring` had to be bumped to `"4.3"` too — **this resolved cleanly.**
-  BoringSSL itself (C/C++, built via cmake) compiled successfully end to end (confirmed
-  `libcrypto.a`/`libssl.a` linked).
-- **Second barrier — quiche's own public API actually changed (the real blocker).**
-  With the `boring` conflict resolved, `cargo check` produces **20 compile errors**, all
-  inside `src/native/napi/connection.rs`:
-  - 9 fields removed from the `quiche::Stats` struct — `peer_initial_max_data`,
-    `peer_initial_max_stream_data_bidi_local`, `peer_initial_max_stream_data_bidi_remote`,
-    `peer_initial_max_stream_data_uni`, `peer_initial_max_streams_bidi`,
-    `peer_initial_max_streams_uni`, `peer_ack_delay_exponent`, `peer_max_ack_delay`,
-    `peer_disable_active_migration`, `peer_active_conn_id_limit`,
-    `peer_max_datagram_frame_size`. `js-quic` reads these directly and forwards them to
-    its JS-facing stats API.
-  - Renamed methods: `active_source_cids` -> `active_scids`, `source_cids_left` ->
-    `scids_left`. `new_source_cid` and `retire_destination_cid` changed signature
-    entirely.
-  - `stream_capacity` now requires `&mut self` (`js-quic`'s code calls it via `&self`) —
-    a mutability mismatch.
-  - (For reference: `src/native/napi/config.rs`, which uses `boring::ssl::*`/
-    `boring::x509::*` directly, had no errors in this list — the TLS setup code
-    compiled fine across the `boring` v3 -> v4 jump.)
-- **Upstream hasn't fixed this either.** `js-quic` has commits as recently as
-  2025-10-06 (an active repo), but `master`'s `Cargo.toml` still pins
-  `quiche = "0.18.0"` — Infisical itself has not picked up this API change yet.
+## Version management
 
-So what remains is not "bump one pin" but **actually patching `js-quic`'s Rust code to
-match quiche's changed API** (deciding what to do about the 9 removed stats fields,
-replacing 3-4 renamed methods, fixing the mutability mismatch), **verifying actual QUIC
-connection behavior, not just a successful compile**, and — if Infisical's own
-TypeScript side consumes any of the now-removed stats fields — updating that too. A
-separate, project-sized piece of work. Registered as an exception in
-`cve-exceptions.json` — rationale: upstream's own package, no newer version published
-(upstream hasn't fixed it either), and a real fix needs a Rust source patch beyond this
-image's scope.
+**Pins not tracked automatically** — a person editing `source.build.env` and opening a PR
+is itself the update trigger (there is no semi-automatic tool like
+`suggest-go-upgrades.py` for this image).
+
+| Key | What | When to raise it |
+| --- | --- | --- |
+| `APP_VERSION`, `SOURCE_COMMIT` | Upstream tag and its commit | When a new tag ships — only the newest is supported, so waiting leaves the support line |
+| `NODE_BUILDER_TAG` | Frontend builder | Follows the `node:` tag in upstream's `Dockerfile.standalone-infisical` |
+| `NODEJS_PKG`, `NODEJS_DEVEL_PKG`, `NPM_PKG` | Runtime/build Node | When SLE_BCI ships `nodejs26` ("Runtime Node" above) |
+| `BUILDER_GCC_VERSION` | Compiler for the backend addons | Only when the build demands it |
+| `NPM_DIRECT_UPGRADES`, `NPM_OVERRIDES` | Force-upgrade lists | **Re-measured from empty on every tag bump** — check first whether upstream's lockfile is already ahead |
+
+**Exceptions**: no `cve-exceptions.json` entry applies to this image now. What was fixed by
+the upgrades and tag bump above is distinct from what is accepted through an exception —
+the latter is zero as of this build.
+
+**Deferred**: `glob` 10.5.0 (CVE-2026-118773) and `minimatch` 9.0.9 (CVE-2026-118764),
+both MEDIUM. The only fixed versions are `glob` 14 and `minimatch` 11, across a major —
+upstream deliberately holds `glob` at 10 (`overrides.glob = ^10.5.0`), and `rimraf@3` and
+`@octopusdeploy/api-client` use the glob 7/8 APIs. When upstream lifts that override, the
+next rebuild follows.
+
+**Condition for stopping the self-build**: as long as upstream's image is Debian-based the
+OS-package layer remains, so this does not apply until upstream moves to a base that passes
+this repository's bar.
 
 ## Building and verifying
 
@@ -185,14 +204,18 @@ IMAGE=infisical BASE_OS=source REGISTRY=<your-registry> \
   bash scripts/build/build-hardened-image.sh /tmp/out
 ```
 
-This image's `verify.sh` differs from this repository's other single-binary
-self-builds — since all the app actually needs is Postgres and Redis, it really spins
-both up as throwaway containers and boots the image against them, polling the same
-`/api/status` endpoint the upstream Helm chart's readiness probe uses until it returns
-200. The auto-migration-on-boot step (`auto-start-migrations.ts` upstream) running to
-completion against a real Postgres is itself a meaningful check that the npm
-`overrides` force-upgrades didn't break dependency resolution or break the app at
-runtime.
+This image's `verify.sh` differs from this repository's other single-binary self-builds —
+all the app needs is Postgres and Redis, so it runs both as throwaway containers and boots
+the image against them for real.
+
+1. It polls `/api/status` — the endpoint the upstream Helm chart's readiness probe uses —
+   until it returns 200, which means the auto-migration on boot ran to completion against
+   a real Postgres.
+2. It then does what an operator does first on a fresh instance: `/api/v1/admin/bootstrap`
+   creates the admin, organization and a machine identity (password hashing — the native
+   addons), and with that token it creates a project, writes a secret and reads it back,
+   checking the value matches (the KMS envelope-encryption path). This step is the real
+   evidence behind running on `nodejs24` instead of Node 26 (above).
 
 Read the result from `/tmp/out/cve-gate.md`. Even when the gate passes, check that
 `CoverageProbe` in `/tmp/out/trivy-reports/*.json` reads `ok`. The verdict logic is
@@ -204,19 +227,20 @@ described in [docs/image-authoring/](../../docs/image-authoring/README.md).
 | --- | --- |
 | `source.Dockerfile` | Build definition — frontend (official node) + backend (SUSE BCI) builders, SUSE BCI (`bci-base`) final stage |
 | `source.build.env` | Pinned commit, versions, builder image tags, the npm `NPM_DIRECT_UPGRADES`/`NPM_OVERRIDES` lists. Only names listed in `BUILD_ARGS` are passed as `--build-arg` |
-| `verify.sh` | Functional verification — boots the image against real throwaway Postgres+Redis and polls `/api/status` |
+| `verify.sh` | Functional verification — boots the image against real throwaway Postgres+Redis, checks `/api/status`, then runs admin bootstrap -> project -> secret write and read-back |
 
 There is only one base variant, so the filenames are fixed at `source.*`.
 
 ### Tags
 
 ```
-<registry>/infisical:v0.164.1-security-hardened-20260831
-                      └  app  ┘└ slug ┘└hardened┘└ build date ┘
+<registry>/infisical:v0.167.11-security-hardened-20261117
+                      └  app   ┘└ slug ┘└hardened┘└ build date ┘
 ```
 
 ## Not done yet — deployment verification
 
-`verify.sh` confirms the server boots and migrates against a standalone Postgres/Redis,
-but installing this alongside `infisical-secrets-operator` in a real Kubernetes cluster
-and confirming an `InfisicalSecret` actually syncs has not been done yet.
+`verify.sh` confirms the server boots and exchanges a secret over the API against a
+standalone Postgres/Redis, but installing this alongside `infisical-secrets-operator` in a
+real Kubernetes cluster and confirming an `InfisicalSecret` actually syncs has not been
+done yet.

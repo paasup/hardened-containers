@@ -16,21 +16,21 @@ Infisical 백엔드(`infisical/infisical`, secrets-operator 와 짝을 이루는
 
 ## 왜 자체 빌드하는가
 
-`infisical/infisical` 은 `v0.158.0` 으로 쓰이고 있었는데, 이는 업스트림
-최신(`v0.164.1`)보다 6개 마이너 버전 뒤처져 있었다 — 상위 태그 교체만으로도 효과가 크다는
-뜻이다. 이 이미지는 최신 태그(`v0.164.1`)를 기준으로 잡았다.
+`infisical/infisical` 은 `v0.158.0` 으로 쓰이고 있었고, 자체 빌드를 시작한 시점의 업스트림
+최신은 `v0.164.1` 이었다. 그때 최신 태그 기준으로 실측한 차단 CVE 는 두 층으로 나뉘었고,
+이 구조는 지금도 그대로다.
 
-최신 태그 기준으로 실측한 CVE 는 두 층으로 나뉜다.
+- **OS 패키지 층(Debian, `node:*-trixie-slim`).** 업스트림 스스로도
+  `Dockerfile.standalone-infisical` 안에서 특정 Debian 패키지를 버전 핀으로 수동
+  업그레이드하며 이 문제와 싸우고 있다(`apt-get install ... libc6=... libssl3t64=...`,
+  릴리스마다 목록이 늘어난다). 베이스를 SUSE BCI 로 교체하면 이 층 전체가 해소된다 — Debian
+  패키지 자체가 이미지에 존재하지 않게 되기 때문이다.
+- **애플리케이션 의존성 층(Node/Go/Rust).** 상위 태그를 따라가는 것이 가장 큰 지렛대다 —
+  업스트림이 의존성을 자주 올리므로, 남는 것만 npm 강제 상향으로 막는다(아래 "업스트림과의
+  차이"). Go 사이드카는 빼서 없앴다(아래 표).
 
-- **OS 패키지 층(Debian 13.3, `node:22.22.0-trixie-slim`) — 실효 HIGH/CRITICAL 273건.**
-  업스트림 스스로도 `Dockerfile.standalone-infisical` 안에서 특정 Debian 패키지를
-  수동으로 핀 업그레이드하며 이 문제와 싸우고 있다(`apt-get install --only-upgrade
-  libgnutls30t64=... libc6=... ...`). 베이스를 SUSE BCI 로 교체하는 것만으로 이 층
-  전체가 해소된다 — Debian 패키지 자체가 이미지에 존재하지 않게 되기 때문이다.
-- **애플리케이션 의존성 층(Node/Go/Rust) — 실효 HIGH/CRITICAL 81건.** 대부분(node-pkg
-  26개 패키지)은 npm `overrides` 로 최소 수정 버전까지 강제 상향해 해소했다(아래
-  "업스트림과의 차이" 표). Go 사이드카·Rust 네이티브 애드온에서 나온 CVE 는 그 두
-  컴포넌트를 아예 빼면서 함께 없어졌다(아래 참고) — 단 `@infisical/quic` 는 예외다.
+이 이미지는 지원 라인의 최신 태그(`APP_VERSION`, 지금은 `v0.167.11`)를 따라간다 — 업스트림은
+유지보수 브랜치 없이 최신 태그 하나만 지원한다(`image.env` 의 `SUPPORT_NOTE`).
 
 정확한 CVE 목록·건수는 `scan-image.sh`/`image-gate.py` 가 매 빌드마다 다시 낸다 — 아래
 "빌드·검증" 절 참고.
@@ -41,7 +41,7 @@ Infisical 백엔드(`infisical/infisical`, secrets-operator 와 짝을 이루는
 
 | 항목 | 왜 빼도 되는지 |
 | --- | --- |
-| Oracle Instant Client | `oracledb` ^6.4.0 는 기본이 thin 모드(순수 JS, 클라이언트 불필요). `initOracleClient()` 는 OracleDB wallet mTLS 연결일 때만 호출되고, 실패해도 catch 되어 그 기능만 못 쓴다(`sql-connection-fns.ts`) |
+| Oracle Instant Client | `oracledb` 는 기본이 thin 모드(순수 JS, 클라이언트 불필요). `initOracleClient()` 는 OracleDB wallet mTLS 연결일 때만 호출되고, 실패해도 catch 되어 그 기능만 못 쓴다(`sql-connection-fns.ts`) |
 | smbclient | npm 의존성이 아니다 — `child_process`로 그 기능이 실제 호출될 때만 spawn 된다(`lib/smb-rpc/smb-rpc-client.ts`). 서버 부팅과 무관 |
 | 번들 `infisical` CLI | 업스트림이 원격 설치 스크립트를 셸로 바로 파이프해 설치(이 레포 규칙 7 위반). 서버 프로세스와 무관한 별도 도구 |
 | PQC(post-quantum) OpenSSL 자체 빌드 | `pqc-openssl.ts` 가 `/opt/openssl-pqc/bin/openssl` 를 lazy `spawn()`으로만 호출 — 부팅과 무관, 그 기능만 못 씀 |
@@ -56,109 +56,122 @@ Infisical 백엔드(`infisical/infisical`, secrets-operator 와 짝을 이루는
 그래서 unixODBC 런타임(`libodbc2`)만은 최종 이미지에 남겼다. 반대로 FreeTDS(실제 TDS
 드라이버, `odbcinst.ini` 가 가리키는 대상)는 실제 연결 시도 시점에만 필요해 뺐다.
 
+Go 사이드카는 업스트림도 `v0.167.0` 부터 이미지에 넣지 않는다 — 위 표의 그 행은 이제
+업스트림과의 차이가 아니라 같은 상태다.
+
+### 런타임 Node — 업스트림은 26, 이 이미지는 SLE `nodejs24`
+
+| 항목 | 업스트림 | 이 이미지 |
+| --- | --- | --- |
+| 런타임 Node | `node:26.12.1-trixie-slim` 의 Node 26 (`backend/package.json` 이 `engines.node >=26.0.0` 선언) | SLE_BCI 15.7 의 OS 패키지 `nodejs24` (24.22.1) |
+| 백엔드 빌드의 `npm` | Node 26 번들 npm | SLE 의 `npm24` (11.19.1 — 업스트림의 `engines.npm >=11.10.0` 충족) |
+
+업스트림은 `v0.166.1` 부터 Node 26 으로 올라갔지만, **SLE_BCI 는 15.7 에도 16.0 에도
+`nodejs26` 패키지가 없다**(둘 다 `nodejs22`·`nodejs24` 까지, 2026-11-17 실측). 비교한 후보:
+
+- **SLE `nodejs24` 로 실행 — 채택.** 런타임 Node 를 벤더가 패치하는 OS 패키지 경로에 두는
+  규칙([builder-languages.md](../../docs/image-authoring/builder-languages.md) "Node")을
+  지킨다. `engines` 불일치는 `npm install` 에서 `EBADENGINE` 경고만 내고 막지 않는다.
+  Node 26 업그레이드 커밋(`6409dce`)의 런타임 코드 변경은 빌드 도구 교체(tsup→tsdown,
+  ts-node→tsx)와 타입 정리였고 Node 26 전용 런타임 API 도입은 보이지 않았다 — 다만 이건
+  읽어서 확인한 것이고, 실제 근거는 `verify.sh` 가 이 이미지로 관리자 부트스트랩부터 시크릿
+  쓰기·읽기까지 돌려 통과한다는 것이다.
+- **nodejs.org 의 Node 26 tarball 을 BCI 위에 직접 설치 — 기각.** 체크섬 검증은 가능하지만
+  런타임 Node 가 OS 패키지 갱신 경로를 벗어나 핀을 사람이 계속 올려야 하고, 스캐너가 이를
+  OS 패키지가 아닌 바이너리로 본다.
+- **Node 22 시절 태그(`v0.164.1`)에 머물기 — 기각.** 지원 라인(최신 태그)을 벗어나고,
+  `@infisical/quic` 의 수정 불가 CVE 3건(아래)을 예외로 계속 끌고 가야 한다.
+
+**전환 조건**: SLE_BCI 가 `nodejs26` 을 내면 `NODEJS_PKG`·`NODEJS_DEVEL_PKG`·`NPM_PKG` 를
+그쪽으로 옮긴다. 그 전에 업스트림이 Node 24 에 없는 API 를 쓰기 시작하면 `verify.sh` 가
+잡아야 한다 — 거기서 깨지면 이 결정을 다시 연다. 결정 기록: [ADR 0013](../../docs/decisions/0013-infisical-runtime-node24.md).
+
 ### 빌더 스테이지 — 백엔드만 SUSE BCI
 
 | 스테이지 | 업스트림 | 이 이미지 | 이유 |
 | --- | --- | --- | --- |
 | 프론트엔드 빌더 | 공식 `node` 이미지 | 동일(공식 `node` 이미지, 업스트림과 같은 태그) | 산출물이 정적 Vite 에셋뿐이라 네이티브 바이너리·ABI 문제가 없다 — 평소 기본값(공식 언어 이미지) 그대로 |
-| 백엔드 빌더 | 공식 `node` 이미지(Debian) | `registry.suse.com/bci/bci-base`(최종 스테이지와 동일 베이스) | 백엔드 프로덕션 의존성에 네이티브 Node 애드온(`argon2`·`bcrypt`·`odbc`)이 있다. Debian 에서 컴파일해 SUSE BCI 에서 실행하면 glibc ABI 불일치 위험이 있다 — [builder-languages.md](../../docs/image-authoring/builder-languages.md) 의 C/Lua 규칙("빌더와 최종 스테이지를 같은 베이스로 유지하고 동적 링크")을 네이티브 Node 애드온에도 그대로 적용했다 |
+| 백엔드 빌더 | 공식 `node` 이미지(Debian) | `registry.suse.com/bci/bci-base`(최종 스테이지와 동일 베이스) + `gcc14-c++` | 백엔드 프로덕션 의존성에 네이티브 Node 애드온(`argon2`·`bcrypt`·`odbc`·`pkcs11js`)이 있다. Debian 에서 컴파일해 SUSE BCI 에서 실행하면 glibc ABI 불일치 위험이 있다 — [builder-languages.md](../../docs/image-authoring/builder-languages.md) 의 C/Lua 규칙("빌더와 최종 스테이지를 같은 베이스로 유지하고 동적 링크")을 네이티브 Node 애드온에도 적용했다 |
 
-### 강제 상향한 Node 의존성(37개, `NPM_DIRECT_UPGRADES` + `NPM_OVERRIDES`)
+백엔드 빌더에서 실측한 함정 두 가지:
 
-`golang.org/x/*`류 Go 모듈처럼, `node-pkg` 취약점은 대부분 **전이 의존성**이다. `go
-get` 의 npm 대응이 `overrides` 필드다(`npm pkg set overrides[<pkg>]=<version>` 후
-`npm install`). 값은 하나하나 손으로 고른 게 아니라 trivy 리포트의 `FixedVersion` 에서
-뽑았고 — 원칙은 **설치된 버전과 같은 메이저 라인 안에서** 고치는 최소 버전(같은
-메이저에 수정 버전이 없는 세 건, `ip-address`→10.x·`sigstore`→4.x·`toml`→4.x 만
-메이저를 올렸다). 정확한 값과 CVE 는 `source.build.env`에 있다.
+- **SLE_BCI 의 `python3` 패키지(3.6.15)는 `node-gyp` 를 돌리기엔 너무 오래됐다** — 3.6 에서는
+  `node-gyp` 가 내장한 `gyp` 가 walrus 연산자에서 `SyntaxError` 로 죽는다. `python313` 을
+  설치하고 `/usr/bin/python3` 로 심볼릭 링크한다(SLE_BCI 에는 `update-alternatives` 가 없다).
+- **SLE 15 의 기본 `gcc-c++` 는 GCC 7 이라 Node 24 헤더가 요구하는 `-std=gnu++20` 을 모른다**
+  (`pkcs11js` 컴파일이 `unrecognized command line option '-std=gnu++20'` 로 실패). Node 22
+  시절엔 드러나지 않던 문제다. `gcc14-c++` 를 설치하고 `CC`/`CXX` 로 지정한다
+  (`BUILDER_GCC_VERSION`). 런타임의 `libstdc++6` 는 16.x 라 GCC 14 로 만든 애드온의 심볼을
+  그대로 해석한다.
 
-Go 쪽 강제 업그레이드에는 없는, 이번에 실제 빌드 실패로 실측한 세 가지 함정이 있다.
+### 강제 상향한 Node 의존성(`NPM_DIRECT_UPGRADES` + `NPM_OVERRIDES`)
 
-- **npm 은 직접 의존성(direct dependency)인 패키지를 `overrides` 로 덮어쓰는 걸
-  거부한다**(`npm error EOVERRIDE`). 37개 중 14개(`@fastify/static`·
-  `@simplewebauthn/server`·`axios`·`dd-trace`·`dompurify`·`fastify`·`mysql2`·
-  `nanoid`·`nodemailer`·`oci-common`·`qs`·`re2`·`scim-patch`·`uuid`)는
-  `backend/package.json`(또는 `dompurify` 처럼 `frontend/package.json`)의 직접
-  의존성이라 `NPM_DIRECT_UPGRADES` 로 별도 처리한다 (`dependencies` 자체를 올리고,
-  다른 패키지가 끌어오는 *중첩* 사본까지 한 번에 맞추기 위해 자기 참조
-  `overrides[pkg]["."]` 항목도 같이 넣는다 — npm 의 EOVERRIDE 검사는 semver 만족
-  여부가 아니라 `dependencies` 값과의 **문자열 일치** 여부를 보므로 `^` 까지 포함해
-  두 값이 글자 그대로 같아야 한다). `npm ci` 는 두 빌드 스테이지 모두 `npm install`
-  로 바꿨다 — `npm pkg set` 이 `package.json` 을 커밋된 `package-lock.json` 과
-  어긋나게 만든 뒤에는 `npm ci` 가 설계상 진행을 거부하기 때문이다.
-- **두 변수는 프론트엔드·백엔드 두 스테이지에 동일하게 적용된다 — 한쪽에서만
-  직접 의존성이어도 `NPM_DIRECT_UPGRADES` 로 가야 한다.** `dompurify` 는
-  `backend/package.json` 에서는 전이 의존성이지만 `frontend/package.json` 에서는
-  직접 의존성(`^3.2.4`)이다. `NPM_OVERRIDES` 에 넣으면 백엔드 스테이지는 통과해도
-  프론트엔드 스테이지에서 `EOVERRIDE` 로 죽는다 — 한 패키지에 대해 두 스테이지가
-  서로 다른 처방을 요구할 수 있다는 뜻이므로, 어느 한쪽에서라도 직접 의존성이면
-  `NPM_DIRECT_UPGRADES` 를 쓴다(프론트엔드 산출물은 정적 Vite 에셋뿐이라 최종
-  이미지의 SBOM에는 잡히지 않지만, 빌드 자체가 실패하면 게이트까지 갈 수 없다).
-- **중첩 의존성 하나를 강제로 올리면, 그걸 일부러 낮춰 쓰던 다른 패키지가 깨질 수
-  있다.** `oci-common@2.108.0`(직접 의존성, OCI Vault 연동)은 `uuid@3.3.3` 을 고정해
-  쓰면서 uuid 의 옛날 서브패스 API `uuid/v1` 을 쓰는데, 이 서브패스는 uuid 9 부터
-  `package.json` 의 `exports` 맵에서 아예 빠졌다. `oci-common` 을 같이 안 올리고
-  `uuid` 만 11.1.1 로 강제하면 서버가 부팅 중 크래시한다(`ERR_PACKAGE_PATH_NOT_EXPORTED`
-  — 게이트가 아니라 `verify.sh` 가 잡아냈다). `oci-common` 을 자기 자신의 최신
-  버전(2.140.0, 이미 최신 `uuid` 를 쓰도록 마이그레이션됨)으로 올리니 크래시와 중첩
-  CVE 가 한 번에 해소됐다 — `oci-common` 이 직접 스캔 대상이 아니었는데도
-  `NPM_DIRECT_UPGRADES` 에 들어있는 이유다.
-- **SLE_BCI 의 `python3` 패키지(3.6.15)는 `node-gyp` 를 돌리기엔 너무 오래됐다** —
-  네이티브 애드온(`odbc`·`argon2`·`bcrypt`) 컴파일에는 Python 3.8 이상이 필요한데, 3.6
-  에서는 `node-gyp` 가 내장한 `gyp` 가 walrus 연산자에서 `SyntaxError` 로 죽는다.
-  `source.Dockerfile` 의 백엔드 빌더는 `python313` 을 설치하고 `/usr/bin/python3` 로
-  심볼릭 링크한다(SLE_BCI 에는 이를 자동으로 해줄 `update-alternatives` 가 없다).
+`v0.167.11` 은 업스트림 자신의 lockfile 이 이전에 강제 상향하던 패키지 대부분을 이미 수정
+버전으로 올려 두었다. 그래서 목록을 빈 상태에서 다시 실측해 쌓았다 — 옛 목록을 그대로 두면
+`NPM_OVERRIDES` 가 정확한 버전으로 고정하는 탓에 업스트림이 이미 올린 패키지를 **도리어
+내린다**(예: 옛 핀 `undici@7.29.0` vs 업스트림 lockfile `7.30.1`). 지금 남은 건 MEDIUM/LOW 를
+같은 메이저 안에서 고치는 세 개뿐이다(값과 이유는 `source.build.env`).
 
-### 예외 — `@infisical/quic` (Rust 네이티브 애드온)
+| 패키지 | 업스트림 lockfile | 이 이미지 |
+| --- | --- | --- |
+| `node-forge` | 1.4.2 | 1.4.3 |
+| `fast-xml-parser` | 5.7.2 | 5.12.x |
+| `@opentelemetry/instrumentation-http` | 0.220.0 | 0.222.0 |
 
-Gateway/QUIC 전송에 실제로 필요한 프로덕션 의존성이고, 미리 컴파일된 플랫폼별 바이너리로
-npm `optionalDependencies` 를 통해 배포된다(Rust 툴체인 불필요). 문제는 이미 **가장 최신
-공개 버전(1.0.8, 2025-03 배포)에 고정돼 있는데 그 버전 자체가 CVE 3건(CRITICAL 1·HIGH
-2, `shlex`·`quiche`)을 여전히 갖고 있다는 것** — 올릴 상위 버전이 없다.
+값은 trivy 의 `FixedVersion` 에서, **설치된 메이저 라인 안의** 최소 수정 버전으로 뽑는다.
+Go 쪽 강제 업그레이드에는 없는, 실제 빌드 실패로 실측한 npm 함정들:
 
-**"Rust 빌드 파이프라인이 없어서"가 이유의 전부가 아니다 — 실제로 빌드를 시도해서 확인한
-결과를 남긴다(다음에 이 작업을 다시 검토할 때 처음부터 재조사하지 않도록).** 소스는
-공개돼 있다(`github.com/Infisical/js-quic`, MIT, 아카이브 안 됨, `napi-rs` 기반).
-`v1.0.8` 태그를 받아 `Cargo.toml`의 `quiche` 를 `0.18.0`→`0.24.5`(실제 해석된 버전은
-`0.24.9`)로 올려 `cargo check` 를 실제로 돌려봤다(`rust:1-bookworm` + `cmake`·
-`pkg-config`·`libssl-dev`·`libclang-dev`·`clang`, `js-quic` 자신의 `flake.nix` 가 요구하는
-툴체인과 일치).
+- **npm 은 직접 의존성인 패키지를 `overrides` 로 덮어쓰는 걸 거부한다**(`npm error
+  EOVERRIDE`). 그래서 목록이 둘이다 — `NPM_DIRECT_UPGRADES` 는 `dependencies` 자체를 올리고
+  다른 패키지가 끌어오는 *중첩* 사본까지 맞추려 자기 참조 `overrides[pkg]["."]` 도 같은
+  범위로 넣는다(EOVERRIDE 검사는 semver 가 아니라 **문자열 일치**라 `^` 까지 같아야 한다).
+  `npm pkg set` 뒤에는 `npm ci` 가 lockfile 불일치로 거부하므로(`EUSAGE`) `npm install` 을 쓴다.
+- **업스트림 `package.json` 이 이미 그 패키지를 문자열로 override 하고 있으면
+  `overrides[pkg]["."]` 를 넣을 수 없다**(`npm error EOVERRIDEVALUE` — `fast-xml-parser` 가
+  그렇다). 이때는 그 문자열 override 를 같은 범위로 교체한다. 루프는 `set -e` 로 돈다 — 전에는
+  루프 중간의 `npm pkg set` 실패가 조용히 삼켜질 수 있었다.
+- **중첩 의존성 하나를 강제로 올리면, 그걸 일부러 낮춰 쓰던 다른 패키지가 깨질 수 있다**
+  (실측: 이전 태그에서 `uuid` 만 올렸더니 `oci-common` 의 옛 `uuid/v1` 서브패스 import 가
+  `ERR_PACKAGE_PATH_NOT_EXPORTED` 로 부팅을 깨뜨렸다 — `verify.sh` 가 잡았다).
+- 두 목록은 **백엔드 두 스테이지에만** 적용된다. 프론트엔드는 업스트림 lockfile 그대로
+  `npm ci` 하며, 산출물이 정적 에셋뿐이라 최종 이미지 SBOM 에 잡히지 않는다.
 
-- **1단계 장벽 — `boring` 크레이트 버전 충돌.** `quiche 0.24.5` 는 `boring ^4.3` 을
-  요구하는데, `js-quic` 자신의 `Cargo.toml` 도 `boring = "3"` 을 **직접** 의존한다. 같은
-  네이티브 라이브러리(`boringssl`)를 링크하는 크레이트가 둘이면 버전이 갈리면 안 되므로
-  (`links = "boringssl"` 충돌, `EOVERRIDE` 류의 Cargo 버전) `js-quic` 의 `boring` 도
-  같이 `"4.3"` 으로 올려야 했다 — **이건 문제없이 해결됐다.** BoringSSL 자체(C/C++, cmake
-  로 빌드)는 그대로 처음부터 끝까지 컴파일에 성공했다(`libcrypto.a`/`libssl.a` 링크까지
-  확인).
-- **2단계 장벽 — `quiche` 의 공개 API 자체가 바뀜(진짜 장벽).** `boring` 문제를 해결한
-  뒤 `cargo check` 를 다시 돌리면 **컴파일 에러 20건**, 전부
-  `src/native/napi/connection.rs` 안에서 발생:
-  - `quiche::Stats` 구조체에서 필드 9개가 사라짐 — `peer_initial_max_data`,
-    `peer_initial_max_stream_data_bidi_local`, `peer_initial_max_stream_data_bidi_remote`,
-    `peer_initial_max_stream_data_uni`, `peer_initial_max_streams_bidi`,
-    `peer_initial_max_streams_uni`, `peer_ack_delay_exponent`, `peer_max_ack_delay`,
-    `peer_disable_active_migration`, `peer_active_conn_id_limit`,
-    `peer_max_datagram_frame_size`. `js-quic` 는 이 필드들을 그대로 읽어 JS 쪽 통계
-    API 로 넘긴다.
-  - 메서드 이름 변경: `active_source_cids`→`active_scids`, `source_cids_left`→
-    `scids_left`. `new_source_cid`·`retire_destination_cid`는 시그니처 자체가 달라짐.
-  - `stream_capacity` 가 이제 `&mut self` 를 요구하는데(`js-quic` 코드는 `&self` 로
-    호출) 가변성이 안 맞음.
-  - (참고로 `boring::ssl::*`/`boring::x509::*` 를 직접 쓰는 `src/native/napi/config.rs`
-    쪽은 이 에러 목록에 없었다 — TLS 설정 코드는 `boring` v3→v4 전환에서 그대로
-    컴파일됐다는 뜻.)
-- **업스트림도 아직 안 고쳤다.** `js-quic` 저장소는 2025-10-06 까지 커밋이 있지만(활발함),
-  `master` 브랜치의 `Cargo.toml` 도 여전히 `quiche = "0.18.0"` 그대로다 — Infisical 자신도
-  아직 이 API 변경을 반영한 적 없다.
+### 해소된 예외 — `@infisical/quic` (Rust 네이티브 애드온)
 
-즉 남은 작업은 "버전 핀 하나 올리기"가 아니라 **quiche 의 바뀐 API 에 맞춰 `js-quic` 의
-Rust 코드를 실제로 고치고**(사라진 9개 통계 필드 처리 방침 결정, 메서드 3~4개 교체,
-가변성 수정), **컴파일 성공만이 아니라 실제 QUIC 연결 동작까지 검증하고**, 만약
-Infisical 자신의 TypeScript 쪽이 사라진 통계 필드를 소비하고 있다면 그쪽도 같이 손봐야
-하는 별도 프로젝트급 작업이다. `cve-exceptions.json` 에 예외로 등록했다 — 근거: 업스트림
-자체 패키지, 새 버전 없음(업스트림도 미수정), 실제 수정은 이 이미지 작업 범위를 넘는
-Rust 소스 패치가 필요함.
+`v0.164.1` 에서는 미리 컴파일된 `@infisical/quic` 1.0.8(Gateway v1 의 QUIC 전송)이 번들한
+`quiche` 0.18.0·`shlex` 1.1.0 의 CVE 3건(CVE-2024-58266 CRITICAL, CVE-2025-7054·CVE-2024-1765
+HIGH)을 고칠 수 없어 `cve-exceptions.json` 예외로 받아들였다(그 패키지의 최신 버전이었고,
+`js-quic` 를 `quiche` 0.24 로 올리려면 Rust 소스 패치가 필요했다 — 조사 기록은
+[ADR 0011](../../docs/decisions/0011-infisical-self-build.md) 과 이 파일의 git 이력).
+
+**업스트림이 `v0.165.13` 에서 Gateway v1 을 폐기하며 이 의존성을 뺐다**("deprecate gateway
+v1"). `v0.167.11` 의 lockfile 에도, 이 이미지의 SBOM 에도 `@infisical/quic`·`quiche`·
+`shlex` 가 없다. 즉 이 세 건은 예외로 받아들인 것이 아니라 **릴리스 상향으로 실제 해소됐다**.
+2026-11-07 에 만료된 해당 예외 항목은 갱신할 이유가 없다.
+
+## 버전 관리
+
+**자동 추적되지 않는 핀** — 사람이 `source.build.env` 를 고쳐 PR 을 여는 것 자체가 갱신
+트리거다(`suggest-go-upgrades.py` 같은 반자동 도구도 없다).
+
+| 키 | 무엇 | 언제 올리나 |
+| --- | --- | --- |
+| `APP_VERSION`·`SOURCE_COMMIT` | 업스트림 태그와 그 커밋 | 새 태그가 나오면 — 최신 태그만 지원되므로 미루면 지원 라인을 벗어난다 |
+| `NODE_BUILDER_TAG` | 프론트엔드 빌더 | 업스트림 `Dockerfile.standalone-infisical` 의 `node:` 태그를 따른다 |
+| `NODEJS_PKG`·`NODEJS_DEVEL_PKG`·`NPM_PKG` | 런타임/빌드 Node | SLE_BCI 에 `nodejs26` 이 생기면(위 "런타임 Node") |
+| `BUILDER_GCC_VERSION` | 백엔드 애드온 컴파일러 | 빌드가 요구할 때만 |
+| `NPM_DIRECT_UPGRADES`·`NPM_OVERRIDES` | 강제 상향 목록 | 태그를 올릴 때마다 **빈 목록에서 다시 실측** — 업스트림 lockfile 이 이미 앞섰는지 먼저 본다 |
+
+**예외**: 지금 이 이미지에 적용되는 `cve-exceptions.json` 항목은 없다. 위 표의 상향과 태그
+교체로 고친 것과, 예외로 받아들인 것은 다르다 — 이번 빌드 기준 후자는 0건이다.
+
+**미룬 것(Deferred)**: `glob` 10.5.0(CVE-2026-118773)·`minimatch` 9.0.9(CVE-2026-118764),
+둘 다 MEDIUM. 수정 버전이 `glob` 14·`minimatch` 11 뿐이라 메이저를 넘어야 하는데, 업스트림이
+`overrides.glob = ^10.5.0` 으로 일부러 10 에 묶어 두었고 `rimraf@3`·`@octopusdeploy/api-client`
+가 glob 7·8 API 를 쓴다. 업스트림이 이 override 를 풀면 다음 재빌드에 따라간다.
+
+**자체 빌드를 그만두는 조건**: 업스트림 이미지가 Debian 베이스인 한 OS 패키지 층이 남으므로,
+업스트림이 이 레포의 기준을 통과하는 베이스로 옮기기 전에는 해당하지 않는다.
 
 ## 빌드·검증 방법
 
@@ -171,12 +184,15 @@ IMAGE=infisical BASE_OS=source REGISTRY=<나의-레지스트리> \
   bash scripts/build/build-hardened-image.sh /tmp/out
 ```
 
-이 이미지의 `verify.sh` 는 이 레포의 다른 단일 바이너리 자체 빌드들과 다르다 — 앱이
-필요로 하는 것이 Postgres·Redis 뿐이라 실제로 그 둘을 임시 컨테이너로 띄우고 이미지를
-그 위에서 실제로 기동해, 업스트림 Helm 차트의 readiness probe 가 쓰는 것과 같은
-`/api/status` 엔드포인트가 200 을 낼 때까지 기다린다. 부팅 시 자동 실행되는 마이그레이션
-(`auto-start-migrations.ts`)이 실제 Postgres 를 상대로 끝까지 도는 것 자체가 npm
-`overrides` 강제 상향이 의존성 해석이나 런타임을 깨지 않았다는 실질적 검증이다.
+이 이미지의 `verify.sh` 는 이 레포의 다른 단일 바이너리 자체 빌드들과 다르다 — 앱이 필요로
+하는 것이 Postgres·Redis 뿐이라 그 둘을 임시 컨테이너로 띄우고 이미지를 실제로 기동한다.
+
+1. 업스트림 Helm 차트의 readiness probe 와 같은 `/api/status` 가 200 을 낼 때까지 기다린다 —
+   부팅 시 자동 마이그레이션이 실제 Postgres 를 상대로 끝까지 돌았다는 뜻이다.
+2. 새 인스턴스에서 운영자가 처음 하는 일을 그대로 한다 — `/api/v1/admin/bootstrap` 으로 관리자·
+   조직·머신 아이덴티티를 만들고(비밀번호 해시 — 네이티브 애드온), 그 토큰으로 프로젝트를
+   만들고, 시크릿을 쓰고 다시 읽어 값이 같은지 본다(KMS 봉투 암호화 경로). Node 26 대신
+   `nodejs24` 로 돌리는 결정(위)의 실질적 근거가 이 단계다.
 
 결과는 `/tmp/out/cve-gate.md` 로 확인한다. 게이트가 PASS 여도 `/tmp/out/trivy-reports/*.json`
 의 `CoverageProbe` 가 `ok` 인지 함께 확인한다. 자세한 판정 로직은
@@ -188,19 +204,19 @@ IMAGE=infisical BASE_OS=source REGISTRY=<나의-레지스트리> \
 | --- | --- |
 | `source.Dockerfile` | 빌드 정의 — 프론트엔드(공식 node) + 백엔드(SUSE BCI) 빌더, SUSE BCI(`bci-base`) 최종 스테이지 |
 | `source.build.env` | pinned commit·버전·빌더 이미지 태그·npm `NPM_DIRECT_UPGRADES`/`NPM_OVERRIDES` 목록. `BUILD_ARGS` 에 나열한 이름만 `--build-arg` 로 전달된다 |
-| `verify.sh` | 실제 Postgres+Redis 를 띄워 이미지를 기동하고 `/api/status` 를 폴링하는 기능 검증 |
+| `verify.sh` | 실제 Postgres+Redis 를 띄워 이미지를 기동하고, `/api/status` 확인 뒤 관리자 부트스트랩→프로젝트 생성→시크릿 쓰기·읽기까지 도는 기능 검증 |
 
 베이스 변종이 하나뿐이라 파일명이 `source.*` 로 고정돼 있다.
 
 ### 태그
 
 ```
-<registry>/infisical:v0.164.1-security-hardened-20260831
-                      └  app  ┘└ 슬러그 ┘└ 하드닝 ┘└ 빌드일 ┘
+<registry>/infisical:v0.167.11-security-hardened-20261117
+                      └  app   ┘└ 슬러그 ┘└ 하드닝 ┘└ 빌드일 ┘
 ```
 
 ## 아직 안 된 것 — 배포 검증
 
-`verify.sh` 는 독립된 Postgres/Redis 를 상대로 서버가 뜨고 마이그레이션이 도는 것까지
+`verify.sh` 는 독립된 Postgres/Redis 를 상대로 서버가 뜨고 API 로 시크릿을 주고받는 것까지
 확인하지만, `infisical-secrets-operator` 와 함께 실제 Kubernetes 클러스터에 설치해
 `InfisicalSecret` 이 실제로 시크릿을 동기화하는지는 아직 별도로 검증하지 않았다.
