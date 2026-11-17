@@ -16,6 +16,17 @@ name: rescan-published-images
 #   workflow_dispatch       Leave image empty for all of them, or name one to rescan just that.
 #                           With push=false, drift is detected but build-image.yml is not
 #                           called (for when you only want to see the rescan result).
+#
+# What a red job means — each kind of trouble has a job of its own, so one that stays red
+# for weeks (an EOL line waiting for a person) cannot hide another (issue #9):
+#
+#   rescan (<image>)        the automation itself broke — the suggester errored. Drift is
+#                           NOT a failure here: it is routed and acted on.
+#   support-line (<image>)  the image's pinned line is end-of-life; a person moves the pin.
+#   schedule-gap            GitHub skipped a scheduled run (the previous one is > 30 h old).
+#
+# Whether the autofix pins actually build is decided later, in the verify build this
+# workflow dispatches; autofix-watch.yml reports that outcome in a tracking issue.
 
 on:
   workflow_dispatch:
@@ -203,8 +214,11 @@ jobs:
           if [ "$rc" != "0" ]; then
             echo "kind=rebuild" >> "$GITHUB_OUTPUT"
             echo "$img" > "route/rebuild-$img.txt"
-            echo "::warning::$img — suggest-go-upgrades.py exited $rc; queueing a rebuild"
-            exit 0
+            # Still routed to rebuild (that may clear an OS-package share of the drift), but
+            # the step fails: the suggester erroring is the automation being broken, and
+            # that must not look like ordinary drift — see "what a red job means" above.
+            echo "::error::$img — suggest-go-upgrades.py exited $rc; queueing a rebuild, but the autofix path is broken"
+            exit 1
           fi
 
           # The suggester exits 0 whether or not it changed anything, so the working tree is
@@ -235,25 +249,39 @@ jobs:
           fi
 
       - name: Upload the routing decision
-        if: steps.autofix.outcome == 'success'
+        # Also on failure: a failed suggester still wrote its rebuild route before exiting.
+        if: always() && (steps.autofix.outcome == 'success' || steps.autofix.outcome == 'failure')
         uses: actions/upload-artifact@v4
         with:
           name: route-${{ matrix.image }}
           path: route/
           if-no-files-found: error
 
-      # Is the pin still on a line upstream patches? The gate cannot answer this — an
-      # image on an end-of-life line passes cleanly until the first CVE nobody will fix.
-      #
-      # Deliberately the LAST step, and deliberately not wired into `drift`:
-      #   - last, so failing here cannot skip the rebuild call above. An image can be both
-      #     on a dead line and carrying CVE drift, and the rebuild must still fire.
-      #   - separate from `drift`, because rebuilding cannot move a pin onto a supported
-      #     line. Feeding it into that path would rebuild the same EOL pin every day.
-      # Only a person raising APP_VERSION resolves this, so the signal is a failed job.
-      # See docs/image-authoring/support-policy.md.
+  # --- Is the pin still on a line upstream patches? -------------------------------
+  # The gate cannot answer this — an image on an end-of-life line passes cleanly until the
+  # first CVE nobody will fix. Only a person raising APP_VERSION resolves it, so the signal
+  # is a failed job. See docs/image-authoring/support-policy.md.
+  #
+  # Its own job, not a step of `rescan`: an EOL line stays red for as long as it takes a
+  # person to move the pin, and while it shared a job with the rescan it painted every
+  # failure of the automation itself the same colour — an autofix that could not build
+  # went unnoticed for three weeks behind it (issue #9). It also never fed `drift`, since
+  # rebuilding cannot move a pin onto a supported line.
+  support-line:
+    needs: discover
+    if: needs.discover.outputs.images != '[]' && needs.discover.outputs.images != ''
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJson(needs.discover.outputs.images) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Upstream support line (fails when the line is end-of-life)
-        if: always()
         run: |
           set +e
           python3 scripts/build/check-support-line.py \
@@ -265,6 +293,39 @@ jobs:
           # 1 = behind within a maintained line: a notice, not a failure.
           [ "$rc" = "1" ] && exit 0
           exit "$rc"
+
+  # --- Did the previous scheduled run happen? -----------------------------------
+  # GitHub delays scheduled runs by hours and sometimes drops one altogether (2026-11-09).
+  # A dropped run leaves nothing behind to look at, so the next run checks the gap and goes
+  # red if the previous scheduled run is more than 30 hours old. A job of its own so that
+  # it never holds up the rescan itself.
+  schedule-gap:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    steps:
+      - name: Check the gap since the previous scheduled rescan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          THIS_RUN: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          prev="$(gh run list --repo "$REPO" --workflow rescan.yml --event schedule -L 5 \
+                    --json databaseId,createdAt \
+                    -q "[.[] | select(.databaseId != $THIS_RUN)][0].createdAt // empty")"
+          if [ -z "$prev" ]; then
+            echo "no previous scheduled run to compare with"; exit 0
+          fi
+          gap_h=$(( ( $(date -u +%s) - $(date -u -d "$prev" +%s) ) / 3600 ))
+          echo "previous scheduled rescan: $prev (${gap_h} h ago)"
+          echo "previous scheduled rescan: $prev — ${gap_h} h ago" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$gap_h" -gt 30 ]; then
+            echo "::error::the previous scheduled rescan was ${gap_h} h ago — GitHub skipped at least one day"
+            exit 1
+          fi
 
   # --- Act on the collected drift -----------------------------------------------
   # Everything the matrix decided is applied here, once, from one job.

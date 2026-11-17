@@ -175,8 +175,12 @@ Three traps show up in practice.
   **"Pre-release only" is not always final, though.** A pseudo-version such as x/crypto's
   `0.58.1-0.20261009181718-2f1f834330b2` means "fixed in a commit not yet tagged". A later
   stable tag may already contain it (v0.59.0 did — check with
-  `gh api repos/<owner>/<repo>/compare/<commit>...<tag>`, `behind_by: 0`). The script does
-  not resolve this yet, so read its pre-release notes before treating the CVE as unfixable.
+  `gh api repos/<owner>/<repo>/compare/<commit>...<tag>`, `behind_by: 0`). The script
+  resolves this itself: it takes each stable tag's commit from the module proxy
+  (`@v/<tag>.info` → `Origin.Hash`) and checks ancestry with a blob-less `git fetch`. It
+  never guesses from dates — on a repository with release branches, a patch tag cut after
+  the commit can still lack it. Without network access it falls back to the old note, so
+  read that note before treating the CVE as unfixable.
 - **A CVE in the binary's own main module is not a `GO_MODULE_UPGRADES` problem.**
   `github.com/argoproj/argo-cd/v3` inside the argocd binary is the source being built; a
   `replace` cannot move it. Raise `SOURCE_COMMIT`/`APP_VERSION` instead. The script
@@ -186,9 +190,15 @@ Three traps show up in practice.
   it higher — a module may require a specific minimum of another module, so the
   suggested value fails the build with `requires <module>@vX, not vY`. Raise it to the
   version that message names.
-  `--apply` also keeps existing pins as they are, so raising one module can leave an
-  older pin of another below what the new one requires (x/crypto v0.59.0 needs x/text
-  ≥ v0.44.0). Read the `.mod` of each raised module, or let the build tell you.
+  `--apply` keeps existing pins, so raising one module can leave an older pin of another
+  below what the new one requires. `go get` never raises a module named explicitly on its
+  own command line — it fails instead. The chain can run several steps: on 2026-11-17,
+  x/net v0.62.0 needed x/crypto ≥ v0.58.0 and x/text ≥ v0.43.0, the GO-2026-5932 fix took
+  x/crypto to v0.59.0, which needed x/text v0.44.0, which needed x/mod v0.42.0. `--apply`
+  now closes the chain itself: it reads each pinned module's `go.mod` from the module
+  proxy and raises any other pin below what it requires, until nothing moves. Each raise
+  is printed as a note. A `requires` the proxy cannot answer is still left for the build
+  to report.
 
 When one image builds several Go projects (`argocd` builds argocd, helm, kustomize, and
 git-lfs together), **reuse a single list across all of them** — add a helper like

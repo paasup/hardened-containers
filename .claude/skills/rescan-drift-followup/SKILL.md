@@ -21,6 +21,11 @@ verify build, or — when no pin changed and the image is merely stale — aggre
 Start by reading the run's job summary to see which images drifted and which of those two
 paths each took.
 
+The open issue labelled `autofix`, if there is one, is the quickest way in. It gives
+the outcome of the latest autofix verify build and the first error line of each image that
+failed. What it covers, and what a red rescan job means, are in
+[ci.md](../../../docs/image-authoring/ci.md).
+
 ## 1. The pull request may not exist
 
 `gh pr create` from Actions fails in this organisation (the org policy that would allow it is

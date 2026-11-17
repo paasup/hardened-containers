@@ -118,7 +118,11 @@ flowchart TD
    공백 구분으로** 담고, 올라간 핀은 `autofix/go-cves` **PR 1건**으로 모은다(재빌드 로직
    자체는 절대 중복되지 않는다). PR을 검증하는 것은 브랜치 push 자체가 아니라 `collect`가
    push 직후 **별도로 dispatch 하는 검증 빌드**다 — 이 job 이 쥔 토큰으로 낸 push 는
-   `build-image.yml`의 push 트리거를 의도적으로 발동시키지 않기 때문이다.
+   `build-image.yml`의 push 트리거를 의도적으로 발동시키지 않기 때문이다. 그 검증 빌드의
+   결과는 `autofix-watch.yml`이 `autofix` 라벨이 붙은 **추적 이슈 1건**에 적는다 — 실패하면
+   이미지별 첫 오류 줄을, 통과했는데 PR이 없으면 PR을 열라는 안내를 남기고, 통과했고 PR이
+   열려 있으면 이슈를 닫는다. Actions 가 PR 을 열 수 없는 조직이라 이 결과가 리뷰어 눈에
+   띄는 곳이 달리 없기 때문이다.
 
    이미지마다 dispatch 를 따로 내면 안 된다 — `build-image.yml`의 concurrency 그룹은
    pending run 을 1건만 유지하고 나머지를 **취소**하기 때문이다(2026-09-03에 11건 중 9건이
