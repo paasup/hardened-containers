@@ -14,6 +14,7 @@ SOURCE_COMMIT="${SOURCE_COMMIT:?SOURCE_COMMIT environment variable is required}"
 HELM_VERSION="${HELM_VERSION:?HELM_VERSION environment variable is required}"
 KUSTOMIZE_VERSION="${KUSTOMIZE_VERSION:?KUSTOMIZE_VERSION environment variable is required}"
 GIT_LFS_VERSION="${GIT_LFS_VERSION:?GIT_LFS_VERSION environment variable is required}"
+TINI_VERSION="${TINI_VERSION:?TINI_VERSION environment variable is required}"
 
 echo "== image metadata =="
 USER_CFG="$(docker inspect --format '{{.Config.User}}' "$TAG")"
@@ -31,6 +32,7 @@ docker run --rm -i --platform "$PLATFORM" \
   -e HELM_VERSION="$HELM_VERSION" \
   -e KUSTOMIZE_VERSION="$KUSTOMIZE_VERSION" \
   -e GIT_LFS_VERSION="$GIT_LFS_VERSION" \
+  -e TINI_VERSION="$TINI_VERSION" \
   --entrypoint sh "$TAG" <<'GUEST'
 set -e
 
@@ -41,9 +43,10 @@ case "$OUT" in
   *"v$APP_VERSION"*) ;;
   *) echo "FAIL: version output lacks v$APP_VERSION — check the Makefile ldflags injection"; exit 1 ;;
 esac
-case "$OUT" in
-  *"$SOURCE_COMMIT"*) ;;
-  *) echo "WARN: the pinned commit is not visible in the version output (it may be elided in short form)" ;;
+# --short elides the commit; the full form prints GitCommit.
+case "$(argocd version --client)" in
+  *"GitCommit: $SOURCE_COMMIT"*) echo "   GitCommit: $SOURCE_COMMIT" ;;
+  *) echo "FAIL: argocd version does not report GitCommit $SOURCE_COMMIT"; exit 1 ;;
 esac
 
 echo "== the nine upstream symlinks =="
@@ -53,6 +56,14 @@ for n in argocd-server argocd-repo-server argocd-cmp-server argocd-application-c
   [ -x "/usr/local/bin/$n" ] || { echo "FAIL: /usr/local/bin/$n is missing"; exit 1; }
 done
 echo "   all nine present and executable"
+
+# The binary dispatches on argv[0]; the chart starts each component by symlink name.
+RS="$(argocd-repo-server --help 2>&1 | head -3)"
+case "$RS" in
+  *"Repository Server"*) ;;
+  *) echo "FAIL: argocd-repo-server did not dispatch to the repo-server command"; echo "$RS"; exit 1 ;;
+esac
+echo "   argv[0] dispatch works (argocd-repo-server --help)"
 
 echo "== bundled tools (replaced by source compilation) =="
 H="$(helm version --short)"
@@ -67,9 +78,46 @@ L="$(git-lfs version)"
 echo "   git-lfs   $L"
 case "$L" in *"$GIT_LFS_VERSION"*) ;; *) echo "FAIL: git-lfs version is not $GIT_LFS_VERSION"; exit 1 ;; esac
 
+echo "== bundled tools do the work repo-server hands them =="
+W="$(mktemp -d)"
+# helm — scaffold a chart and render it, as repo-server does for a helm source.
+helm create "$W/chart" >/dev/null
+helm template smoke "$W/chart" > "$W/helm.yaml"
+grep -q '^kind: Deployment' "$W/helm.yaml" || { echo "FAIL: helm template rendered no Deployment"; exit 1; }
+echo "   helm template rendered $(grep -c '^kind:' "$W/helm.yaml") objects"
+
+# kustomize — a generator plus a name prefix, as repo-server does for a kustomize source.
+mkdir -p "$W/kust"
+cat > "$W/kust/kustomization.yaml" <<'EOK'
+namePrefix: smoke-
+configMapGenerator:
+  - name: cfg
+    literals: [key=value]
+EOK
+KOUT="$(kustomize build "$W/kust")"
+case "$KOUT" in
+  *"name: smoke-cfg-"*) ;;
+  *) echo "FAIL: kustomize build did not produce the prefixed, hashed ConfigMap"; echo "$KOUT"; exit 1 ;;
+esac
+echo "   kustomize build produced the generated ConfigMap"
+
+# git-lfs — track, commit, and confirm the object went through the LFS clean filter.
+mkdir -p "$W/repo" && cd "$W/repo"
+git init -q .
+git lfs track '*.bin' >/dev/null
+head -c 2048 /dev/urandom > blob.bin
+git add .gitattributes blob.bin
+git -c user.name=verify -c user.email=verify@example.invalid commit -qm smoke
+git lfs ls-files | grep -q 'blob.bin' || { echo "FAIL: git-lfs did not record blob.bin as an LFS object"; exit 1; }
+git cat-file -p HEAD:blob.bin | grep -q '^version https://git-lfs' || { echo "FAIL: blob.bin was committed without an LFS pointer"; exit 1; }
+cd / && rm -rf "$W"
+echo "   git-lfs stored blob.bin as an LFS pointer"
+
 echo "== C tools built from source (absent from SLE_BCI) =="
 [ -x /usr/bin/tini ] || { echo "FAIL: /usr/bin/tini is missing"; exit 1; }
-/usr/bin/tini --version
+T="$(/usr/bin/tini --version)"
+echo "   $T"
+case "$T" in *"$TINI_VERSION"*) ;; *) echo "FAIL: tini version is not $TINI_VERSION"; exit 1 ;; esac
 [ -x /usr/bin/connect-proxy ] || { echo "FAIL: /usr/bin/connect-proxy is missing"; exit 1; }
 # connect prints usage and exits non-zero when called with no arguments — only check that it runs.
 /usr/bin/connect-proxy >/dev/null 2>&1 || true

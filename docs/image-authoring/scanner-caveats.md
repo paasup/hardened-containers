@@ -28,6 +28,14 @@ Those are in scope: `image-gate.py` reports them in their own section (they stil
 the build), and what to do with them is
 [remediation-priority.md](remediation-priority.md).
 
+**A Go binary with no recorded version is invisible to its own advisories.** trivy reads a
+module's version from build info; a project that keeps its version in a `const` (git-lfs:
+`config.Version`) and is built from a git context shows up in the SBOM with no version, so
+none of its advisories can match. argocd's bundled git-lfs carried four HIGH advisories
+(fixed in 3.8.1) that neither the gate nor the daily rescan ever reported. `-X` ldflags do
+not help — trivy does not read them. For such a component, check upstream's advisories by
+hand when moving its pin; the image README names which components are affected.
+
 The `CoverageProbe` sentinel packages are deliberately **not** produced by lowering the
 version of an installed package. If the only packages in the install list happen to have
 no vendor advisories at all, lowering their versions still yields zero findings, and
