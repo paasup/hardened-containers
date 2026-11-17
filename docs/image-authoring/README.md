@@ -140,6 +140,12 @@ out.
   real certificate problem, fix it by installing the CA, not by removing the check.
 - `curl … | sh` / `curl … | perl -` — this executes an unverified remote script on every
   build. The moment the remote changes, something else gets installed, silently.
+- Running an upstream helper script that downloads on its own. Every `wget`/`curl` the
+  Dockerfile writes can be checksummed and `repo-checks.sh` sees it — a download inside a
+  fetched script (`wasm-nginx-module`'s `install-wasmtime.sh`) it cannot see. Read what a
+  helper script fetches before calling it; if it downloads without a checksum, do that
+  download in the Dockerfile with a pinned SHA256 and skip the script (apisix's wasmtime
+  step, which also fails the build if the script's own version drifts from the pin).
 
 Checksums follow rules 3 and 4 like any other pin: keep them as values in `build.env`
 and update them when the version changes. See `images/apisix/source.build.env` for how

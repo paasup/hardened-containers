@@ -36,7 +36,10 @@ apisix(APISIX-Runtime + APISIX 애플리케이션) 전체를 업스트림 소스
 | Debian/RHEL 사전 빌드 RPM/DEB 를 SUSE 에 재설치하지 않고 소스 컴파일 | glibc/openssl 심볼 버전이 안 맞아 ABI 가 깨질 위험이 있고, SUSE 자체 저장소에 대응 패키지가 없어 "같은 배포판 계열 재설치"가 성립하지 않는다. |
 | Rust 툴체인을 SLE_BCI 패키지(`rust`·`cargo`)로 설치 | 업스트림은 rustup 부트스트랩 스크립트를 파이프로 실행하지만, 그러면 매 빌드마다 검증되지 않은 원격 스크립트가 실행된다 — 배포판 패키지로 대체했다(설계 원칙 7). |
 | cpanm 부트스트랩 제거 | 업스트림은 OpenSSL Configure 가 요구하는 `IPC::Cmd` 를 cpanm 으로 설치하지만, SLE_BCI 의 stock perl 에 이미 있다(5.26.1 / IPC::Cmd 0.96 — 코어 모듈). 불필요한 원격 실행을 없앴다. |
-| 소스 tarball 무결성 검증 추가 | zlib·PCRE·OpenSSL·OpenResty·lua-resty-limit-traffic 과 luarocks 설치 스크립트를 SHA256 으로 검증한다(`source.build.env` 의 `*_SHA256`). 이 이미지만 tarball 을 받으므로 git 커밋 SHA 같은 보장이 없기 때문이다. |
+| 소스 tarball 무결성 검증 추가 | zlib·PCRE·OpenSSL·OpenResty·lua-resty-limit-traffic·wasmtime C API 와 luarocks 설치 스크립트를 SHA256 으로 검증한다(`source.build.env` 의 `*_SHA256`). tarball 에는 git 커밋 SHA 같은 보장이 없기 때문이다. |
+| git 소스를 태그가 아닌 커밋으로 고정 | 업스트림 빌드 스크립트는 APISIX 소스와 nginx 모듈 7종을 태그로 `git clone` 한다 — 태그는 옮겨질 수 있다. 여기서는 각 태그의 커밋 SHA 를 `source.build.env` 에 커밋하고 BuildKit git context(`ADD <repo>.git#<sha>`)로 받아, 받은 트리가 정확히 그 커밋임을 BuildKit 이 보장한다(설계 원칙 7). |
+| `install-wasmtime.sh` 대신 직접 받아 검증 | `wasm-nginx-module` 의 `install-wasmtime.sh` 는 wasmtime C API tarball 을 체크섬 없이 받는다. 이 스크립트는 실행하지 않고 같은 tarball(같은 버전)을 Dockerfile 이 직접 받아 SHA256 을 검증한다. 스크립트에 하드코딩된 `VER=` 가 `WASMTIME_VERSION` 과 다르면 빌드가 실패하므로, 모듈을 올릴 때 이 값이 조용히 뒤처지지 않는다. |
+| 번들 `openssl` CLI 의 rpath 에 `openssl3/lib` 추가 | 업스트림과 같은 rpath(zlib 만)로는 `/usr/local/openresty/openssl3/bin/openssl` 이 이 빌드의 libcrypto(3.5.9) 대신 베이스 OS 의 libopenssl3(3.5.0)을 로드했다 — nginx 는 자체 rpath 로 정상 링크돼 영향이 없었다. |
 | 애플리케이션 코드·모듈 버전 | 업스트림과 100% 동일(diff 최소화 원칙) — apiseven 의 공식 빌드 스크립트(`api7/apisix-build-tools`, 태그 `apisix-runtime/1.4.2`)를 그대로 재현했다. |
 
 ## 3단계 구성
@@ -60,7 +63,7 @@ apisix(APISIX-Runtime + APISIX 애플리케이션) 전체를 업스트림 소스
   경고로 낮추고, `luarocks make` 끝나면 즉시 원복한다(다른 빌드에 영향 안 줌).
   `source.Dockerfile` 의 해당 RUN 스텝 주석 참고.
 - **`ui/`(Admin 대시보드 프론트엔드)는 `apache/apisix` 저장소 자체엔 없다.** apiseven
-  의 패키징 파이프라인이 별도로(Node.js/yarn 빌드) 끼워 넣는 단계라 git clone 만으로는
+  의 패키징 파이프라인이 별도로(Node.js/yarn 빌드) 끼워 넣는 단계라 소스 체크아웃만으로는
   재현 안 된다 — 이 배포는 이 UI 를 쓰지 않아 없으면 빈 디렉터리로 대체하고 건너뛴다.
 - **`/usr/bin/apisix` 래퍼 스크립트가 내부적으로 `awk` 를 쓴다.** OpenResty 버전 파싱에
   쓰는데, `final` 스테이지에 `gawk` 를 안 깔면 "awk: command not found" 로 `apisix
@@ -81,18 +84,51 @@ apisix(APISIX-Runtime + APISIX 애플리케이션) 전체를 업스트림 소스
   가 실패한 rock 이다 — 의존성이나 버전 문제로 오인해 핀을 고치지 말고 다시 빌드한다.
   같은 이유로 `runtime` 스테이지의 `zypper install` 이 public-dl.suse.com 의 끊김(curl
   error 56)으로 실패할 때도 Dockerfile 을 고치지 않고 재시도한다.
+- **OpenSSL 을 직접 빌드할 때 rpath 에 `openssl3/lib` 가 없으면 번들 `openssl` CLI 가
+  베이스 OS 의 libopenssl3 를 로드한다.** 빌드는 성공하고 nginx 도 정상이라(자체
+  `--with-ld-opt` rpath 가 `openssl3/lib` 를 가리킴) 눈에 띄지 않는다 — `openssl version`
+  이 `OpenSSL 3.5.9 ... (Library: OpenSSL 3.5.0 ...)` 처럼 빌드 버전과 로드한 라이브러리가
+  다르다고 출력할 뿐이다. `verify.sh` 가 이제 이 불일치를 실패로 판정한다.
 
 ## 소스·버전 관리
 
 | 항목 | 값 |
 | --- | --- |
-| APISIX 소스 | `https://github.com/apache/apisix.git` (태그 `3.20.0`, 커밋 `bc1e687f`) |
+| APISIX 소스 | `https://github.com/apache/apisix.git` 태그 `3.20.0` → `SOURCE_COMMIT=bc1e687fdb82883f86d1bca9fa4fbd6bb433682b` |
 | OpenResty | `1.31.8.1` |
 | OpenSSL | `3.5.9` |
 | zlib / PCRE | `1.3.1` / `8.45` |
-| 커스텀 모듈 | `apisix-nginx-module 1.20.3`, `wasm-nginx-module 0.7.0`, `lua-var-nginx-module v0.5.3`, `lua-resty-events 0.2.0`, `ngx_multi_upstream_module 1.4.1`, `mod_dubbo 1.0.2`, `ngx_http_ffi_client v0.1.3` |
 | APISIX_RUNTIME_VER | `1.4.2` (apiseven 빌드 스크립트 버전 태그) |
+| wasmtime C API | `v0.38.1` (`WASMTIME_VERSION`, x86_64·aarch64 각각 `WASMTIME_C_API_SHA256_*`) |
 | 최종 베이스 | `registry.suse.com/bci/bci-base:15.7` |
+
+커스텀 모듈은 태그(`*_VER`, 디렉터리 이름과 "어느 태그에서 풀었는지"의 기록)와 커밋
+(`*_COMMIT`, 실제로 받는 값) 두 값으로 고정한다:
+
+| 모듈 | 태그 | 커밋 |
+| --- | --- | --- |
+| `api7/apisix-nginx-module` | `1.20.3` | `fa0559cd8916427183e50db8e5e12a6acf671ac2` |
+| `api7/wasm-nginx-module` | `0.7.0` | `0b4b31d6ecfdbc587e8ea455ed6e920a98aadff1` |
+| `api7/lua-var-nginx-module` | `v0.5.3` | `dc04c71e14e8a0407831f9019043d7e6da61b3c3` |
+| `Kong/lua-resty-events` | `0.2.0` | `8448a92cec36ac04ea522e78f6496ba03c9b1fd8` |
+| `api7/ngx_multi_upstream_module` | `1.4.1` | `1271391a52e947b576ecbfced05d8bedcd22d04f` |
+| `api7/mod_dubbo` | `1.0.2` | `4aabf9448fe4a49ca71009af8e03645ee5dadd15` |
+| `api7/ngx_http_ffi_client` | `v0.1.3` | `ea8374ddf416ee2553a8aff60189310ca1b6b0c0` |
+
+커밋은 `git ls-remote --tags <repo>.git 'refs/tags/<태그>' 'refs/tags/<태그>^{}'` 로 풀고,
+peeled `^{}` 항목이 있으면 그것을 쓴다(주석 태그의 경우 태그 객체가 아닌 커밋). 위 여덟 태그는
+전부 경량 태그라 `^{}` 항목이 없고, 각 SHA 가 커밋 객체임을 GitHub API 로 확인했다. APISIX 의
+`SOURCE_COMMIT` 은 `repo-checks.sh` 의 "tag matches the pinned source" 가 `APP_VERSION`
+태그와 대조하지만, **모듈 커밋은 그런 자동 대조가 없다** — 모듈 태그를 올릴 때 `*_VER` 와
+`*_COMMIT` 을 함께 올린다. wasmtime 체크섬은 업스트림이 이 릴리스에 체크섬을 공개하지
+않아, x86_64 tarball 의 `lib/libwasmtime.so` 를 `apache/apisix:3.20.0-debian` 안의 같은
+파일과 sha256 으로 대조했다(일치).
+
+**아직 검증되지 않는 가져오기**: `luarocks make` 는 rockspec 의 의존 rock ~50개를
+luarocks.org(그리고 각 rock 의 `source.url` — 다수가 GitHub 태그)에서 HTTPS 로 받는다.
+luarocks 는 버전 범위를 해석해 받을 뿐 커밋·체크섬을 고정하지 않으므로, 이 단계는 TLS 외에
+무결성 보장이 없다. 고치려면 의존 rock 전체를 미리 받아 체크섬을 고정한 로컬 rocks 서버
+(또는 `luarocks pack` 산출물)로 바꿔야 해서 규모가 커 이번에는 남겨 두었다.
 
 모듈 세트는 우리가 고르는 값이 아니다. APISIX 가 `.requirements` 에 필요한 런타임을
 선언하고(태그 `3.20.0` 기준 `APISIX_RUNTIME=1.4.2`), 그 태그의
@@ -121,7 +157,8 @@ OpenSSL 은 openssl.org 와 GitHub 릴리스의 `.sha256`, OpenResty 는 openres
 `daemon off;` 로 포그라운드 실행하므로 영향이 없다.
 배포 쪽 설정은 업스트림 `CHANGELOG.md` 의 3.19.0·3.20.0 항목과 대조해야 한다.
 
-전부 `source.build.env` 에서 관리하며 **자동 추적하지 않는다.** 다른 자체 빌드 이미지와
+전부(`SOURCE_COMMIT`·`*_COMMIT`·`WASMTIME_*`·`*_SHA256` 포함) `source.build.env` 에서
+관리하며 **자동 추적하지 않는다.** 다른 자체 빌드 이미지와
 동일하게, 사람이 업스트림 새 릴리스(또는 위 CVE 세트를 이미 해소한 버전)를 보고
 `source.build.env` 를 고쳐 PR 을 여는 것 자체가 갱신 트리거다.
 
@@ -153,7 +190,10 @@ IMAGE=apisix BASE_OS=source REGISTRY=<나의-레지스트리> \
 ```
 
 수행 순서: **빌드 → 기능 검증(`verify.sh`) → SBOM → 전 심각도 스캔 → 게이트 판정.**
-`verify.sh`는 `apisix version` 출력·nginx 설정 문법(`nginx -t`)뿐 아니라, standalone
+`verify.sh`는 `apisix version` 출력, nginx 와 번들 `openssl` CLI 가 고정한
+`OPENSSL_VERSION` 으로 빌드됐고 실행 시에도 그 라이브러리를 로드하는지(`nginx -V` 의
+`built with OpenSSL` 줄에 `running with` 가 없고, `openssl version` 에 `Library:` 불일치가
+없음), nginx 설정 문법(`nginx -t`)뿐 아니라, standalone
 YAML 설정으로 **실제 nginx worker 를 기동**해 APISIX 라우터가 HTTP 요청에 응답하는지
 (라우트 없음 → 404), 설정한 라우트가 매칭되고 서로 다른 단계의 플러그인 두 개
 (`mocking`·`response-rewrite`)가 실제로 실행되는지까지 확인한다 — 15개 커스텀 모듈 + ~90개 Lua 플러그인(lua-resty-saml

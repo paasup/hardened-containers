@@ -23,6 +23,13 @@ ARG NGX_MULTI_UPSTREAM_MODULE_VER=1.4.1
 ARG MOD_DUBBO_VER=1.0.2
 ARG NGX_HTTP_FFI_CLIENT_VER=v0.1.3
 ARG APISIX_RUNTIME_VER=1.4.2
+ARG LUA_RESTY_EVENTS_COMMIT
+ARG NGX_MULTI_UPSTREAM_MODULE_COMMIT
+ARG MOD_DUBBO_COMMIT
+ARG APISIX_NGINX_MODULE_COMMIT
+ARG WASM_NGINX_MODULE_COMMIT
+ARG LUA_VAR_NGINX_MODULE_COMMIT
+ARG NGX_HTTP_FFI_CLIENT_COMMIT
 
 ENV OR_PREFIX=/usr/local/openresty
 
@@ -72,13 +79,15 @@ RUN wget "https://sourceforge.net/projects/pcre/files/pcre/${PCRE_VERSION}/pcre-
 
 # --- OpenSSL (the same version as upstream) — the zlib header path is passed explicitly ---
 # This is the crypto library that ends up in the final image. TLS verification is never
-# disabled, and the checksum must match.
+# disabled, and the checksum must match. The rpath names openssl3/lib as well as zlib/lib:
+# without it the bundled `openssl` CLI resolves libssl/libcrypto from the base OS instead of
+# this build (nginx is unaffected — its own --with-ld-opt rpath already names openssl3/lib).
 ARG OPENSSL_SHA256
 RUN wget "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz" \
  && echo "${OPENSSL_SHA256}  openssl-${OPENSSL_VERSION}.tar.gz" | sha256sum -c - \
  && tar xzf "openssl-${OPENSSL_VERSION}.tar.gz" \
  && cd "openssl-${OPENSSL_VERSION}" \
- && CFLAGS="-I${OR_PREFIX}/zlib/include" LDFLAGS="-L${OR_PREFIX}/zlib/lib -Wl,-rpath,${OR_PREFIX}/zlib/lib" \
+ && CFLAGS="-I${OR_PREFIX}/zlib/include" LDFLAGS="-L${OR_PREFIX}/zlib/lib -Wl,-rpath,${OR_PREFIX}/zlib/lib:${OR_PREFIX}/openssl3/lib" \
     ./config shared zlib enable-camellia enable-seed enable-rfc3779 \
       enable-cms enable-md2 enable-rc5 enable-weak-ssl-ciphers \
       --prefix="${OR_PREFIX}/openssl3" --libdir=lib \
@@ -92,17 +101,42 @@ RUN wget "https://openresty.org/download/openresty-${OPENRESTY_VERSION}.tar.gz" 
  && echo "${OPENRESTY_SHA256}  openresty-${OPENRESTY_VERSION}.tar.gz" | sha256sum -c - \
  && tar zxf "openresty-${OPENRESTY_VERSION}.tar.gz"
 
-RUN git clone --depth=1 -b "${LUA_RESTY_EVENTS_VER}" https://github.com/Kong/lua-resty-events.git "lua-resty-events-${LUA_RESTY_EVENTS_VER}" \
- && git clone --depth=1 -b "${NGX_MULTI_UPSTREAM_MODULE_VER}" https://github.com/api7/ngx_multi_upstream_module.git "ngx_multi_upstream_module-${NGX_MULTI_UPSTREAM_MODULE_VER}" \
- && git clone --depth=1 -b "${MOD_DUBBO_VER}" https://github.com/api7/mod_dubbo.git "mod_dubbo-${MOD_DUBBO_VER}" \
- && git clone --depth=1 -b "${APISIX_NGINX_MODULE_VER}" -- https://github.com/api7/apisix-nginx-module.git "apisix-nginx-module-${APISIX_NGINX_MODULE_VER}" \
- && git clone --depth=1 -b "${WASM_NGINX_MODULE_VER}" https://github.com/api7/wasm-nginx-module.git "wasm-nginx-module-${WASM_NGINX_MODULE_VER}" \
- && git clone --depth=1 -b "${LUA_VAR_NGINX_MODULE_VER}" https://github.com/api7/lua-var-nginx-module "lua-var-nginx-module-${LUA_VAR_NGINX_MODULE_VER}" \
- && git clone --depth=1 -b "${NGX_HTTP_FFI_CLIENT_VER}" https://github.com/api7/ngx_http_ffi_client.git "ngx_http_ffi_client-${NGX_HTTP_FFI_CLIENT_VER}"
+# The nginx modules come through BuildKit's git context, pinned by commit (rule 7): the
+# checkout is exactly the committed SHA, not whatever the tag points at today. The *_VER tag
+# only names the directory.
+ADD https://github.com/Kong/lua-resty-events.git#${LUA_RESTY_EVENTS_COMMIT} lua-resty-events-${LUA_RESTY_EVENTS_VER}
+ADD https://github.com/api7/ngx_multi_upstream_module.git#${NGX_MULTI_UPSTREAM_MODULE_COMMIT} ngx_multi_upstream_module-${NGX_MULTI_UPSTREAM_MODULE_VER}
+ADD https://github.com/api7/mod_dubbo.git#${MOD_DUBBO_COMMIT} mod_dubbo-${MOD_DUBBO_VER}
+ADD https://github.com/api7/apisix-nginx-module.git#${APISIX_NGINX_MODULE_COMMIT} apisix-nginx-module-${APISIX_NGINX_MODULE_VER}
+ADD https://github.com/api7/wasm-nginx-module.git#${WASM_NGINX_MODULE_COMMIT} wasm-nginx-module-${WASM_NGINX_MODULE_VER}
+ADD https://github.com/api7/lua-var-nginx-module.git#${LUA_VAR_NGINX_MODULE_COMMIT} lua-var-nginx-module-${LUA_VAR_NGINX_MODULE_VER}
+ADD https://github.com/api7/ngx_http_ffi_client.git#${NGX_HTTP_FFI_CLIENT_COMMIT} ngx_http_ffi_client-${NGX_HTTP_FFI_CLIENT_VER}
+
+# wasm-nginx-module's install-wasmtime.sh fetches the wasmtime C API with no checksum, so it is
+# not run: the same tarball is fetched here and verified. The script's own VER= must still
+# equal WASMTIME_VERSION — if a module bump moves it, the build stops instead of drifting.
+# (Its build-from-source branch is for musl or RHEL aarch64 only; neither applies here.)
+ARG WASMTIME_VERSION
+ARG WASMTIME_C_API_SHA256_X86_64
+ARG WASMTIME_C_API_SHA256_AARCH64
+RUN cd "wasm-nginx-module-${WASM_NGINX_MODULE_VER}" \
+ && { grep -qx "VER=${WASMTIME_VERSION}" install-wasmtime.sh \
+      || { echo "FAIL: install-wasmtime.sh no longer pins VER=${WASMTIME_VERSION} — raise WASMTIME_VERSION and its checksums"; exit 1; }; } \
+ && arch="$(uname -m)" \
+ && case "$arch" in \
+      x86_64)  sum="${WASMTIME_C_API_SHA256_X86_64}" ;; \
+      aarch64) sum="${WASMTIME_C_API_SHA256_AARCH64}" ;; \
+      *) echo "FAIL: no wasmtime checksum pinned for $arch"; exit 1 ;; \
+    esac \
+ && f="wasmtime-${WASMTIME_VERSION}-${arch}-linux-c-api" \
+ && wget "https://github.com/bytecodealliance/wasmtime/releases/download/${WASMTIME_VERSION}/${f}.tar.xz" \
+ && echo "${sum}  ${f}.tar.xz" | sha256sum -c - \
+ && tar -xf "${f}.tar.xz" \
+ && rm -rf wasmtime-c-api \
+ && mv "${f}" wasmtime-c-api
 
 RUN cd "ngx_multi_upstream_module-${NGX_MULTI_UPSTREAM_MODULE_VER}" && ./patch.sh "../openresty-${OPENRESTY_VERSION}" && cd .. \
- && cd "apisix-nginx-module-${APISIX_NGINX_MODULE_VER}/patch" && ./patch.sh "../../openresty-${OPENRESTY_VERSION}" && cd ../.. \
- && cd "wasm-nginx-module-${WASM_NGINX_MODULE_VER}" && ./install-wasmtime.sh && cd ..
+ && cd "apisix-nginx-module-${APISIX_NGINX_MODULE_VER}/patch" && ./patch.sh "../../openresty-${OPENRESTY_VERSION}" && cd ../..
 
 # Replace OpenResty's bundled lua-resty-limit-traffic with the api7 fork. The bundle directory
 # name must stay as-is for the openresty build to find it — hence the separate values for the
@@ -191,12 +225,16 @@ RUN wget https://raw.githubusercontent.com/apache/apisix/${APISIX_VERSION}/utils
  && chmod +x linux-install-luarocks.sh \
  && ./linux-install-luarocks.sh
 
+# APISIX itself comes through BuildKit's git context, pinned by commit (rule 7). SOURCE_COMMIT
+# is the commit of the APISIX_VERSION tag — repo-checks ("tag matches the pinned source")
+# confirms that against upstream.
+ARG SOURCE_COMMIT
 WORKDIR /apisix
-RUN git clone --depth=1 -b "${APISIX_VERSION}" https://github.com/apache/apisix.git .
+ADD https://github.com/apache/apisix.git#${SOURCE_COMMIT} /apisix
 
 # apisix-master-0.rockspec sits at the repository root (re-confirmed at tag 3.20.0).
 # `luarocks make` does not use the rockspec's source.url (a remote tarball); it builds the
-# current directory — so a git clone is sufficient, and there is no need to sed-patch
+# current directory — so the checkout is sufficient, and there is no need to sed-patch
 # source.url to a local path the way the apiseven build does.
 #
 # lua-resty-saml's xmlsec binding does not match the API signature change in libxml2 2.12 and
