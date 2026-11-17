@@ -20,88 +20,61 @@ the build framework generally are owned by
 
 ## Why we build this ourselves
 
-Upstream `quay.io/keycloak/keycloak:26.6.4` has **17 blocking findings at the gate (17
-effective HIGH, 0 CRITICAL)**. The layers differ completely in nature.
+Keycloak ships its jars statically inside the upstream distribution, and their versions
+are pinned by the Quarkus BOM Keycloak follows. So when a blocking CVE appears, **each
+layer has a different remedy.**
 
-| Layer | Count | Representative CVEs | Fixed by a newer tag or base OS swap? |
-| --- | --- | --- | --- |
-| UBI9 rpm | 5 | `java-21-openjdk-headless` ×3, `libacl`, `pcre2` | Partly. 3 are resolved by updating rpms |
-| Bundled jars | 12 | netty ×6, jackson ×3, postgresql-jdbc, mssql-jdbc, keycloak-services | **No** |
+| Layer | Remedy | Fixed by a newer tag or base OS swap? |
+| --- | --- | --- |
+| OS packages (JDK, glibc, …) | a rebuild makes zypper install the current patch | Yes — a base OS matter |
+| Keycloak's own code (`keycloak-services`, …) | raise `KEYCLOAK_VERSION` | Yes — a newer tag |
+| Bundled jars pinned by the Quarkus BOM | **none** until a Keycloak release raises the BOM | **No** |
 
-Those 12 split three ways in how they are addressed — the self-build did not "fix" all of
-them. netty, jackson, and postgresql-jdbc were, at the time, genuinely replaced by the jar
-overlay described under "Differences from upstream" below (jackson and postgresql-jdbc
-later stopped needing the overlay once the image moved to 26.7.2 — see "Then we move to
-26.7.2" below). The 5 keycloak-services findings are resolved by moving to 26.7.1 (see "We
-still move to 26.7.1" below). **The one mssql-jdbc finding is not an overlay target** — it
-is actually a trivy false positive, and the risk is accepted through an exception in
-`cve-exceptions.json` (see "Version management").
+The third layer is why this image is built here. A base OS swap does not touch jars
+(structurally the same as the statically linked Go modules in `cloudnative-pg` and
+`etcd`), and a newer tag only helps once the BOM moves. The jar overlay fills the gap in
+between — the same kind of dependency override as the etcd image adding one `replace`
+line to `go.work`, and orchestration shares the one
+[scripts/build/build-hardened-image.sh](../../scripts/build/build-hardened-image.sh). The
+measurement that first led here (comparing the Quarkus BOMs of 26.6.4 and 26.7.1) is in
+[ADR 0008](../../docs/decisions/0008-keycloak-self-build.md).
 
-### Result of evaluating a newer tag first (image-authoring/README.md checklist step 1)
+### Moving to the 26.8 line
 
-**The 12 jar findings are not resolved by raising the keycloak version.** keycloak
-`26.6.4` and the latest `26.7.1` both have `quarkus.version` of `3.33.2.1`, and the
-Quarkus 3.33.2.1 BOM pins `netty 4.1.135.Final` and `jackson-bom 2.21.2` (measured:
-comparing keycloak's `pom.xml` across both tags plus `quarkusio/quarkus`
-`bom/application/pom.xml@3.33.2.1`). The fixed versions for the blocking CVEs are netty
-`4.1.136.Final` and jackson `2.21.4` — until the next Quarkus BOM lands, the upstream
-image offers no path.
+Keycloak maintains only the current minor (`SUPPORT_NOTE` in `image.env`). 26.7 went
+end-of-life on 2026-10-01, when 26.8.0 shipped, and `check-support-line.py` failed daily
+from then on. Because this moves the line, it was handled as a migration rather than a
+pin raise — what actually changed upstream was established first.
 
-**A base OS swap does not touch jars either.** The CVEs are in jars shipped with the
-distribution rather than in OS packages — structurally the same as the statically linked
-Go modules in `cloudnative-pg` and `etcd`.
+- **The container contract is unchanged.** Upstream `quarkus/container/Dockerfile` and
+  `ubi-null.sh` are identical between 26.7.2 and 26.8.2 (still
+  `java-21-openjdk-headless`), and `bin/kc.sh` is byte-for-byte the same. So
+  `RUNTIME_PACKAGES`, `USER` and `ENTRYPOINT` are untouched.
+- **Quarkus moves from `3.33.3.1` to `3.40.1.1`,** and that resolves most of the previous
+  overlay targets and of the jars the rescan newly flagged in the base distribution
+  (measured from 26.8.2's `lib/lib/main`):
 
-So **a self-build that replaces the jars directly is the only lever**. It is the same kind
-of dependency override as the etcd image resolving its issue with one
-`replace golang.org/x/text` line in `go.work`, and orchestration shares the one
-[scripts/build/build-hardened-image.sh](../../scripts/build/build-hardened-image.sh).
+  | jar | 26.7.2 | 26.8.2 | Result |
+  | --- | --- | --- | --- |
+  | netty family | `4.1.136.Final` (overlaid to `4.1.137.Final`) | `4.1.139.Final` | overlay removed |
+  | jackson-core/databind | `2.21.5` | `2.21.7` | resolved |
+  | bcprov-jdk18on | `1.84` | `1.86` | resolved |
+  | freemarker | `2.3.32` | `2.3.35` | resolved |
+  | mssql-jdbc | `13.2.1.jre11` | `13.4.0.jre11` | see "Version management" |
+  | opentelemetry-api | `1.57.0` (overlaid to `1.62.0`) | `1.62.0` | below the fix `1.67.0` — overlay removed, **deferred** (see "Differences from upstream") |
+  | guava | `33.5.0-jre` | `33.6.0-jre` | below the fix `33.7.2-jre` — **new overlay** |
+  | mariadb-java-client | `3.5.9` | `3.5.10` | below the fix `3.5.11` — **new overlay** |
 
-### We still move to 26.7.1
+- **26.8.2 itself fixes a large batch of Keycloak-code CVEs** (the "Security fixes" in its
+  release notes — SAML parser DoS, account takeover, forged DCR claims, and more). They
+  are not in trivy's database, so the gate never catches them, but the risk is real and
+  the 26.7 line no longer receives backports.
 
-`26.6.4` is vulnerable to 5 `keycloak-services` HIGH findings patched only in `26.7.1`
-(and `26.6.5`) — CVE-2026-16102 / 16442 / 16443 / 15572 / 15573 (plus 2 MEDIUM, measured
-from the GitHub Security Advisories). They simply were not in the trivy DB at scan time,
-so the gate did not catch them.
-
-The chart (`keycloakx`) **stays at 7.2.2, the latest.** The chart's
-`appVersion: 26.6.4` is only the default when `image.tag` is unset
-(`templates/statefulset.yaml` — `.Values.image.tag | default .Chart.AppVersion`), and we
-specify the tag explicitly. Its appVersion trailing 26.7.1 is a release-cadence lag in the
-codecentric chart, not a chart defect.
-
-### Then we move to 26.7.2
-
-A rescan later measured 5 new MEDIUM findings (jackson-databind ×3, netty-codec-http,
-opentelemetry-api — all 2026 CVEs disclosed after the 26.7.2 release).
-
-**Keycloak 26.7.2's own release notes claim CVE-2026-45292/59888/59889 are "fixed", but
-checking the actual jar versions shows that is only half true.** Bumping Quarkus from
-`3.33.2.1` to `3.33.3.1`:
-
-- **genuinely fixes jackson-databind/jackson-core** — `jackson-bom` moves to `2.21.5`, so
-  the base distribution now ships the fixed version with no overlay needed.
-- **also already ships postgresql-jdbc at `42.7.13`** (past the overlay's old `42.7.12`
-  target), so that overlay is no longer needed either.
-- **also already ships micrometer at `1.16.6`** (exactly the overlay's old target), so
-  that overlay is no longer needed either.
-- **leaves netty unchanged at `4.1.136.Final`**, so CVE-2026-59903 (a CORS `Vary`-header
-  cache-poisoning issue in netty-codec-http, fixed in `4.1.137.Final`) is **not** resolved
-  by moving to 26.7.2 — the overlay target has to move from `4.1.136.Final` to
-  `4.1.137.Final`.
-- **does not touch opentelemetry-api at all.** Keycloak's actual fix (PR #50869,
-  `SizeLimitedBaggagePropagator`) is an application-level workaround that caps baggage
-  parsing size in code, not a dependency bump — the jar itself still ships at `1.57.0`,
-  and trivy judges by the jar version in the SBOM, so CVE-2026-45292 keeps getting
-  flagged. `opentelemetry-api` alone was added as a new overlay target, `1.57.0` →
-  `1.62.0` (the rest of the same group — sdk, context, exporter-\* — carries no CVE and
-  is left alone; `api` is mostly an interface module, so it is not held to the same
-  "family version mixing is unsupported" rule as netty/micrometer).
-
-Moving to 26.7.2 is still worth it beyond jackson, because it also removes 5 Keycloak-native
-CVEs (a fine-grained admin-permission bypass, a group-hierarchy disclosure, a leak of
-vault-resolved rotated client secrets, a predictable account-linking hash, and an
-unauthenticated account takeover via the reset-credentials flow) — none of those are in
-trivy's database, so the gate never caught them, but the risk is real.
+guava is blocking (HIGH) while mariadb is MEDIUM/LOW, but a rebuild forced by a blocking
+CVE takes every fixable finding with it
+([remediation-priority.md](../../docs/image-authoring/remediation-priority.md), "The unit
+of cost is a rebuild, not a CVE"). opentelemetry-api (MEDIUM) was attempted for the same
+reason, but broke the real startup and was deferred — see below.
 
 ## Shape and base OS
 
@@ -124,18 +97,13 @@ confirmed by the gate's `CoverageProbe` positive control (rescanning with inject
 sentinel packages), **consistency across images was prioritised over "stay as close to
 upstream as possible"**.
 
-**BCI 16.0 is available, but 15.7 is used — the newer one is older for this image.** All
-the other required packages exist in 16.0, but its JDK lags.
-
-| BCI | `java-21-openjdk-headless` |
-| --- | --- |
-| 15.7 | `21.0.12.0-150600.3.29.1` |
-| 16.0 | `21.0.11.0-160000.2.1` |
-
-`21.0.12` is the fixed version for CVE-2026-41254 and CVE-2026-47063, so going to 16.0
-would have left two of the very blocking CVEs this image exists to remove. **When 16.0's
-JDK catches up with 15.7, we move** — the re-measurement procedure is in the
-`suse.build.env` comments.
+**BCI 16.0 is available, but 15.7 is used.** When this was adopted, 16.0's
+`java-21-openjdk-headless` lagged 15.7's (the comparison is in ADR 0008). Re-measured in
+2026-11, both have caught up to `21.0.12.1` (15.7: `21.0.12.1-150600.3.32.1`, 16.0:
+`21.0.12.1-160000.1.1`), so **moving to 16.0 is now worth reviewing** — but it was kept
+out of this migration. A base OS move also brings the rest of the package names, the tag
+slug (`TAG_SLUG`) and an update to ADR 0008 with it, and is a separate decision. The
+re-measurement procedure is in the `suse.build.env` comments.
 
 ### Why the rootfs is built with the "seed" method
 
@@ -153,7 +121,10 @@ image appears in the SBOM. Always confirm this after the build (see "Building" b
 
 Compared with upstream
 [`quarkus/container/Dockerfile`](https://github.com/keycloak/keycloak/blob/main/quarkus/container/Dockerfile),
-there are only three differences.
+there are only three differences. (Fetching the tar.gz and checking it with
+`sha256sum -c` against `KEYCLOAK_SHA256` committed in `suse.build.env`, rather than
+upstream's bare `ADD`, follows the supply-chain rule — CLAUDE.md design rule 7 — and
+produces the same result.)
 
 1. **The runtime rootfs is SUSE BCI** — see above. The package list
    (`RUNTIME_PACKAGES`) was derived from the 44 rpms in the upstream image's SBOM. `sed`
@@ -166,26 +137,40 @@ there are only three differences.
 
    | Group | Targets | Version |
    | --- | --- | --- |
-   | `io.netty` | the whole family, 17 artifacts | `4.1.136.Final` → `4.1.137.Final` |
-   | `io.opentelemetry` | `opentelemetry-api` only | `1.57.0` → `1.62.0` |
+   | `com.google.guava` | `guava` | `33.6.0-jre` → `33.7.2-jre` |
+   | `org.mariadb.jdbc` | `mariadb-java-client` | `3.5.10` → `3.5.11` |
 
-   For netty the **whole family** is raised, not only the artifacts with a CVE — mixing
-   versions across its artifacts is unsupported. opentelemetry-api raises only the one
-   artifact with the CVE — `api` is mostly an interface module, so running it ahead of the
-   rest of its group (sdk, context, exporter-\*) is confirmed safe by the real startup in
-   `verify.sh` rather than assumed unsafe by default.
+   Both are single artifacts raised within the same major — the `failureaccess` that
+   guava `33.7.2-jre` requires is `1.0.3`, the same as for `33.6.0-jre`.
 
-   jackson-core/jackson-databind, postgresql-jdbc, and micrometer were overlay targets
-   here at one point, but were removed once Keycloak 26.7.2 (Quarkus 3.33.3.1) started
-   shipping the fixed versions in the base distribution — see "Then we move to 26.7.2"
-   above.
+   **opentelemetry is not overlaid (deferred).** The fixed version of
+   `opentelemetry-api` is `1.67.0`; its POM requires `context 1.67.0`, which requires
+   `common 1.67.0`, so all three were raised together and built. Augmentation
+   (`kc.sh build`) passed, but **the real startup with tracing enabled died unable to find
+   `io/opentelemetry/api/internal/ConfigUtil`** — in 1.67 that class moved to
+   `io.opentelemetry.common.impl`, and `InstrumentationUtil` also left `api.internal`,
+   while the SDK and exporters Quarkus 3.40.1.1 ships (`1.62.0`) and
+   `opentelemetry-instrumentation-api 2.28.1` link against exactly those `api.internal`
+   classes (measured from the bytecode of the distribution's jars). Fixing it would mean
+   raising the whole SDK, exporter and instrumentation stack beyond what the Quarkus
+   extension was built against — not a risk worth taking for one MEDIUM. Per "the blocking
+   fix is never held hostage" (remediation-priority.md), the image ships with the blocking
+   fixes and this CVE is **deferred**. It is resolved once a Keycloak release's Quarkus BOM
+   raises OpenTelemetry to `1.67.0` or later. (The `api`-only overlay on 26.7.x was only
+   ever verified with a tracing-disabled startup — which is why `verify.sh` now starts
+   with tracing enabled.)
+
+   netty, jackson-core/jackson-databind, postgresql-jdbc, and micrometer were overlay
+   targets here at one point, but were removed once Keycloak raised its Quarkus BOM and the
+   base distribution started shipping the fixed versions (netty in 26.8.2, the rest in
+   26.7.2).
 
    This is not disguise — trivy determines versions from `META-INF/maven/**/pom.properties`
    inside the jar (falling back to a sha1↔GAV index), so the SBOM reports the new version
    accurately, and the contents really are the new version.
 3. **`bin/client/` removed** — `keycloak-admin-cli-<ver>.jar` is an uber-jar that shades
-   jackson, so jar replacement cannot fix it (measured from the SBOM: the FilePath of
-   `jackson-databind@2.21.2` is this file). Being a standalone CLI (`kcadm.sh` /
+   its dependencies (jackson and others), so jar replacement cannot fix it (measured from
+   the SBOM at adoption: the FilePath of `jackson-databind@2.21.2` is this file). Being a standalone CLI (`kcadm.sh` /
    `kcreg.sh`) that the server JVM never loads, it was removed from the hardened image.
    **This is the only functional difference from upstream** — if `kcadm` is needed in
    operations, use the upstream image as a separate container.
@@ -197,38 +182,51 @@ optimised image).
 
 ## Version management
 
-`APP_VERSION`/`KEYCLOAK_VERSION` and the `*_OLD`/`*_VERSION` jar versions are **not
-tracked automatically.** Someone reading an upstream release and editing `suse.build.env`
-to open a PR is itself the update trigger.
+The following values are **not tracked automatically** — someone reading an upstream
+release and editing `suse.build.env` to open a PR is itself the update trigger.
+
+| Value | Note |
+| --- | --- |
+| `APP_VERSION`, `KEYCLOAK_VERSION` | Always equal. The line must match `SUPPORT_LINE` (`26.8`) in `image.env` |
+| `KEYCLOAK_SHA256` | Changes with the version. Computed from the downloaded tar.gz and cross-checked against the `.sha1` asset on the upstream release |
+| `GUAVA_OLD`/`GUAVA_VERSION`, `MARIADB_OLD`/`MARIADB_VERSION` | Overlay pairs |
+| `BUILDER_BASE`, `MICRO_BASE` | BCI version — see "Background to the base OS decision" above |
+
+`check-support-line.py` only reports whether the line is end-of-life (exit 2) or behind
+within the line (exit 1). Following patch releases within the line is also done by a
+person.
 
 `overlay-jars.sh` **fails the build** if it finds no jar at any `*_OLD` version. That
 prevents the state where upstream bumped a dependency, the script silently did nothing,
-and the build "succeeded" with the CVEs still present.
+and the build "succeeded" with the CVEs still present. Raising `KEYCLOAK_VERSION` usually
+hits this failure first — if the jar's new base version is at or past the fixed version,
+delete the spec; otherwise move only `*_OLD`.
 
-**The mssql-jdbc CVE is not an overlay target.** It is included in the 12-finding tally
-under "Why we build this ourselves", but it is actually a trivy false positive:
-`mssql-jdbc-13.2.1.jre11.jar` is mis-decomposed into two components because of filename
-truncation — the installed artifact is already the fixed version. There is no way to
-remove it from the image side (the mssql driver is part of the Quarkus augmentation, so
-deleting the file breaks the classpath), so the risk is accepted through the
-`CVE-2025-59250` exception in the repository root's `cve-exceptions.json` — **the
-self-build did not fix it.** When that exception expires, the gate blocks again and forces
-a re-review.
+**Remediations are kept apart.** This image's CVEs are handled four ways:
 
-The tally (under "Why we build this ourselves") and the overlay targets (under
-"Differences from upstream") must always add up — update both whenever another CVE is
-blocked.
+- **Fixed by the overlay** — the jars in the table under "Differences from upstream".
+- **Fixed by raising the Keycloak version** — the jars the base resolved in the table
+  under "Moving to the 26.8 line", and Keycloak's own code CVEs.
+- **Deferred** — the opentelemetry-api MEDIUM (fixed in `1.67.0`). The reason is under
+  "Differences from upstream" above. Collected when the next Keycloak release raises the
+  BOM.
+- **Risk accepted through an exception** — `CVE-2025-59250` (mssql-jdbc) in
+  `cve-exceptions.json`. **The self-build did not fix it.** It was a trivy false positive:
+  trivy mis-decomposed the one file `mssql-jdbc-13.2.1.jre11.jar` into two components
+  (`13.2.1.jre11` / `13.2.1`) because of filename truncation — the installed artifact was
+  already the fixed version. 26.8.2 ships `13.4.0.jre11`, and on the 26.8.2 build's gate
+  this CVE **no longer matches** — trivy still decomposes the file into two components
+  (`13.4.0.jre11` / `13.4.0`), but both are outside the vulnerable range. So this image no
+  longer needs the exception (retiring the entry belongs to the exception-review
+  procedure). The decomposition habit itself remains, so re-check whenever the mssql-jdbc
+  version changes.
 
-**jackson-databind/jackson-core, postgresql-jdbc, and micrometer are also not overlay
-targets.** Unlike mssql-jdbc this is not a trivy false positive — Keycloak 26.7.2 genuinely
-ships the fixed versions already (see "Then we move to 26.7.2" above). Re-check all three
-groups on every `KEYCLOAK_VERSION` bump — if a future Quarkus BOM regresses one of them,
-its overlay needs to come back.
-
-**Suggested review cadence**: whenever the gate reports a blocking CVE for this image
-again, or when Keycloak ships a release with an updated Quarkus BOM — **once the BOM moves
-up and makes the overlay unnecessary, removing that spec always takes priority over
-keeping this self-build.**
+**When to stop self-building**: once a Keycloak release's Quarkus BOM raises every
+overlay target to its fixed version or later, the overlay is empty, and the only
+differences left are the SUSE BCI rootfs and the removal of `bin/client`. **Once the BOM
+moves up and makes an overlay unnecessary, removing that spec always takes priority over
+keeping this self-build.** Review it whenever the gate reports a blocking CVE for this
+image again, or when Keycloak ships a release with an updated Quarkus BOM.
 
 ## Building
 
@@ -266,9 +264,19 @@ After the build, check:
 What `verify.sh` checks: the shell tools kc.sh uses, java 21, the `en_US.UTF-8` locale and
 `Asia/Seoul` timezone, that `bin/client` is gone, **the `pom.properties` version inside
 each overlaid jar** (the contents, not the filename — the same basis trivy uses), and,
-after a real `start-dev` startup, the OIDC discovery response, admin token issuance, and
-`GET /admin/realms`. External postgres, ingress, and clustering are outside this smoke
-test's scope — real deployment verification follows a separate procedure.
+after a real `start-dev --tracing-enabled=true` startup, the OIDC discovery response,
+admin token issuance, and `GET /admin/realms`. Because tracing is on, the startup and
+those requests really load the OpenTelemetry stack, and the server log is then checked for
+class-linkage errors (`NoSuchMethodError`, `NoClassDefFoundError`, …) — a startup with
+tracing off never touches that stack and misses incompatibilities like the opentelemetry
+overlay above. No OTLP collector is started — export-failure warnings are
+expected.
+
+What it does **not** check: the path that connects to a real database through the mariadb
+driver (the startup uses the dev-file DB, so the mariadb driver is never loaded — only the
+overlaid jar's content version and augmentation passing are confirmed), and external
+postgres, ingress, and clustering. Real deployment verification follows a separate
+procedure.
 
 ### File layout
 
@@ -278,13 +286,13 @@ test's scope — real deployment verification follows a separate procedure.
 | `suse.build.env` | keycloak version, base images, runtime packages, jar overlay versions. Only names listed in `BUILD_ARGS` are passed as `--build-arg` |
 | `overlay-jars.sh` | Replaces the vulnerable jars and removes `bin/client`. Builder-stage only (never run directly on the host) |
 | `verify.sh` | Functional verification. Runs on the host under bash, combining guest shell injection, host-side python3 jar inspection, and a real startup |
-| `image.env` | The default build variant — holds only `DEFAULT_BASE_OS=suse` |
+| `image.env` | The default build variant (`DEFAULT_BASE_OS=suse`), the root README grouping (`CATEGORY`), and the upstream support line (`SUPPORT_*`) |
 
 There is only one base variant, so the filenames are fixed at `suse.*`.
 
 ### Tags
 
 ```
-<registry>/keycloak:26.7.2-bci15.7-hardened-20260826
+<registry>/keycloak:26.8.2-bci15.7-hardened-20261117
                      └ app ┘└ slug ┘└hardened┘└ build date ┘
 ```

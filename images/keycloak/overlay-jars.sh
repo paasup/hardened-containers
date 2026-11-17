@@ -3,10 +3,9 @@
 # Runs only in suse.Dockerfile's builder stage (never used directly on the host).
 #
 # Why this is needed
-#   12 of the 17 blocking CVEs are jars in /opt/keycloak/lib/lib/main/. Those versions are
-#   pinned by the Quarkus 3.33.2.1 BOM, so neither a newer keycloak tag nor a base OS swap
-#   changes them. This is the same kind of dependency override as the etcd image's
-#   `go.work replace`.
+#   These jars are pinned by the Quarkus BOM Keycloak ships, so neither a newer keycloak tag
+#   nor a base OS swap changes them — which targets, and the CVEs behind them, are in
+#   README.md. The same kind of dependency override as the etcd image's `go.work replace`.
 #
 # Why the filenames are preserved
 #   A Quarkus fast-jar distribution references jar filenames directly through the Class-Path in
@@ -32,14 +31,14 @@ M2="${M2_BASE:-https://repo1.maven.org/maven2}"
 
 [ -d "$LIB" ] || { echo "FAIL: $LIB is missing — check whether the distribution layout changed"; exit 1; }
 
-: "${NETTY_OLD:?}"      "${NETTY_VERSION:?}"
-: "${OTEL_OLD:?}"       "${OTEL_VERSION:?}"
+: "${GUAVA_OLD:?}"      "${GUAVA_VERSION:?}"
+: "${MARIADB_OLD:?}"    "${MARIADB_VERSION:?}"
 
 # groupId (filename prefix) | groupPath (Maven path) | artifact filter | OLD | NEW
 #   An artifact filter of '*' targets every jar with that groupId at the OLD version.
 SPECS=(
-  "io.netty|io/netty|*|${NETTY_OLD}|${NETTY_VERSION}"
-  "io.opentelemetry|io/opentelemetry|opentelemetry-api|${OTEL_OLD}|${OTEL_VERSION}"
+  "com.google.guava|com/google/guava|guava|${GUAVA_OLD}|${GUAVA_VERSION}"
+  "org.mariadb.jdbc|org/mariadb/jdbc|mariadb-java-client|${MARIADB_OLD}|${MARIADB_VERSION}"
 )
 
 fetch() {   # $1 = url, $2 = output path
@@ -59,10 +58,10 @@ for spec in "${SPECS[@]}"; do
     [ -e "$f" ] || continue
     base="$(basename "$f")"
 
-    rest="${base#"$gid."}"          # netty-codec-http-4.1.135.Final.jar
-    rest="${rest%.jar}"             # netty-codec-http-4.1.135.Final
-    artifact="${rest%%-"$old"*}"    # netty-codec-http
-    tail="${rest#*-"$old"}"         # '' or -linux-x86_64 (a classifier)
+    rest="${base#"$gid."}"          # mariadb-java-client-3.5.10.jar
+    rest="${rest%.jar}"             # mariadb-java-client-3.5.10
+    artifact="${rest%%-"$old"*}"    # mariadb-java-client
+    tail="${rest#*-"$old"}"         # '' or -linux-x86_64 / -alpha (a classifier or suffix)
 
     if [ "$filter" != "*" ] && [ "$artifact" != "$filter" ]; then continue; fi
 
@@ -85,14 +84,12 @@ done
 
 echo "overlay: replaced ${total} jars"
 
-# keycloak-admin-cli is an uber-jar that shades jackson, so jar replacement cannot fix it
-# (measured from the SBOM: the FilePath of jackson-databind@2.21.2 is
-# bin/client/keycloak-admin-cli-*.jar). Being a standalone CLI (kcadm.sh/kcreg.sh) that the
-# server JVM never loads, it is removed from the hardened image.
-# This is the only functional difference from upstream — documented in README.md.
+# keycloak-admin-cli is an uber-jar that shades its dependencies, so jar replacement cannot
+# fix it. It is a standalone CLI (kcadm.sh/kcreg.sh) the server JVM never loads, so it is
+# removed — the one functional difference from upstream, documented in README.md.
 if [ -d "$KC_HOME/bin/client" ]; then
   rm -rf "$KC_HOME/bin/client"
-  echo "removed: bin/client (kcadm/kcreg — jackson shaded uber-jar, unused by the server runtime)"
+  echo "removed: bin/client (kcadm/kcreg — shaded uber-jar, unused by the server runtime)"
 else
   echo "FAIL: bin/client is missing — the distribution layout changed. Re-check the removal assumption"
   exit 1

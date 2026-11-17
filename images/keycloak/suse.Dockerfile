@@ -11,7 +11,7 @@
 #   registry.access.redhat.com/ubi9 (builder)      →  registry.suse.com/bci/bci-base:15.7
 #   ubi-null.sh (build rootfs, then rpm erase the rest) →  bci-micro filesystem seed + zypper --installroot
 #   registry.access.redhat.com/ubi9-micro (final)  →  FROM scratch + the rootfs above
-#   ADD $KEYCLOAK_DIST → tar → /opt/keycloak       →  identical
+#   ADD $KEYCLOAK_DIST → tar → /opt/keycloak       →  curl + sha256sum -c → tar → /opt/keycloak
 #   keycloak:x:0:root / uid 1000 / ENTRYPOINT      →  identical
 #   (none)                                         →  vulnerable jar overlay + kc.sh build re-augmentation
 #
@@ -28,11 +28,12 @@ FROM ${MICRO_BASE} AS micro
 FROM ${BUILDER_BASE} AS builder
 
 ARG KEYCLOAK_VERSION
+ARG KEYCLOAK_SHA256
 ARG RUNTIME_PACKAGES
-ARG NETTY_OLD
-ARG NETTY_VERSION
-ARG OTEL_OLD
-ARG OTEL_VERSION
+ARG GUAVA_OLD
+ARG GUAVA_VERSION
+ARG MARIADB_OLD
+ARG MARIADB_VERSION
 
 # (a) Build the runtime rootfs. The rootfs uses the seed method (see "Adding packages on top
 # of bci-micro" in docs/image-authoring/base-os-policy.md) — creating a separate installroot
@@ -51,12 +52,16 @@ RUN set -eux; \
     zypper --non-interactive --installroot /rootfs clean --all; \
     rm -rf /rootfs/var/log/zypp /rootfs/var/cache/zypp /rootfs/var/cache/zypper
 
-# (b) Unpack the upstream distribution — identical to upstream's ADD $KEYCLOAK_DIST + tar step.
-ADD https://github.com/keycloak/keycloak/releases/download/${KEYCLOAK_VERSION}/keycloak-${KEYCLOAK_VERSION}.tar.gz /tmp/keycloak/
+# (b) Unpack the upstream distribution — upstream's ADD $KEYCLOAK_DIST + tar step, plus a
+#     SHA256 check against the value committed in build.env.
 RUN set -eux; \
+    mkdir -p /tmp/keycloak; \
     cd /tmp/keycloak; \
-    tar -xf keycloak-*.tar.gz; \
-    rm keycloak-*.tar.gz; \
+    curl -fsSL --retry 3 --retry-delay 2 -o keycloak.tar.gz \
+      "https://github.com/keycloak/keycloak/releases/download/${KEYCLOAK_VERSION}/keycloak-${KEYCLOAK_VERSION}.tar.gz"; \
+    echo "${KEYCLOAK_SHA256}  keycloak.tar.gz" | sha256sum -c -; \
+    tar -xf keycloak.tar.gz; \
+    rm keycloak.tar.gz; \
     mv keycloak-* /opt/keycloak; \
     mkdir -p /opt/keycloak/data; \
     chmod -R g+rwX /opt/keycloak
