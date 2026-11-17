@@ -14,15 +14,15 @@ apisix(APISIX-Runtime + APISIX 애플리케이션) 전체를 업스트림 소스
 
 ## 왜 자체 빌드하나
 
-업스트림 `apache/apisix:3.18.0-debian`은 이미 최신 업스트림 태그인 채로도 차단 CVE 를
+업스트림 `apache/apisix:3.20.0-debian`은 이미 최신 업스트림 태그인 채로도 차단 CVE 를
 갖고 있다 — 그래서 상위 태그 교체로는 해소되지 않는다. 그 CVE 는 전부 Debian 베이스 OS
 패키지(libc, perl, pcre 등) 쪽이라 애플리케이션 코드가 아니라 베이스 OS 를 통째로
 바꿔야 해소된다.
 
 ## 업스트림과 다르게 하는 부분 — SUSE 에 이 이미지가 없는 이유
 
-업스트림(`apache/apisix:3.18.0-debian`)은 vanilla OpenResty 가 아니라 **"APISIX-Runtime"**
-이라는 커스텀 컴파일 nginx다 — OpenSSL 3.4.1·zlib·PCRE 를 직접 빌드해 넣고,
+업스트림(`apache/apisix:3.20.0-debian`)은 vanilla OpenResty 가 아니라 **"APISIX-Runtime"**
+이라는 커스텀 컴파일 nginx다 — OpenSSL 3.5.9·zlib·PCRE 를 직접 빌드해 넣고,
 `apisix-nginx-module`·`wasm-nginx-module`(WASM, wasmtime)·`lua-var-nginx-module`·
 `lua-resty-events`·`mod_dubbo`·`ngx_multi_upstream_module`을 `--add-module`로
 **컴파일 타임에 정적으로** 얹는다(`openresty -V` 출력으로 확인 가능 — 정확한 버전은
@@ -37,13 +37,13 @@ apisix(APISIX-Runtime + APISIX 애플리케이션) 전체를 업스트림 소스
 | Rust 툴체인을 SLE_BCI 패키지(`rust`·`cargo`)로 설치 | 업스트림은 rustup 부트스트랩 스크립트를 파이프로 실행하지만, 그러면 매 빌드마다 검증되지 않은 원격 스크립트가 실행된다 — 배포판 패키지로 대체했다(설계 원칙 7). |
 | cpanm 부트스트랩 제거 | 업스트림은 OpenSSL Configure 가 요구하는 `IPC::Cmd` 를 cpanm 으로 설치하지만, SLE_BCI 의 stock perl 에 이미 있다(5.26.1 / IPC::Cmd 0.96 — 코어 모듈). 불필요한 원격 실행을 없앴다. |
 | 소스 tarball 무결성 검증 추가 | zlib·PCRE·OpenSSL·OpenResty·lua-resty-limit-traffic 과 luarocks 설치 스크립트를 SHA256 으로 검증한다(`source.build.env` 의 `*_SHA256`). 이 이미지만 tarball 을 받으므로 git 커밋 SHA 같은 보장이 없기 때문이다. |
-| 애플리케이션 코드·모듈 버전 | 업스트림과 100% 동일(diff 최소화 원칙) — apiseven 의 공식 빌드 스크립트(`api7/apisix-build-tools`, 태그 `apisix-runtime/1.3.16`)를 그대로 재현했다. |
+| 애플리케이션 코드·모듈 버전 | 업스트림과 100% 동일(diff 최소화 원칙) — apiseven 의 공식 빌드 스크립트(`api7/apisix-build-tools`, 태그 `apisix-runtime/1.4.2`)를 그대로 재현했다. |
 
 ## 3단계 구성
 
 | 단계 | 목표 |
 | --- | --- |
-| `runtime` | OpenSSL 3.4.1·zlib·PCRE 를 `$OR_PREFIX/{openssl3,zlib,pcre}`에 직접 빌드하고, OpenResty 소스에 위 커스텀 모듈 6종을 `--add-module`로 붙여 컴파일한다. openresty.org 의 SLES 전용 `-devel` 패키지가 없어 이 경로들을 소스 빌드로 채운다. |
+| `runtime` | OpenSSL 3.5.9·zlib·PCRE 를 `$OR_PREFIX/{openssl3,zlib,pcre}`에 직접 빌드하고, OpenResty 소스에 위 커스텀 모듈 6종을 `--add-module`로 붙여 컴파일한다. openresty.org 의 SLES 전용 `-devel` 패키지가 없어 이 경로들을 소스 빌드로 채운다. |
 | `apisix-app` | `runtime`이 만든 OpenResty/LuaJIT 위에 APISIX 애플리케이션(Lua 코드 + 일부 C 확장 rock)을 `luarocks make`로 설치한다. |
 | `final` | 위 두 스테이지 산출물만 깨끗한 SUSE BCI 이미지로 옮기고, 런타임에 필요한 공유 라이브러리(libxml2·libxslt·libyaml·pcre·pcre2)만 추가, non-root(`apisix`, uid 636) 설정까지 마친다. |
 
@@ -74,24 +74,52 @@ apisix(APISIX-Runtime + APISIX 애플리케이션) 전체를 업스트림 소스
   전제하기 때문), Dockerfile 을 안 고쳤어도 SUSE BCI 태그가 그 사이 갱신되면 전체
   재컴파일(약 35분)이 발생할 수 있다 — Dockerfile 반복 수정·테스트는 `--pull` 없는
   순수 `docker build` 로 하고, 최종 검증에서만 `build-hardened-image.sh` 를 쓴다.
+- **`luarocks make` 의 "LuaRocks 3.12.0 bug ... `fetch.lua:139`: attempt to concatenate
+  local 'name' (a nil value)" 는 luarocks 버그가 아니라 네트워크 실패다.** luarocks.org 에서
+  rock 다운로드가 실패하면 luarocks 3.12.0 의 실패 처리 경로가 `nil` 을 이어 붙이다 죽어서,
+  원래의 다운로드 오류 대신 이 스택 트레이스만 남는다. 앞 줄의 `Installing https://luarocks.org/...`
+  가 실패한 rock 이다 — 의존성이나 버전 문제로 오인해 핀을 고치지 말고 다시 빌드한다.
+  같은 이유로 `runtime` 스테이지의 `zypper install` 이 public-dl.suse.com 의 끊김(curl
+  error 56)으로 실패할 때도 Dockerfile 을 고치지 않고 재시도한다.
 
 ## 소스·버전 관리
 
 | 항목 | 값 |
 | --- | --- |
-| APISIX 소스 | `https://github.com/apache/apisix.git` (태그 `3.18.0`) |
-| OpenResty | `1.29.2.4` |
-| OpenSSL | `3.4.1` |
+| APISIX 소스 | `https://github.com/apache/apisix.git` (태그 `3.20.0`, 커밋 `bc1e687f`) |
+| OpenResty | `1.31.8.1` |
+| OpenSSL | `3.5.9` |
 | zlib / PCRE | `1.3.1` / `8.45` |
-| 커스텀 모듈 | `apisix-nginx-module 1.19.9`, `wasm-nginx-module 0.7.0`, `lua-var-nginx-module v0.5.3`, `lua-resty-events 0.2.0`, `ngx_multi_upstream_module 1.3.3`, `mod_dubbo 1.0.2`, `ngx_http_ffi_client v0.1.3` |
-| APISIX_RUNTIME_VER | `1.3.16` (apiseven 빌드 스크립트 버전 태그) |
+| 커스텀 모듈 | `apisix-nginx-module 1.20.3`, `wasm-nginx-module 0.7.0`, `lua-var-nginx-module v0.5.3`, `lua-resty-events 0.2.0`, `ngx_multi_upstream_module 1.4.1`, `mod_dubbo 1.0.2`, `ngx_http_ffi_client v0.1.3` |
+| APISIX_RUNTIME_VER | `1.4.2` (apiseven 빌드 스크립트 버전 태그) |
+| 최종 베이스 | `registry.suse.com/bci/bci-base:15.7` |
 
 모듈 세트는 우리가 고르는 값이 아니다. APISIX 가 `.requirements` 에 필요한 런타임을
-선언하고(태그 `3.18.0` 기준 `APISIX_RUNTIME=1.3.16`), 그 태그의
+선언하고(태그 `3.20.0` 기준 `APISIX_RUNTIME=1.4.2`), 그 태그의
 `api7/apisix-build-tools` 가 모듈 버전을 정한다 — `APISIX_VERSION` 을 올릴 때는 두
 파일을 모두 읽고 대조한다. `ngx_http_ffi_client` 는 3.18 에서 FFI HTTP 클라이언트가
 기본이 되면서 추가된 모듈이라 선택 사항이 아니다.
-| 최종 베이스 | `registry.suse.com/bci/bci-base:15.7` |
+
+3.18 에서 3.20 으로 바로 옮겼다(3.19 는 3.20.0 이 나온 2026-11-11 에 EOL). 3.20.0(커밋
+`bc1e687f`)은 런타임을 `1.4.2` 로 올리고, 그와 함께 바뀐 값은 OpenResty(`1.29.2.4` →
+`1.31.8.1`, nginx 1.31.8)·OpenSSL(`3.4.1` → `3.5.9`)·`apisix-nginx-module`(`1.19.9` →
+`1.20.3`)·`ngx_multi_upstream_module`(`1.3.3` → `1.4.1`)이다(3.19 의 런타임 `1.3.18` 에서
+바뀐 두 모듈 값도 여기 포함된다). zlib·PCRE·나머지 모듈·lua-resty-limit-traffic 은
+그대로이고, OpenResty 1.31.8.1 번들에도 `lua-resty-limit-traffic-0.09` 와 `ngx_lua-*`
+디렉터리가 그대로 있어 Dockerfile 의 번들 교체·탐색 단계는 바뀌지 않는다. luarocks 설치
+스크립트는 3.20.0 에서 바뀌어(`lrexlib-pcre` 가 런타임 번들 PCRE 를 쓰도록
+`PCRE_DIR` 지정) 체크섬을 새로 고정했다. 새 tarball 체크섬은 출처 밖 값과 대조했다 —
+OpenSSL 은 openssl.org 와 GitHub 릴리스의 `.sha256`, OpenResty 는 openresty.org 가 공개한
+릴리스 서명 키(A0E98066)로 `.asc` 서명을 검증했다.
+
+3.19.0·3.20.0 의 하위 호환 깨짐(`:warning:`)은 전부 설정·플러그인 동작 쪽이라 이미지 빌드
+계약에는 영향이 없다 — 예: 업스트림 `tls.verify` 가 https/grpcs 에도 적용(3.19),
+`mcp-bridge` 플러그인 제거, `oas-validator` 의 `ssl_verify` 기본값 `true`, `wolf-rbac`
+의 `header_prefix` 위치 이동, `forward-auth` 가 FFI 클라이언트로 전환, Prometheus 스트림
+메트릭 라벨 추가(3.20). `apisix start` 는 이제 openresty 를 데몬화한 뒤 반환하지만, 이
+이미지의 엔트리포인트는 업스트림 `apache/apisix-docker` 와 같이 openresty 를
+`daemon off;` 로 포그라운드 실행하므로 영향이 없다.
+배포 쪽 설정은 업스트림 `CHANGELOG.md` 의 3.19.0·3.20.0 항목과 대조해야 한다.
 
 전부 `source.build.env` 에서 관리하며 **자동 추적하지 않는다.** 다른 자체 빌드 이미지와
 동일하게, 사람이 업스트림 새 릴리스(또는 위 CVE 세트를 이미 해소한 버전)를 보고
@@ -103,11 +131,15 @@ apisix(APISIX-Runtime + APISIX 애플리케이션) 전체를 업스트림 소스
 
 **이 이미지는 여기 있는 것들 중 지원 창이 가장 짧다.** APISIX 는 최신 마이너 하나만
 유지보수해서, 새 마이너가 나오면 직전 마이너가 **같은 날 EOL** 된다(약 2개월 주기).
-실제로 3.17 은 3.18.0 이 나온 2026-08-20 에 그대로 EOL 됐다. 그래서 이 이미지의 버전
-갱신 트리거는 차단 CVE 만이 아니다 — 라인이 EOL 되면 게이트가 0건이어도 옮겨야 하고,
+실제로 3.17 은 3.18.0 이 나온 2026-08-20 에, 3.18 은 3.19.0 이 나온 2026-09-28 에,
+3.19 는 3.20.0 이 나온 2026-11-11 에 그대로 EOL 됐다. 그래서 이 이미지의 버전 갱신
+트리거는 차단 CVE 만이 아니다 — 라인이 EOL 되면 게이트가 0건이어도 옮겨야 하고,
 그 판정은 일간 rescan 의 support-line 검사가 자동으로 내린다
 ([support-policy.md](../../docs/image-authoring/support-policy.md) 참고).
-EOL 은 리빌드로 해소되지 않는다.
+EOL 은 리빌드로 해소되지 않는다. 또 endoflife.date 는 새 마이너를 며칠 늦게 반영하기도
+해서, 새 라인으로 옮긴 직후에는 그 라인이 아직 목록에 없어
+`check-support-line.py` 가 "upstream lists no line" 으로 exit 2 를 낼 수 있다. 이는 라인이
+목록에 오르면 저절로 풀리며, 우회하지 않는다.
 
 ## 빌드·검증 방법
 
@@ -123,7 +155,8 @@ IMAGE=apisix BASE_OS=source REGISTRY=<나의-레지스트리> \
 수행 순서: **빌드 → 기능 검증(`verify.sh`) → SBOM → 전 심각도 스캔 → 게이트 판정.**
 `verify.sh`는 `apisix version` 출력·nginx 설정 문법(`nginx -t`)뿐 아니라, standalone
 YAML 설정으로 **실제 nginx worker 를 기동**해 APISIX 라우터가 HTTP 요청에 응답하는지
-(라우트 없음 → 404)까지 확인한다 — 15개 커스텀 모듈 + ~90개 Lua 플러그인(lua-resty-saml
+(라우트 없음 → 404), 설정한 라우트가 매칭되고 서로 다른 단계의 플러그인 두 개
+(`mocking`·`response-rewrite`)가 실제로 실행되는지까지 확인한다 — 15개 커스텀 모듈 + ~90개 Lua 플러그인(lua-resty-saml
 같은 C 확장 포함) 로딩까지 실제로 거치는 유일한 방법이다.
 
 빌드 후 확인할 것:
@@ -147,6 +180,6 @@ YAML 설정으로 **실제 nginx worker 를 기동**해 APISIX 라우터가 HTTP
 ### 태그
 
 ```
-docker.io/paasup/apisix:3.18.0-security-hardened-20260826
+docker.io/paasup/apisix:3.20.0-security-hardened-20261116
                         └ app  ┘└ 슬러그 ┘└ 하드닝 ┘└ 빌드일 ┘
 ```

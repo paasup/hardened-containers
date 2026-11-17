@@ -46,7 +46,7 @@ Current declarations:
 
 | Image | Source | Product | Line |
 |---|---|---|---|
-| `apisix` | endoflife.date | `apache-apisix` | 3.17 |
+| `apisix` | endoflife.date | `apache-apisix` | 3.20 |
 | `argocd` | endoflife.date | `argo-cd` | 3.5 |
 | `cnpg-postgresql` | endoflife.date | `postgresql` | 18 |
 | `etcd` | endoflife.date | `etcd` | 3.7 |
