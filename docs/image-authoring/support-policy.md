@@ -74,15 +74,19 @@ declaration exists, is internally complete, and that `SUPPORT_LINE` agrees with
 `SUPPORT_LINE`, which would leave the live check below silently measuring the wrong line.
 
 **`scripts/build/check-support-line.py` — needs the network, runs daily.** Reads each
-`image.env`, queries endoflife.date, and compares. Invoked as a step in `rescan.yml`,
-which already has a daily schedule, a per-image matrix, and a Job Summary.
+`image.env`, queries endoflife.date, and compares. Invoked by `rescan.yml`'s
+`support-line` job, which reuses its daily schedule, per-image matrix, and Job Summary.
 
 | Exit | Meaning | Effect |
 |---|---|---|
 | 0 | On a maintained line at its newest release, or skipped (`manual`) | — |
-| 1 | On a maintained line but behind within it | `::notice::` — **does not fail** |
+| 1 | On a maintained line but behind within it — or on a line **newer than any listed** (not indexed yet) | `::notice::` — **does not fail** |
 | 2 | The line is end-of-life, or upstream no longer lists it | `::warning::` and **the job fails** |
 | 3 | Could not be measured (network, malformed declaration) | `::warning::` |
+
+A line newer than every listed one is upstream's newest release that endoflife.date has
+not caught up with yet. apisix 3.20 was in that state for days after its release, and
+failing the job then would have sent a person to "fix" the one pin that was already current.
 
 Being *behind within a maintained line* does not fail, because a fix is still available
 upstream and the CVE gate already blocks anything that actually matters. Being *on a dead

@@ -34,7 +34,8 @@ Usage
 
 Exit codes
     0  every image checked is on a maintained line at its newest release (or was skipped)
-    1  on a maintained line, but behind within it — a notice, not a failure
+    1  on a maintained line, but behind within it — or on a line newer than any upstream
+       lists yet. A notice, not a failure
     2  at least one image is on an unmaintained line, or its line is unknown upstream
     3  execution error (network, malformed declaration)
 """
@@ -74,6 +75,11 @@ def app_version(image_dir, env):
         return None
     bench = image_dir / f"{variant}.build.env"
     return read_env(bench).get("APP_VERSION") if bench.exists() else None
+
+
+def line_key(name):
+    """'3.20' → (3, 20), so that 3.20 sorts above 3.9 — as strings it sorts below 3.3."""
+    return tuple(int(n) for n in re.findall(r"\d+", name or "")) or (0,)
 
 
 def fetch(product):
@@ -125,12 +131,27 @@ def check(image_dir):
     releases = {r.get("name"): r for r in result.get("releases") or []}
     rel = releases.get(line)
     if rel is None:
-        # A line upstream does not list at all. Treated as unmaintained rather than an
-        # error: upstream dropping a line from its own index is exactly the signal here.
+        newest = sorted(releases, key=line_key, reverse=True)
+        if newest and line_key(line) > line_key(newest[0]):
+            # Newer than every line listed: upstream released it and endoflife.date has
+            # not indexed it yet (apisix 3.20 for some days after its release). Reporting
+            # that as end-of-life sends a person to "fix" the one pin that is already
+            # current, so it is a notice — the newest line is by definition the one still
+            # patched. Nothing here measured it, and the detail says so.
+            row["status"] = BEHIND
+            row["maintained"] = "not yet listed"
+            row["detail"] = (
+                f"line {line} is newer than every line endoflife.date lists for {product} "
+                f"(newest listed: {newest[0]}) — not indexed yet; assumed maintained until it is"
+            )
+            return row
+        # A line upstream does not list at all, and not because it is too new. Treated as
+        # unmaintained rather than an error: upstream dropping a line from its own index is
+        # exactly the signal here.
         row["status"] = UNMAINTAINED
         row["detail"] = (
             f"upstream lists no line {line!r} for {product} "
-            f"(known: {', '.join(sorted(releases)[:8]) or 'none'})"
+            f"(newest listed: {', '.join(newest[:8]) or 'none'})"
         )
         return row
 
