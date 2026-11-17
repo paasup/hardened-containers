@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# apisix — a self-build that recompiles upstream apache/apisix:3.18.0-debian (the
+# apisix — a self-build that recompiles upstream apache/apisix:3.20.0-debian (the
 # APISIX-Runtime custom nginx plus the APISIX application) from source on SUSE BCI. Three
 # stages: runtime (OpenSSL/zlib/pcre plus the custom nginx modules) → apisix-app (installing
 # APISIX itself with luarocks) → final (moving only the artifacts onto bci-base). Why we build
@@ -13,16 +13,16 @@ ARG RUNTIME_BASE=registry.suse.com/bci/bci-base:15.7
 # 1) runtime — OpenSSL/zlib/pcre + OpenResty (the full set of APISIX-Runtime custom modules)
 # =============================================================================
 FROM ${BUILDER_BASE} AS runtime
-ARG OPENRESTY_VERSION=1.29.2.4
-ARG OPENSSL_VERSION=3.4.1
-ARG APISIX_NGINX_MODULE_VER=1.19.9
+ARG OPENRESTY_VERSION=1.31.8.1
+ARG OPENSSL_VERSION=3.5.9
+ARG APISIX_NGINX_MODULE_VER=1.20.3
 ARG WASM_NGINX_MODULE_VER=0.7.0
 ARG LUA_VAR_NGINX_MODULE_VER=v0.5.3
 ARG LUA_RESTY_EVENTS_VER=0.2.0
-ARG NGX_MULTI_UPSTREAM_MODULE_VER=1.3.3
+ARG NGX_MULTI_UPSTREAM_MODULE_VER=1.4.1
 ARG MOD_DUBBO_VER=1.0.2
 ARG NGX_HTTP_FFI_CLIENT_VER=v0.1.3
-ARG APISIX_RUNTIME_VER=1.3.16
+ARG APISIX_RUNTIME_VER=1.4.2
 
 ENV OR_PREFIX=/usr/local/openresty
 
@@ -170,7 +170,7 @@ RUN cd "apisix-nginx-module-${APISIX_NGINX_MODULE_VER}" && OPENRESTY_PREFIX="${O
 # 2) apisix — install APISIX itself (the Lua application)
 # =============================================================================
 FROM runtime AS apisix-app
-ARG APISIX_VERSION=3.18.0
+ARG APISIX_VERSION=3.20.0
 
 ENV PATH=$PATH:${OR_PREFIX}/luajit/bin:${OR_PREFIX}/nginx/sbin:${OR_PREFIX}/bin
 
@@ -194,7 +194,7 @@ RUN wget https://raw.githubusercontent.com/apache/apisix/${APISIX_VERSION}/utils
 WORKDIR /apisix
 RUN git clone --depth=1 -b "${APISIX_VERSION}" https://github.com/apache/apisix.git .
 
-# apisix-master-0.rockspec sits at the repository root (re-confirmed at tag 3.18.0).
+# apisix-master-0.rockspec sits at the repository root (re-confirmed at tag 3.20.0).
 # `luarocks make` does not use the rockspec's source.url (a remote tarball); it builds the
 # current directory — so a git clone is sufficient, and there is no need to sed-patch
 # source.url to a local path the way the apiseven build does.
