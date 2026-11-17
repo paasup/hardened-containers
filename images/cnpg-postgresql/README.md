@@ -53,6 +53,13 @@ The `zypper update` in the `patched` stage corresponds to `apt-get upgrade` in t
 version — base images are only rebuilt periodically, so they lag the distribution
 archive, and without this step the unpatched vulnerabilities of that moment simply remain.
 
+That step must **not move PostgreSQL itself**, though. Until 2026-11 it ran with the PGDG
+repository enabled, so with `PG_VERSION` pinned to 18.4 the server still went to 18.7, and
+the 18.4 tag carried 18.7. Now the `minimal` stage installs `postgresql18`, `-libs`, `-server`
+and `-contrib` all at the one `PG_VERSION` and locks them with `zypper addlock`, and
+`verify.sh` checks `postgres --version` and every package EVR against `APP_VERSION` and
+`PG_VERSION`. The tag always names the server inside the image.
+
 ### Checking for upstream build recipe changes (manual, not automated)
 
 If the `cloudnative-pg/postgres-containers` repository changes its own Dockerfile
@@ -67,7 +74,7 @@ if the structure changed, re-port `suse.Dockerfile` by hand.
 `EXTENSIONS` are **not tracked automatically.** Someone reading a new release in the PGDG
 repository and editing `suse.build.env` to open a PR is itself the update trigger.
 `PG_VERSION` must not be bumped by looking at major.minor alone — the whole EVR (for
-example `18.4-4200001PGDG.sles15.7`) has to match exactly what the PGDG repository
+example `18.7-4200001PGDG.sles15.7`) has to match exactly what the PGDG repository
 actually publishes, or `zypper install` will not fetch that version.
 
 `PG_TEXTSEARCH_VERSION` and `PG_TEXTSEARCH_SHA256` are also bumped by hand. If a database using
@@ -107,7 +114,7 @@ application version the result of `zypper update` differs from one point in time
 another, so rolling tags are avoided in favour of a fixed tag including the build date.
 
 ```
-<registry>/cnpg-postgresql:18.4-bci15.7-hardened-20260729
+<registry>/cnpg-postgresql:18.7-bci15.7-hardened-20261117
                             └ app ┘└ base ─┘└hardened┘└ build date ┘
 ```
 

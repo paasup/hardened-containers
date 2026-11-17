@@ -48,6 +48,13 @@ Ubuntu 기반 자체 빌드도 후보였으나 gid 26 이 `tape` 그룹에 선�
 이미지는 주기적으로만 재빌드되므로 배포판 아카이브보다 뒤처져 있고, 이 단계가 없으면 그
 시점의 미패치 취약점이 그대로 남는다.
 
+단, 이 단계가 **PostgreSQL 자체를 올리면 안 된다**. 2026-11 까지는 PGDG 저장소가 켜진 채로
+`zypper update` 가 돌아, `PG_VERSION` 을 18.4 로 고정했는데도 서버가 18.7 로 올라가 18.4 태그에
+18.7 이 들어 있었다. 지금은 `minimal` 스테이지에서 `postgresql18`·`-libs`·`-server`·`-contrib`
+를 모두 `PG_VERSION` 하나로 설치한 뒤 `zypper addlock` 으로 잠그고, `verify.sh` 가
+`postgres --version` 과 각 패키지의 EVR 을 `APP_VERSION`·`PG_VERSION` 과 대조한다. 태그는 항상
+이미지 안의 서버 버전과 같다.
+
 ### 업스트림 빌드 레시피 변경 점검 (수동, 자동화 대상 아님)
 
 `cloudnative-pg/postgres-containers` 저장소가 자체 Dockerfile 구조를 바꾸면(새 확장, 새
@@ -60,7 +67,7 @@ diff 를 낼 수 없다 — **권장 점검 주기는 CNPG 마이너 릴리스�
 `APP_VERSION`·`PG_VERSION`(PGDG 패키지의 정확한 EVR 문자열)·`BASE`·`EXTENSIONS` 는
 **자동 추적하지 않는다.** 사람이 PGDG 저장소의 새 릴리스를 보고 `suse.build.env` 를
 고쳐 PR 을 여는 것 자체가 갱신 트리거다. `PG_VERSION` 은 메이저.마이너만 보고 올리면
-안 된다 — EVR 전체(예: `18.4-4200001PGDG.sles15.7`)가 PGDG 저장소가 실제로 배포한
+안 된다 — EVR 전체(예: `18.7-4200001PGDG.sles15.7`)가 PGDG 저장소가 실제로 배포한
 값과 정확히 일치해야 `zypper install` 이 그 버전을 받는다.
 
 `PG_TEXTSEARCH_VERSION`·`PG_TEXTSEARCH_SHA256` 도 사람이 올린다. 이 확장을 쓰는 DB 가
@@ -97,7 +104,7 @@ IMAGE=cnpg-postgresql BASE_OS=suse bash scripts/build/build-hardened-image.sh /t
 고정 태그를 쓴다.
 
 ```
-docker.io/paasup/cnpg-postgresql:18.4-bci15.7-hardened-20260729
+docker.io/paasup/cnpg-postgresql:18.7-bci15.7-hardened-20261117
                                    └ 앱 ─┘└ 베이스 ─┘└ 하드닝 ┘└ 빌드일 ┘
 ```
 
