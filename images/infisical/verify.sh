@@ -11,7 +11,9 @@
 # GitHub code search against the pinned commit) — auto-migration-on-boot
 # (auto-start-migrations.ts upstream) running to completion against a real Postgres is
 # itself a meaningful check that the npm `overrides` force-upgrades (build.env
-# NPM_OVERRIDES) did not break dependency resolution or break the app at runtime.
+# NPM_OVERRIDES) did not break dependency resolution or break the app at runtime. It then
+# bootstraps an admin and round-trips a secret through the API, so the native addons and
+# the encryption path are exercised, not just loaded.
 #
 # Printing VERIFY-OK on the last line means it passed. build-hardened-image.sh judges by that.
 set -e
@@ -78,5 +80,40 @@ for i in $(seq 1 90); do
 done
 [ -n "$OK" ] || { echo "FAIL: /api/status did not return 200 within 90s"; docker logs "$APP"; exit 1; }
 echo "   /api/status returned 200 — server booted, auto-migrations completed against a real Postgres"
+
+# Booting proves the modules load; it does not prove the request path works. Run the first
+# thing an operator does against a fresh instance: bootstrap the admin (password hashing —
+# the native bcrypt/argon2 addons), create a project with a machine-identity token, write a
+# secret and read it back (the KMS envelope encryption path on node:crypto). Runs inside the
+# app container with node's own fetch — the image has no curl.
+echo "== bootstrap → create project → write and read back a secret =="
+if ! docker exec "$APP" node -e '
+  const base = "http://127.0.0.1:8080";
+  const value = "verify-" + require("crypto").randomBytes(12).toString("hex");
+  const call = async (step, method, path, body, token) => {
+    const res = await fetch(base + path, {
+      method,
+      headers: { "content-type": "application/json", ...(token ? { authorization: "Bearer " + token } : {}) },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    const text = await res.text();
+    if (res.status !== 200) { console.error(step + ": HTTP " + res.status + " " + text); process.exit(1); }
+    return JSON.parse(text);
+  };
+  (async () => {
+    const boot = await call("bootstrap", "POST", "/api/v1/admin/bootstrap",
+      { email: "verify@example.com", password: "Verify-Only-Password-1!", organization: "verify" });
+    const token = boot.identity.credentials.token;
+    const { project } = await call("create project", "POST", "/api/v1/projects", { projectName: "verify" }, token);
+    const q = "projectId=" + project.id + "&environment=dev&secretPath=%2F";
+    await call("create secret", "POST", "/api/v4/secrets/VERIFY_KEY",
+      { projectId: project.id, environment: "dev", secretPath: "/", secretValue: value }, token);
+    const { secret } = await call("read secret", "GET", "/api/v4/secrets/VERIFY_KEY?" + q, null, token);
+    if (secret.secretValue !== value) { console.error("read back a different value: " + secret.secretValue); process.exit(1); }
+    console.log("   project " + project.id + ": secret written and read back intact");
+  })().catch((e) => { console.error(e); process.exit(1); });
+'; then
+  echo "FAIL: the bootstrap → secret round trip did not complete"; docker logs "$APP" | tail -50; exit 1
+fi
 
 echo "VERIFY-OK"

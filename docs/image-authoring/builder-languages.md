@@ -84,7 +84,10 @@ RUN zypper -n install -y ${NODE_PKG} && zypper -n clean --all
   (measured: `infisical`). SLE_BCI's `python3` (3.6.15) is too old for `node-gyp`
   (`SyntaxError` on the walrus operator) — install `python313`+`nodejs*-devel` and
   symlink `python3` to it (SLE_BCI has no `update-alternatives` to do this
-  automatically).
+  automatically). SLE 15's default `gcc-c++` is GCC 7, which rejects the
+  `-std=gnu++20` Node 24's headers require (`unrecognized command line option`) — install
+  a newer `gcc<N>-c++` and select it through `CC`/`CXX` (measured: `infisical`,
+  `pkcs11js`; it never surfaced under Node 22).
 
 ## JVM (jar replacement)
 
@@ -212,6 +215,9 @@ build failing rather than anticipated in advance:
   EOVERRIDE check is a textual comparison against `dependencies`, not a semver
   satisfaction check, so `dependencies[<pkg>]=^1.2.3` paired with
   `overrides[<pkg>]["."]=1.2.3` (no caret) still conflicts.
+  If upstream's `package.json` already overrides that package with a **plain string**,
+  `overrides[<pkg>]["."]` cannot be added under it (`npm error EOVERRIDEVALUE`) —
+  replace the string instead (measured: `infisical`, `fast-xml-parser`).
 - **`npm ci` refuses to run once `npm pkg set` has put `package.json` out of sync with
   the committed `package-lock.json`** (`npm error EUSAGE`, worded as if the lockfile
   were simply missing — it is present and valid). Use `npm install` (which reconciles

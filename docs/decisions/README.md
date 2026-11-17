@@ -21,6 +21,7 @@ ADR is for.
 | [0010](0010-infisical-secrets-operator-self-build.md) | Replace the infisical-secrets-operator image with a source-compiled self-build | Accepted |
 | [0011](0011-infisical-self-build.md) | Replace the infisical image with a source-compiled self-build | Accepted |
 | [0012](0012-go-cve-autofix-pr.md) | Raise Go pins automatically, but deliver them as a pull request | Accepted |
+| [0013](0013-infisical-runtime-node24.md) | Run infisical on SUSE BCI's Node 24 while upstream declares Node 26 | Accepted |
 
 ## When to write a new ADR
 

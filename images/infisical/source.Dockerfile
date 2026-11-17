@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-# infisical — upstream source (the v0.164.1 tag) compiled directly, reproducing
+# infisical — upstream source (the APP_VERSION tag) compiled directly, reproducing
 # upstream's own Dockerfile.standalone-infisical build steps, with three deliberate
 # scope cuts and one force-upgrade list. Candidates compared and rationale: "Why we
 # build this ourselves" / "Differences from upstream" in README.md, and ADR 0011.
@@ -41,13 +41,11 @@
 # afterward — `npm ci` refuses to proceed once `npm pkg set` has put package.json out of
 # sync with the committed package-lock.json, by design (`npm error EUSAGE`).
 #
-# @infisical/quic (a Rust-native addon, required for the Gateway/QUIC transport) is
-# NOT force-upgraded — it ships as a prebuilt platform binary via npm
-# optionalDependencies, is already pinned to its latest published version, and that
-# version still carries known CVEs with no newer release available. See
-# cve-exceptions.json and README.md "Version management".
+# Runtime Node is SLE's nodejs24 although upstream declares engines.node >=26 — SLE_BCI
+# ships no nodejs26 package. Rationale and what verify.sh proves about it: README.md
+# "Differences from upstream".
 
-ARG NODE_BUILDER_TAG=22.22.0-trixie-slim
+ARG NODE_BUILDER_TAG=26.12.1-trixie-slim
 # An ARG used in a FROM must be declared before the first FROM (global scope) — see
 # docs/image-authoring/README.md.
 ARG RUNTIME_BASE=registry.suse.com/bci/bci-base:15.7
@@ -84,15 +82,19 @@ FROM ${RUNTIME_BASE} AS backend-toolchain
 ARG NODEJS_PKG
 ARG NODEJS_DEVEL_PKG
 ARG NPM_PKG
+ARG BUILDER_GCC_VERSION
 # node-gyp (compiling odbc/argon2/bcrypt's native addons) requires Python 3.8+ — SLE_BCI's
 # `python3` package is 3.6.15, which node-gyp's bundled gyp fails on (SyntaxError on the
 # walrus operator). python313 has no /usr/bin/python3 alternative wired up by default (no
 # update-alternatives in this image), so the symlink is created explicitly.
 RUN zypper -n install -y --no-recommends \
       ${NODEJS_PKG} ${NODEJS_DEVEL_PKG} ${NPM_PKG} \
-      gcc-c++ make python313 unixODBC-devel \
+      gcc${BUILDER_GCC_VERSION}-c++ make python313 unixODBC-devel \
     && ln -sf /usr/bin/python3.13 /usr/bin/python3 \
     && zypper -n clean --all
+# SLE 15's default gcc-c++ is GCC 7, which rejects the -std=gnu++20 that Node 24's
+# node-gyp headers require — node-gyp picks the versioned compiler up from CC/CXX.
+ENV CC=gcc-${BUILDER_GCC_VERSION} CXX=g++-${BUILDER_GCC_VERSION}
 WORKDIR /app
 
 FROM backend-toolchain AS backend-build
@@ -111,18 +113,22 @@ COPY --from=src /src/standalone-entrypoint.sh standalone-entrypoint.sh
 # compatible. Only the `dependencies` bump forces the top-level resolution; the
 # matching override on top of it is what dedupes every *nested* copy other packages
 # pull in (measured: without it, e.g. uuid@3.3.3/8.3.2/9.0.1/10.0.0/11.1.0 all kept
-# coexisting alongside the fixed top-level uuid@11.1.1).
-RUN for spec in ${NPM_DIRECT_UPGRADES}; do \
+# coexisting alongside the fixed top-level uuid@11.1.1). Where upstream's package.json
+# already overrides the package with a plain string, `[.]` cannot be set on it
+# (EOVERRIDEVALUE) — that string is replaced with the same range instead.
+RUN set -e; for spec in ${NPM_DIRECT_UPGRADES}; do \
       pkg="${spec%@*}"; ver="${spec##*@}"; \
       npm pkg set "dependencies[${pkg}]=^${ver}"; \
-      npm pkg set "overrides[${pkg}][.]=^${ver}"; \
+      case "$(npm pkg get "overrides[${pkg}]")" in \
+        '"'*) npm pkg set "overrides[${pkg}]=^${ver}" ;; \
+        *)    npm pkg set "overrides[${pkg}][.]=^${ver}" ;; \
+      esac; \
     done
-RUN for spec in ${NPM_OVERRIDES}; do \
+RUN set -e; for spec in ${NPM_OVERRIDES}; do \
       pkg="${spec%@*}"; ver="${spec##*@}"; \
       npm pkg set "overrides[${pkg}]=${ver}"; \
     done
 RUN npm install
-RUN npm i -g tsconfig-paths
 ENV NODE_OPTIONS="--max-old-space-size=8192"
 RUN npm run build
 # No Contentful secrets are supplied by this build (self-hosted/air-gapped path) — the
@@ -136,16 +142,21 @@ FROM backend-toolchain AS backend-prod-deps
 ARG NPM_DIRECT_UPGRADES
 ARG NPM_OVERRIDES
 COPY --from=src /src/backend/package.json /src/backend/package-lock.json ./
-RUN for spec in ${NPM_DIRECT_UPGRADES}; do \
+RUN set -e; for spec in ${NPM_DIRECT_UPGRADES}; do \
       pkg="${spec%@*}"; ver="${spec##*@}"; \
       npm pkg set "dependencies[${pkg}]=^${ver}"; \
-      npm pkg set "overrides[${pkg}][.]=^${ver}"; \
+      case "$(npm pkg get "overrides[${pkg}]")" in \
+        '"'*) npm pkg set "overrides[${pkg}]=^${ver}" ;; \
+        *)    npm pkg set "overrides[${pkg}][.]=^${ver}" ;; \
+      esac; \
     done
-RUN for spec in ${NPM_OVERRIDES}; do \
+RUN set -e; for spec in ${NPM_OVERRIDES}; do \
       pkg="${spec%@*}"; ver="${spec##*@}"; \
       npm pkg set "overrides[${pkg}]=${ver}"; \
     done
 RUN npm install --omit=dev
+# Same as upstream: test folders these packages publish carry sample private keys.
+RUN rm -rf node_modules/@fastify/reply-from/test node_modules/ssh2/test node_modules/universal-github-app-jwt/test
 
 ##
 ## FINAL — SUSE BCI, runtime packages only (no compiler, no dev headers).
