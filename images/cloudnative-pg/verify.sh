@@ -11,6 +11,7 @@ TAG="${TAG:?TAG environment variable is required}"
 PLATFORM="${PLATFORM:-linux/amd64}"
 SOURCE_COMMIT="${SOURCE_COMMIT:?SOURCE_COMMIT environment variable is required (build-hardened-image.sh passes it from build.env)}"
 SHORT_COMMIT="${SOURCE_COMMIT:0:8}"
+APP_VERSION="${APP_VERSION:?APP_VERSION environment variable is required (build-hardened-image.sh passes it from build.env)}"
 
 echo "== manager version =="
 OUT="$(docker run --rm --platform "$PLATFORM" --entrypoint /manager "$TAG" version)"
@@ -18,6 +19,12 @@ echo "   $OUT"
 case "$OUT" in
   *"$SHORT_COMMIT"*) ;;
   *) echo "FAIL: version output lacks the pinned commit ($SHORT_COMMIT) — check the ldflags injection"; exit 1 ;;
+esac
+# The reported version must be APP_VERSION (ldflags buildVersion). This proves the injection,
+# not that APP_VERSION matches SOURCE_COMMIT — that pairing is kept in source.build.env.
+case "$OUT" in
+  *"{Version:$APP_VERSION "*) ;;
+  *) echo "FAIL: version output does not report APP_VERSION ($APP_VERSION)"; exit 1 ;;
 esac
 
 echo "== run-as user (nonroot, from image metadata) =="

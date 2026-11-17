@@ -77,3 +77,19 @@ Go dependencies directly.
   unnecessary.
 - **If unexpected runtime problems appear on `bci-micro`** (CA trust chain, TLS, …) —
   promote to `bci-base` or reconsider another BCI variant.
+
+## Note — 2026-11-17: the pin moved from a maintenance-branch commit to a release tag
+
+Upstream tagged `v1.30.1` (2026-09-23), which contains the previously pinned
+maintenance-branch commit `4463551` (111 commits after it). The first revisiting
+condition above — a formal patch release containing the fixes — was therefore met, and the
+pin moved to that tag (`SOURCE_COMMIT` = the commit `v1.30.1` points at, `APP_VERSION` =
+`1.30.1`). The maintenance-branch pickup point was the answer to "no release carries the
+fix yet"; it is now a fallback for that case only, not the default.
+
+What still holds: the self-build itself. Moving to the tag changes *what* is compiled, not
+*whether* it is compiled here — the final runtime base remains SUSE BCI (ADR
+[0001](0001-cnpg-postgresql-image.md)), which the upstream distroless image is not, and
+compiling here is what keeps `GO_MODULE_UPGRADES` available for a module CVE a release has
+not yet picked up. The "a maintenance branch is not a pure patch backport" cost no longer
+applies while a release tag is pinned.

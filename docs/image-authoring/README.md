@@ -64,6 +64,22 @@ to know anything about the image:
 | `BUILD_ARGS` | Space-separated variable names. Only those listed are passed as `--build-arg` |
 | `APP_VERSION` | Generic version string used for the tag prefix and passed to `verify.sh` (the only required value) |
 
+**The tag has to name what is inside.** `APP_VERSION` becomes the tag, but it is a value of
+its own, so nothing stops it from drifting away from the code that really goes in.
+`repo-checks.sh` ("tag matches the pinned source") ties the two together:
+
+| The app comes from | Rule | Escape hatch |
+| --- | --- | --- |
+| `<repo>.git#${SOURCE_COMMIT}` | `SOURCE_COMMIT` is the commit upstream's tag for `APP_VERSION` points at | `SOURCE_COMMIT_UNTAGGED="<reason>"` — a deliberate branch-head pin; warns instead of failing |
+| A package EVR or tarball version | Declare `APP_VERSION_FROM=<VAR>` (e.g. `PG_VERSION`); `APP_VERSION` must equal that value or its version part | — |
+
+A package-installed app also has to survive the image's own `zypper update`: pin every
+package of the app to one EVR and `zypper addlock` them, and have `verify.sh` compare the
+running binary's version with `APP_VERSION`. A "version" check that reads a string injected
+from `APP_VERSION` (Go ldflags) proves nothing about the code. Both failures happened:
+cnpg-postgresql tagged 18.4 shipped 18.7, and cloudnative-pg tagged 1.30.0 shipped a
+branch head 59 commits later.
+
 Any other image-specific variable (`PG_MAJOR`, `SOURCE_COMMIT`, …) only has to be
 written in `build.env` — it is **automatically passed to `verify.sh` as an environment
 variable**, so the script never needs to know what to forward.

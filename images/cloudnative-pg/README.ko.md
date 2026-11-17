@@ -38,15 +38,34 @@ CNPG 오퍼레이터(컨트롤러) 이미지를 업스트림 소스에서 직접
 빌더 스테이지(Go 컴파일)는 공식 `golang` 이미지를 그대로 쓴다 — 최종 이미지에 남는 것이
 아니라 컴파일 산출물만 최종 스테이지로 넘어오므로 스캔·정책 대상이 아니다.
 
-`SOURCE_COMMIT` 은 **자동 추적하지 않는다.** `cnpg-postgresql` 의 PGDG 버전처럼 사람이
-업스트림 유지보수 브랜치(또는 그다음 패치 릴리스가 나오면 그 태그)를 보고
-`source.build.env` 를 고쳐 PR 을 여는 것 자체가 갱신 트리거다.
+`SOURCE_COMMIT` 은 **자동 추적하지 않는다.** 현재 핀은 업스트림 릴리스 태그 `v1.30.1` 이
+가리키는 커밋이고, `APP_VERSION` 은 그 태그와 같은 값이다 — `APP_VERSION` 이 ldflags 로
+바이너리의 보고 버전에 주입되므로 둘은 항상 함께 옮긴다(`verify.sh` 는 보고 버전이
+`APP_VERSION` 인지만 확인할 뿐, 커밋과의 짝은 확인하지 못한다). `cnpg-postgresql` 의
+PGDG 버전처럼 사람이 다음 패치 릴리스 태그를 `git ls-remote --tags` 로 확인해 `source.build.env` 를 고쳐 PR 을 여는 것 자체가 갱신
+트리거다. 릴리스 태그가 아직 담지 않은 수정이 필요할 때만 유지보수 브랜치 커밋으로
+되돌아간다([ADR 0002](../../docs/decisions/0002-cloudnative-pg-operator-self-build.md)) —
+그 경우 `APP_VERSION` 은 그 커밋이 아직 어떤 릴리스와도 같지 않다는 점을 숨기지 않도록
+고른다.
 
-`GO_MODULE_UPGRADES` 는 **평소 비어 있다.** 이 이미지는 유지보수 브랜치 HEAD 를 컴파일해
-업스트림이 이미 백포트한 수정을 그대로 받으므로 강제 업그레이드할 것이 없었다. 그래도 키
-자체는 선언해 둔다 — `suggest-go-upgrades.py --apply` 는 **없는 키를 새로 만들지 않기**
-때문에, 선언이 없으면 업스트림이 백포트하지 않은 모듈 CVE 가 왔을 때 이 이미지만 자동
-수정에서 조용히 빠진다(실제로 2026-09-03 CVE-2026-84304 이 그 상황이었다).
+`GO_MODULE_UPGRADES` 는 **릴리스 태그가 아직 담지 못한 수정만** 채운다 — 핀한 릴리스의
+`go.mod` 가 이미 수정 버전을 요구하면 해당 항목은 지운다. `GO_BUILDER_TAG` 는 `go.mod` 요구
+버전 이상에서 stdlib CVE 수정 버전까지 올린다. `v1.30.0` 이후
+유지보수 브랜치 커밋을 핀하던 동안 강제한 `google.golang.org/grpc@v1.83.1`(2026-09-03
+CVE-2026-84304)은 `v1.30.1` 의 `go.mod` 가 grpc `v1.84.0` 을 요구하므로 제거했다. 2026-11-17
+`v1.30.1` 빌드 스캔에서 이 자체 빌드가 **실제로 고친** CVE 는 다음과 같다(이 이미지에 등록된
+예외는 없다).
+
+| 핀 | 해소한 CVE |
+| --- | --- |
+| `GO_MODULE_UPGRADES="golang.org/x/net@v0.62.0"` (`v1.30.1` 은 `v0.58.0`) | HIGH CVE-2026-78661 · CVE-2026-78669, MEDIUM CVE-2026-78659 · CVE-2026-78660 · CVE-2026-78663 · CVE-2026-97032 · CVE-2026-97045 |
+| `GO_BUILDER_TAG=1.26.11-trixie` (기존 `1.26.6`) | stdlib HIGH CVE-2026-111943 · CVE-2026-78667 · CVE-2026-78669 · CVE-2026-97031, MEDIUM 9건, LOW CVE-2026-56857, 미평가 CVE-2026-97054 |
+
+`suggest-go-upgrades.py` 는 HIGH 이상만 보고 `1.26.10` 을 제안했다. 미평가
+CVE-2026-97054 는 `1.26.11` 에서만 고쳐지고, 수정 버전이 있는 미평가 CVE 는 처분 대상이므로
+([remediation-priority.md](../../docs/image-authoring/remediation-priority.md)) 한 패치 더
+올렸다. 키는 비어 있을 때도 선언해 둔다 — `suggest-go-upgrades.py --apply` 는 **없는 키를
+새로 만들지 않기** 때문에, 선언이 없으면 이 이미지만 자동 수정에서 조용히 빠진다.
 
 **권장 점검 주기**: 게이트가 이 이미지의 차단 CVE 를 다시 보고할 때, 또는 업스트림이 새
 패치 릴리스를 내놓았을 때 — 그 릴리스가 위 CVE 들을 이미 해소했다면, 자체 빌드를
@@ -68,9 +87,9 @@ IMAGE=cloudnative-pg BASE_OS=source REGISTRY=<나의-레지스트리> \
 `/tmp/out/trivy-reports/*.json` 의 `CoverageProbe` 가 `ok` 인지 함께 확인한다 — `none`
 이면 findings 0 건이 진짜 0 건이 아니라 스캐너에 그 배포판 데이터가 없다는 뜻이다.
 
-`verify.sh` 는 `manager version` 출력에 pinned commit 이 실제로 반영됐는지(ldflags 주입
-확인), 이미지 `Config.User` 가 `65532:65532`(nonroot)인지, `--help` 가 정상 종료하는지를
-확인한다 — 실제 컨트롤러 기동(k8s API 필요)은 이 스모크 테스트 범위 밖이다. 실제 배포
+`verify.sh` 는 `manager version` 출력에 pinned commit 과 `APP_VERSION` 이 실제로
+반영됐는지(ldflags 주입 확인), 이미지 `Config.User` 가 `65532:65532`(nonroot)인지,
+`--help` 가 정상 종료하는지를 확인한다 — 실제 컨트롤러 기동(k8s API 필요)은 이 스모크 테스트 범위 밖이다. 실제 배포
 검증은 별도 절차를 따른다.
 
 ### 소스·버전 관리
@@ -78,8 +97,9 @@ IMAGE=cloudnative-pg BASE_OS=source REGISTRY=<나의-레지스트리> \
 | 항목 | 값 |
 | --- | --- |
 | 소스 | `https://github.com/cloudnative-pg/cloudnative-pg.git` |
-| pinned commit | `source.build.env` 의 `SOURCE_COMMIT` (업스트림 유지보수 브랜치) |
-| 빌더 | 공식 `golang` 이미지 (`source.build.env` 의 `GO_BUILDER_TAG`, go.mod 요구 버전과 일치) |
+| pinned commit | `source.build.env` 의 `SOURCE_COMMIT` — 업스트림 릴리스 태그(`v${APP_VERSION}`)가 가리키는 커밋. **자동 추적하지 않음** |
+| 강제 모듈 업그레이드 | `source.build.env` 의 `GO_MODULE_UPGRADES` — `suggest-go-upgrades.py` 로 도출. 핀이 릴리스를 앞서는 동안만 값이 있다 |
+| 빌더 | 공식 `golang` 이미지 (`source.build.env` 의 `GO_BUILDER_TAG`, go.mod 요구 버전 이상 — `suggest-go-upgrades.py` 로 도출) |
 | 최종 베이스 | `registry.suse.com/bci/bci-micro` |
 
 ### 파일 구성
@@ -96,7 +116,7 @@ IMAGE=cloudnative-pg BASE_OS=source REGISTRY=<나의-레지스트리> \
 ### 태그
 
 ```
-docker.io/paasup/cloudnative-pg:1.30.0-security-hardened-20260730
+docker.io/paasup/cloudnative-pg:1.30.1-security-hardened-20260730
                                  └ app ─┘└ 슬러그 ┘└ 하드닝 ┘└ 빌드일 ┘
 ```
 

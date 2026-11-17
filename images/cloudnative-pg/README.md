@@ -42,17 +42,37 @@ The builder stage (Go compilation) uses the official `golang` image as-is — it
 survive into the final image, only the compiled artifacts move forward, so it is not
 subject to scanning or policy.
 
-`SOURCE_COMMIT` is **not tracked automatically.** As with the PGDG version in
-`cnpg-postgresql`, someone reading the upstream maintenance branch (or the next patch
-release tag once it exists) and editing `source.build.env` to open a PR is itself the
-update trigger.
+`SOURCE_COMMIT` is **not tracked automatically.** The current pin is the commit the
+upstream release tag `v1.30.1` points at, and `APP_VERSION` names that same tag —
+`APP_VERSION` is injected into the binary's reported version through ldflags, so the two
+always move together (`verify.sh` checks only that the reported version is
+`APP_VERSION`; it cannot check the pairing with the commit). As with the PGDG version in
+`cnpg-postgresql`, someone resolving the next patch release tag with
+`git ls-remote --tags` and editing `source.build.env` to open a PR is itself the update
+trigger. Fall back to a maintenance-branch commit only when a fix is needed that no
+release tag carries yet
+([ADR 0002](../../docs/decisions/0002-cloudnative-pg-operator-self-build.md)) — and then
+choose `APP_VERSION` so that it does not hide that the commit is not yet any release.
 
-`GO_MODULE_UPGRADES` is **normally empty.** This image compiles the maintenance branch
-HEAD, so it picks up fixes upstream has already backported and has had nothing to force.
-The key is declared anyway, because `suggest-go-upgrades.py --apply` **never adds a
-missing key** — without the declaration, a module CVE upstream has *not* backported
-leaves this image silently outside the automated fix (which is exactly what happened with
-CVE-2026-84304 on 2026-09-03).
+`GO_MODULE_UPGRADES` carries **only the fixes the release tag does not yet carry** — once
+the pinned release's `go.mod` requires a fixed version, that entry is removed.
+`GO_BUILDER_TAG` sits at or above what `go.mod` requires, raised to the stdlib CVE fix
+point. `google.golang.org/grpc@v1.83.1` (CVE-2026-84304, 2026-09-03), forced while a
+post-`v1.30.0` maintenance-branch commit was pinned, was dropped because `v1.30.1`'s
+`go.mod` requires grpc `v1.84.0`. The CVEs this self-build **actually fixes**, from the
+2026-11-17 scan of the `v1.30.1` build (no exceptions are registered for this image):
+
+| Pin | CVEs resolved |
+| --- | --- |
+| `GO_MODULE_UPGRADES="golang.org/x/net@v0.62.0"` (`v1.30.1` ships `v0.58.0`) | HIGH CVE-2026-78661 · CVE-2026-78669, MEDIUM CVE-2026-78659 · CVE-2026-78660 · CVE-2026-78663 · CVE-2026-97032 · CVE-2026-97045 |
+| `GO_BUILDER_TAG=1.26.11-trixie` (was `1.26.6`) | stdlib HIGH CVE-2026-111943 · CVE-2026-78667 · CVE-2026-78669 · CVE-2026-97031, 9 MEDIUM, LOW CVE-2026-56857, unrated CVE-2026-97054 |
+
+`suggest-go-upgrades.py` weighs only HIGH and above and suggested `1.26.10`. The unrated
+CVE-2026-97054 is fixed only in `1.26.11`, and an unrated CVE with a fixed version must be
+dispositioned ([remediation-priority.md](../../docs/image-authoring/remediation-priority.md)),
+so the pin went one patch higher. The key is declared even when empty, because
+`suggest-go-upgrades.py --apply` **never adds a missing key** — without the declaration,
+this image silently drops out of the automated fix.
 
 **Suggested review cadence**: whenever the gate reports a blocking CVE for this image
 again, or upstream ships a new patch release — if that release already resolves the CVEs
@@ -75,8 +95,8 @@ when the gate passes, check that `CoverageProbe` in `/tmp/out/trivy-reports/*.js
 `ok` — `none` means the zero findings were not a measurement but an absence of scanner
 data for that distribution.
 
-`verify.sh` checks that `manager version` output actually reflects the pinned commit
-(confirming ldflags injection), that the image's `Config.User` is `65532:65532`
+`verify.sh` checks that `manager version` output actually reflects the pinned commit and
+`APP_VERSION` (confirming ldflags injection), that the image's `Config.User` is `65532:65532`
 (nonroot), and that `--help` exits cleanly — actually starting the controller (which
 needs a Kubernetes API) is outside this smoke test's scope. Real deployment verification
 follows a separate procedure.
@@ -86,8 +106,9 @@ follows a separate procedure.
 | Item | Value |
 | --- | --- |
 | Source | `https://github.com/cloudnative-pg/cloudnative-pg.git` |
-| Pinned commit | `SOURCE_COMMIT` in `source.build.env` (upstream maintenance branch) |
-| Builder | The official `golang` image (`GO_BUILDER_TAG` in `source.build.env`, matching what go.mod requires) |
+| Pinned commit | `SOURCE_COMMIT` in `source.build.env` — the commit the upstream release tag (`v${APP_VERSION}`) points at. **Not tracked automatically** |
+| Forced module upgrades | `GO_MODULE_UPGRADES` in `source.build.env` — derived with `suggest-go-upgrades.py`. Holds a value only while the pin is ahead of the release |
+| Builder | The official `golang` image (`GO_BUILDER_TAG` in `source.build.env`, at least what go.mod requires — derived with `suggest-go-upgrades.py`) |
 | Final base | `registry.suse.com/bci/bci-micro` |
 
 ### File layout
@@ -105,7 +126,7 @@ grow, as in `cnpg-postgresql`, they branch into
 ### Tags
 
 ```
-<registry>/cloudnative-pg:1.30.0-security-hardened-20260730
+<registry>/cloudnative-pg:1.30.1-security-hardened-20260730
                            └ app ─┘└ slug ┘└hardened┘└ build date ┘
 ```
 
