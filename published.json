@@ -7,7 +7,7 @@
       "tag": "0.29.0-security-hardened-20261116"
     },
     "apisix": {
-      "digest": "sha256:09d8756296fe593604d201ad4a346b84af7359dbcc14d221f82e9cdfebd25cea",
+      "digest": "sha256:80a9266234c26bb2d120c75902e0e362ec31d22313985872a476fb54cff8e8a8",
       "gate": "pass",
       "ref": "docker.io/paasup/apisix:3.20.0-security-hardened-20261117",
       "tag": "3.20.0-security-hardened-20261117"
