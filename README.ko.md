@@ -58,7 +58,7 @@ Critical/High 는 게이트 차단 기준(항상 0)이 아니라, 승인된 예�
 </thead>
 <tbody>
 <tr><td rowspan="3">APISIX</td><td><code>adc</code></td><td><code>0.29.0-security-hardened-20261116</code></td><td>0</td><td>0</td></tr>
-<tr><td><code>apisix</code></td><td><code>3.18.0-security-hardened-20260908</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>apisix</code></td><td><code>3.18.0-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
 <tr><td><code>apisix-ingress-controller</code></td><td><code>2.1.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
 <tr><td>ArgoCD</td><td><code>argocd</code></td><td><code>3.5.4-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
 <tr><td rowspan="2">CloudNativePG</td><td><code>cloudnative-pg</code></td><td><code>1.30.1-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
