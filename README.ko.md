@@ -62,7 +62,7 @@ Critical/High 는 게이트 차단 기준(항상 0)이 아니라, 승인된 예�
 <tr><td><code>apisix-ingress-controller</code></td><td><code>2.1.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
 <tr><td>ArgoCD</td><td><code>argocd</code></td><td><code>3.5.1-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
 <tr><td rowspan="2">CloudNativePG</td><td><code>cloudnative-pg</code></td><td><code>1.30.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
-<tr><td><code>cnpg-postgresql</code></td><td><code>18.4-bci15.7-hardened-20261116</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>cnpg-postgresql</code></td><td><code>18.4-bci15.7-hardened-20261117</code></td><td>0</td><td>0</td></tr>
 <tr><td>etcd</td><td><code>etcd</code></td><td><code>3.7.1-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
 <tr><td rowspan="2">Infisical</td><td><code>infisical</code></td><td><code>v0.164.1-security-hardened-20260907</code></td><td>0</td><td>0</td></tr>
 <tr><td><code>infisical-secrets-operator</code></td><td><code>v0.11.8-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
