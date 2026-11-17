@@ -39,8 +39,11 @@ FROM --platform=$BUILDPLATFORM golang:${GO_BUILDER_TAG} AS go-tools
 
 ARG TARGETARCH
 ARG HELM_VERSION
+ARG HELM_COMMIT
 ARG KUSTOMIZE_VERSION
+ARG KUSTOMIZE_COMMIT
 ARG GIT_LFS_VERSION
+ARG GIT_LFS_COMMIT
 ARG GO_MODULE_UPGRADES
 ENV CGO_ENABLED=0 GOOS=linux GO_MODULE_UPGRADES=${GO_MODULE_UPGRADES}
 COPY go-mod-upgrade.sh /usr/local/bin/go-mod-upgrade
@@ -48,7 +51,7 @@ RUN chmod 0755 /usr/local/bin/go-mod-upgrade
 WORKDIR /out
 
 # helm — reproduces upstream's Makefile ldflags (version/gitTreeState).
-ADD https://github.com/helm/helm.git#v${HELM_VERSION} /src/helm
+ADD https://github.com/helm/helm.git#${HELM_COMMIT} /src/helm
 RUN --mount=type=cache,target=/root/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build \
     cd /src/helm && go-mod-upgrade && \
     P=helm.sh/helm/v4/internal/version && \
@@ -57,7 +60,7 @@ RUN --mount=type=cache,target=/root/go/pkg/mod --mount=type=cache,target=/root/.
       -o /out/helm ./cmd/helm
 
 # kustomize — the kustomize/ submodule inside the repo is the CLI.
-ADD https://github.com/kubernetes-sigs/kustomize.git#kustomize/v${KUSTOMIZE_VERSION} /src/kustomize
+ADD https://github.com/kubernetes-sigs/kustomize.git#${KUSTOMIZE_COMMIT} /src/kustomize
 RUN --mount=type=cache,target=/root/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build \
     cd /src/kustomize/kustomize && go-mod-upgrade && \
     P=sigs.k8s.io/kustomize/api/provenance && \
@@ -65,12 +68,12 @@ RUN --mount=type=cache,target=/root/go/pkg/mod --mount=type=cache,target=/root/.
       -ldflags "-X ${P}.version=v${KUSTOMIZE_VERSION}" \
       -o /out/kustomize .
 
-# git-lfs — the Makefile bakes the version in via ldflags.
-ADD https://github.com/git-lfs/git-lfs.git#v${GIT_LFS_VERSION} /src/git-lfs
+# git-lfs — the same ldflags as upstream's Makefile (the commit; the version is a const).
+ADD https://github.com/git-lfs/git-lfs.git#${GIT_LFS_COMMIT} /src/git-lfs
 RUN --mount=type=cache,target=/root/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build \
     cd /src/git-lfs && go-mod-upgrade && \
     GOARCH=${TARGETARCH} go build -trimpath \
-      -ldflags "-X github.com/git-lfs/git-lfs/v3/config.GitCommit=v${GIT_LFS_VERSION}" \
+      -ldflags "-X github.com/git-lfs/git-lfs/v3/config.GitCommit=${GIT_LFS_COMMIT}" \
       -o /out/git-lfs .
 
 ####################################################################################################
@@ -111,20 +114,22 @@ RUN --mount=type=cache,target=/root/go/pkg/mod --mount=type=cache,target=/root/.
 ####################################################################################################
 FROM ${RUNTIME_BASE} AS c-builder
 
-ARG TINI_VERSION
-ARG SSH_CONNECT_VERSION
+ARG TINI_COMMIT
+ARG SSH_CONNECT_COMMIT
 ARG BUILDER_PACKAGES
-# The SLE_BCI mirror drops intermittently (e.g. curl error 56, SSL unexpected eof). Retry.
-RUN for i in 1 2 3 4 5; do \
-      zypper --non-interactive --gpg-auto-import-keys refresh && break; \
-      echo "zypper refresh failed — retry $i"; sleep 10; \
-    done && \
-    zypper --non-interactive install -y --no-recommends ${BUILDER_PACKAGES} && \
+# The SLE_BCI mirror drops intermittently (e.g. curl error 56, SSL unexpected eof) — during
+# package downloads as well as refresh, so the whole transaction is retried. RPM signatures
+# are still checked on every attempt.
+RUN ok=; for i in 1 2 3 4 5; do \
+      zypper --non-interactive --gpg-auto-import-keys refresh && \
+      zypper --non-interactive install -y --no-recommends ${BUILDER_PACKAGES} && { ok=1; break; }; \
+      echo "zypper failed — retry $i"; sleep 10; \
+    done && [ -n "$ok" ] && \
     zypper --non-interactive clean --all
 
 # tini — upstream argocd's ENTRYPOINT (["/usr/bin/tini", "--"]).
 # SLE_BCI has no static glibc, so it is built dynamically linked (this stage and final share a base).
-ADD https://github.com/krallin/tini.git#v${TINI_VERSION} /src/tini
+ADD https://github.com/krallin/tini.git#${TINI_COMMIT} /src/tini
 RUN cd /src/tini && \
     cmake -DCMAKE_BUILD_TYPE=Release . && \
     make tini && \
@@ -132,7 +137,7 @@ RUN cd /src/tini && \
 
 # connect-proxy — the upstream of Debian's connect-proxy package (connect.c from gotoh/ssh-connect).
 # git uses it in SSH-over-proxy environments. Built rather than dropping the functionality.
-ADD https://github.com/gotoh/ssh-connect.git#${SSH_CONNECT_VERSION} /src/connect
+ADD https://github.com/gotoh/ssh-connect.git#${SSH_CONNECT_COMMIT} /src/connect
 RUN cd /src/connect && \
     gcc -O2 -o /out-connect connect.c
 
@@ -149,13 +154,13 @@ ENV ARGOCD_USER_ID=999
 # RUNTIME_PACKAGES is upstream's apt list translated to SLE names. The ones that differ:
 #   git → git-core   tzdata → timezone   gpg/gpg-agent → gpg2   openssh-client → openssh-clients
 # tini and connect-proxy are absent from SLE_BCI, so they are built in c-builder and COPYed in.
-# The SLE_BCI mirror drops intermittently. Retry.
-RUN for i in 1 2 3 4 5; do \
-      zypper --non-interactive --gpg-auto-import-keys refresh && break; \
-      echo "zypper refresh failed — retry $i"; sleep 10; \
-    done && \
-    zypper --non-interactive update -y && \
-    zypper --non-interactive install -y --no-recommends ${RUNTIME_PACKAGES} && \
+# The SLE_BCI mirror drops intermittently — the whole transaction is retried, as in c-builder.
+RUN ok=; for i in 1 2 3 4 5; do \
+      zypper --non-interactive --gpg-auto-import-keys refresh && \
+      zypper --non-interactive update -y && \
+      zypper --non-interactive install -y --no-recommends ${RUNTIME_PACKAGES} && { ok=1; break; }; \
+      echo "zypper failed — retry $i"; sleep 10; \
+    done && [ -n "$ok" ] && \
     zypper --non-interactive clean --all && \
     rm -rf /var/log/zypp /usr/share/doc/packages/*
 

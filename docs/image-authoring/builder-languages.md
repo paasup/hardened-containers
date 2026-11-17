@@ -169,6 +169,11 @@ Three traps show up in practice.
   1.85.0-dev.0.2026…-93e3…` means "1.83.2 on the 1.83 branch", not the pseudo-version. The
   script takes the smallest stable alternative above the installed version, and skips
   (with a note) a CVE fixed only in a pre-release.
+  **"Pre-release only" is not always final, though.** A pseudo-version such as x/crypto's
+  `0.58.1-0.20261009181718-2f1f834330b2` means "fixed in a commit not yet tagged". A later
+  stable tag may already contain it (v0.59.0 did — check with
+  `gh api repos/<owner>/<repo>/compare/<commit>...<tag>`, `behind_by: 0`). The script does
+  not resolve this yet, so read its pre-release notes before treating the CVE as unfixable.
 - **A CVE in the binary's own main module is not a `GO_MODULE_UPGRADES` problem.**
   `github.com/argoproj/argo-cd/v3` inside the argocd binary is the source being built; a
   `replace` cannot move it. Raise `SOURCE_COMMIT`/`APP_VERSION` instead. The script
@@ -178,6 +183,9 @@ Three traps show up in practice.
   it higher — a module may require a specific minimum of another module, so the
   suggested value fails the build with `requires <module>@vX, not vY`. Raise it to the
   version that message names.
+  `--apply` also keeps existing pins as they are, so raising one module can leave an
+  older pin of another below what the new one requires (x/crypto v0.59.0 needs x/text
+  ≥ v0.44.0). Read the `.mod` of each raised module, or let the build tell you.
 
 When one image builds several Go projects (`argocd` builds argocd, helm, kustomize, and
 git-lfs together), **reuse a single list across all of them** — add a helper like
