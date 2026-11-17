@@ -19,10 +19,10 @@
       "tag": "2.1.0-security-hardened-20260904"
     },
     "argocd": {
-      "digest": "sha256:baa1adbc39cb92673795966d8027cb741190b8e923d28460c8a4df4ee64a79ae",
+      "digest": "sha256:3ae1db5a1d4db3d35e032b6509473d94cfb6a622c7251cf659587567c27272d9",
       "gate": "pass",
-      "ref": "docker.io/paasup/argocd:3.5.1-security-hardened-20260904",
-      "tag": "3.5.1-security-hardened-20260904"
+      "ref": "docker.io/paasup/argocd:3.5.4-security-hardened-20261117",
+      "tag": "3.5.4-security-hardened-20261117"
     },
     "background-controller": {
       "digest": "sha256:6008e91f3c2aeef637fb8275013ad34dc21eed9053527a27e6eaaa33e6f3271d",
@@ -37,10 +37,10 @@
       "tag": "v1.19.0-security-hardened-20260904"
     },
     "cloudnative-pg": {
-      "digest": "sha256:9c4dfb3e146b8ff9b1cbd274fbc659c3c87fe09b4c73a386f84ba4df713246f3",
+      "digest": "sha256:8716a3a8b9de3118ca9a20046bbd9e641f0bf1e5f6a2aa30eed84e104aa7e4ae",
       "gate": "pass",
-      "ref": "docker.io/paasup/cloudnative-pg:1.30.0-security-hardened-20260904",
-      "tag": "1.30.0-security-hardened-20260904"
+      "ref": "docker.io/paasup/cloudnative-pg:1.30.1-security-hardened-20261117",
+      "tag": "1.30.1-security-hardened-20261117"
     },
     "cnpg-postgresql": {
       "digest": "sha256:91ea960c8240dde9c5c5baff65b73051680795fae50493269ad84b7f773d5fd3",
