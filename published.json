@@ -13,10 +13,10 @@
       "tag": "3.20.0-security-hardened-20261117"
     },
     "apisix-ingress-controller": {
-      "digest": "sha256:86c88a25cbc29310700e9dc74a8ba294e15315669393d9d151291f3846ff631b",
+      "digest": "sha256:a222425eaa1a97fa4a3704143c889c004a7c86117bb91cad4f7ca4ba91b9aa1e",
       "gate": "pass",
-      "ref": "docker.io/paasup/apisix-ingress-controller:2.1.0-security-hardened-20260904",
-      "tag": "2.1.0-security-hardened-20260904"
+      "ref": "docker.io/paasup/apisix-ingress-controller:2.1.0-security-hardened-20261117",
+      "tag": "2.1.0-security-hardened-20261117"
     },
     "argocd": {
       "digest": "sha256:3ae1db5a1d4db3d35e032b6509473d94cfb6a622c7251cf659587567c27272d9",
@@ -25,16 +25,16 @@
       "tag": "3.5.4-security-hardened-20261117"
     },
     "background-controller": {
-      "digest": "sha256:6008e91f3c2aeef637fb8275013ad34dc21eed9053527a27e6eaaa33e6f3271d",
+      "digest": "sha256:d1f889355a1e841f12fe75c78c63a926b2ed25975db475f4ff56d0f78898c3de",
       "gate": "pass",
-      "ref": "docker.io/paasup/background-controller:v1.19.0-security-hardened-20260904",
-      "tag": "v1.19.0-security-hardened-20260904"
+      "ref": "docker.io/paasup/background-controller:v1.19.0-security-hardened-20261117",
+      "tag": "v1.19.0-security-hardened-20261117"
     },
     "cleanup-controller": {
-      "digest": "sha256:30d51de6a5c854a79922f2c3f031fa2878d7c898600e9e5d7564c61ad5d635b7",
+      "digest": "sha256:e9b952607a45616e751bc874cc1cce5fcb6ee56d4e31a96e99d3f350e6367a32",
       "gate": "pass",
-      "ref": "docker.io/paasup/cleanup-controller:v1.19.0-security-hardened-20260904",
-      "tag": "v1.19.0-security-hardened-20260904"
+      "ref": "docker.io/paasup/cleanup-controller:v1.19.0-security-hardened-20261117",
+      "tag": "v1.19.0-security-hardened-20261117"
     },
     "cloudnative-pg": {
       "digest": "sha256:8716a3a8b9de3118ca9a20046bbd9e641f0bf1e5f6a2aa30eed84e104aa7e4ae",
@@ -61,10 +61,10 @@
       "tag": "v0.167.11-security-hardened-20261117"
     },
     "infisical-secrets-operator": {
-      "digest": "sha256:e5c4ae907298b17a26ef986a86600e0792400f9cb3dac015aee9fc07ab023a93",
+      "digest": "sha256:4eb7c710a28d593f51587dcb3b66f0bb1864cdaab6d1d77f41b1629080993229",
       "gate": "pass",
-      "ref": "docker.io/paasup/infisical-secrets-operator:v0.11.8-security-hardened-20260904",
-      "tag": "v0.11.8-security-hardened-20260904"
+      "ref": "docker.io/paasup/infisical-secrets-operator:v0.11.8-security-hardened-20261117",
+      "tag": "v0.11.8-security-hardened-20261117"
     },
     "keycloak": {
       "digest": "sha256:c409e80577c1890dbf0d6fbdfa19230b964c92f961bb0756d69368761321da5c",
@@ -73,34 +73,34 @@
       "tag": "26.8.2-bci15.7-hardened-20261117"
     },
     "kyverno": {
-      "digest": "sha256:ab5bf448f3a63d34c5f44005b75f612c3025f8a7e6e67d3f3ea86eb34b022c58",
+      "digest": "sha256:1ba26007f565653cf577309ca1bd2794e4f296ef48ca40ff4877b7c35580ffa5",
       "gate": "pass",
-      "ref": "docker.io/paasup/kyverno:v1.19.0-security-hardened-20260904",
-      "tag": "v1.19.0-security-hardened-20260904"
+      "ref": "docker.io/paasup/kyverno:v1.19.0-security-hardened-20261117",
+      "tag": "v1.19.0-security-hardened-20261117"
     },
     "kyverno-cli": {
-      "digest": "sha256:664b678840a468578a5217dfd40239d1dba9646f6878359bdfdbd625cdeada81",
+      "digest": "sha256:16b311a985a834250672446cc94788273cd9d9423245db8973ee40b66bd14b4f",
       "gate": "pass",
-      "ref": "docker.io/paasup/kyverno-cli:v1.19.0-security-hardened-20260904",
-      "tag": "v1.19.0-security-hardened-20260904"
+      "ref": "docker.io/paasup/kyverno-cli:v1.19.0-security-hardened-20261117",
+      "tag": "v1.19.0-security-hardened-20261117"
     },
     "kyvernopre": {
-      "digest": "sha256:cc204806dabaefb783404ef2559e1162ed6711f76e04bb893a6f91a5db45bf5a",
+      "digest": "sha256:00063f1d85435764c485c3325a72ca6b0e5d1c56709e328db3372941d453c27d",
       "gate": "pass",
-      "ref": "docker.io/paasup/kyvernopre:v1.19.0-security-hardened-20260904",
-      "tag": "v1.19.0-security-hardened-20260904"
+      "ref": "docker.io/paasup/kyvernopre:v1.19.0-security-hardened-20261117",
+      "tag": "v1.19.0-security-hardened-20261117"
     },
     "readiness-checker": {
-      "digest": "sha256:26c83629c36c7d1abac62a76929306edfbd0bdd4302311528caa36e802499e09",
+      "digest": "sha256:a32182af6336c50c7a76e074df2eeb6d0e6f245d587df61485b5b8752c814df7",
       "gate": "pass",
-      "ref": "docker.io/paasup/readiness-checker:v1.19.0-security-hardened-20260827",
-      "tag": "v1.19.0-security-hardened-20260827"
+      "ref": "docker.io/paasup/readiness-checker:v1.19.0-security-hardened-20261117",
+      "tag": "v1.19.0-security-hardened-20261117"
     },
     "reports-controller": {
-      "digest": "sha256:3a55f192f67d2578121328798d925661d67804275be9141305d996c7a50d6ab4",
+      "digest": "sha256:df5613d3e71027938b235af2fb3472c01f09b8a464ecc7f1a4fdb3b138fbd7ca",
       "gate": "pass",
-      "ref": "docker.io/paasup/reports-controller:v1.19.0-security-hardened-20260904",
-      "tag": "v1.19.0-security-hardened-20260904"
+      "ref": "docker.io/paasup/reports-controller:v1.19.0-security-hardened-20261117",
+      "tag": "v1.19.0-security-hardened-20261117"
     }
   },
   "schemaVersion": 1

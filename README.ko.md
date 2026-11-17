@@ -59,21 +59,21 @@ Critical/High 는 게이트 차단 기준(항상 0)이 아니라, 승인된 예�
 <tbody>
 <tr><td rowspan="3">APISIX</td><td><code>adc</code></td><td><code>0.29.0-security-hardened-20261116</code></td><td>0</td><td>0</td></tr>
 <tr><td><code>apisix</code></td><td><code>3.20.0-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
-<tr><td><code>apisix-ingress-controller</code></td><td><code>2.1.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>apisix-ingress-controller</code></td><td><code>2.1.0-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
 <tr><td>ArgoCD</td><td><code>argocd</code></td><td><code>3.5.4-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
 <tr><td rowspan="2">CloudNativePG</td><td><code>cloudnative-pg</code></td><td><code>1.30.1-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
 <tr><td><code>cnpg-postgresql</code></td><td><code>18.7-bci15.7-hardened-20261117</code></td><td>0</td><td>0</td></tr>
 <tr><td>etcd</td><td><code>etcd</code></td><td><code>3.7.1-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
 <tr><td rowspan="2">Infisical</td><td><code>infisical</code></td><td><code>v0.167.11-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
-<tr><td><code>infisical-secrets-operator</code></td><td><code>v0.11.8-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>infisical-secrets-operator</code></td><td><code>v0.11.8-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
 <tr><td>Keycloak</td><td><code>keycloak</code></td><td><code>26.8.2-bci15.7-hardened-20261117</code></td><td>0</td><td>0</td></tr>
-<tr><td rowspan="7">Kyverno</td><td><code>background-controller</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
-<tr><td><code>cleanup-controller</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
-<tr><td><code>kyverno</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
-<tr><td><code>kyverno-cli</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
-<tr><td><code>kyvernopre</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
-<tr><td><code>readiness-checker</code></td><td><code>v1.19.0-security-hardened-20260827</code></td><td>0</td><td>0</td></tr>
-<tr><td><code>reports-controller</code></td><td><code>v1.19.0-security-hardened-20260904</code></td><td>0</td><td>0</td></tr>
+<tr><td rowspan="7">Kyverno</td><td><code>background-controller</code></td><td><code>v1.19.0-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>cleanup-controller</code></td><td><code>v1.19.0-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>kyverno</code></td><td><code>v1.19.0-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>kyverno-cli</code></td><td><code>v1.19.0-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>kyvernopre</code></td><td><code>v1.19.0-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>readiness-checker</code></td><td><code>v1.19.0-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
+<tr><td><code>reports-controller</code></td><td><code>v1.19.0-security-hardened-20261117</code></td><td>0</td><td>0</td></tr>
 </tbody>
 </table>
 <!-- END GENERATED TABLE: published images -->
