@@ -39,7 +39,8 @@ hardened-containers/
 │       ├── scan-image.sh             # trivy sbom scan + coverage self-check
 │       └── image-gate.py             # the zero-CRITICAL/HIGH gate verdict
 ├── .github/workflows/       # build-image.yml (build/publish) · pr-checks.yml (static PR checks)
-│                            # · rescan.yml (daily drift check)
+│                            # · rescan.yml (daily drift check) · autofix-watch.yml
+│                            #   (tracking issue for the autofix verify build)
 ├── .claude/                 # how Claude Code works in this repository
 │   ├── skills/<skill>/SKILL.md  # repeatable procedures — one per recurring task
 │   ├── agents/              # open-ended judgement — image-author (writes files)

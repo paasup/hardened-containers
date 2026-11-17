@@ -124,7 +124,11 @@ The four stages:
    rebuild logic itself is never duplicated). What verifies that PR is a `build-image.yml`
    run `collect` dispatches explicitly right after the push — not the push itself, since a
    push made with this job's own token deliberately does not trigger `build-image.yml`'s
-   push trigger.
+   push trigger. `autofix-watch.yml` records that verify build's outcome in **one tracking
+   issue** labelled `autofix`. If the build fails, the issue gets the first error line of
+   each failing image. If it passes but no PR is open, the issue says to open one. If it
+   passes and a PR is open, the issue is closed. The organisation does not let Actions
+   open a PR, so without this issue the outcome would show up nowhere a reviewer looks.
 
    Dispatching per image is what must not happen: `build-image.yml`'s concurrency group
    keeps only one pending run and **cancels** the rest — nine of eleven vanished that way

@@ -1,0 +1,132 @@
+name: autofix-watch
+
+# Reports the outcome of the autofix verify build in one tracking issue (issue #9).
+#
+# rescan.yml pushes raised Go pins to `autofix/go-cves` and dispatches a verify-only
+# build-image.yml run on that branch. That branch has no pull request until a person opens
+# one (the organisation does not let Actions open PRs), so the verify build's result is
+# shown nowhere a reviewer looks — from 2026-10-27 it failed every day for three weeks and
+# nobody saw it. This workflow turns that result into one issue, labelled `autofix`:
+#
+#   verify build red                    issue opened or updated: failing images + first
+#                                       error line of each
+#   verify build green, no PR open      issue opened or updated: the PR still has to be
+#                                       opened by hand, with the command to do it
+#   verify build green, PR open         issue closed — the PR is now the place to look
+#
+# It runs only GitHub API calls: it never checks the repository out, so nothing from the
+# autofix branch executes with this job's token.
+
+on:
+  workflow_run:
+    workflows: [self-build-image]
+    types: [completed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  report:
+    if: >-
+      github.event.workflow_run.head_branch == 'autofix/go-cves' &&
+      (github.event.workflow_run.conclusion == 'success' ||
+       github.event.workflow_run.conclusion == 'failure')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      issues: write
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      RUN_ID: ${{ github.event.workflow_run.id }}
+      RUN_URL: ${{ github.event.workflow_run.html_url }}
+      CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+      BRANCH: autofix/go-cves
+      LABEL: autofix
+      TITLE: "autofix/go-cves needs attention"
+    steps:
+      - name: Write the state of the autofix branch
+        id: state
+        run: |
+          set -euo pipefail
+          pr="$(gh pr list --head "$BRANCH" --state open --json number -q '.[0].number // empty')"
+          echo "pr=$pr" >> "$GITHUB_OUTPUT"
+
+          if [ "$CONCLUSION" = "success" ] && [ -n "$pr" ]; then
+            echo "action=close" >> "$GITHUB_OUTPUT"
+            echo "The verify build passed ($RUN_URL) and #$pr is open — review and merge it there." > body.md
+            exit 0
+          fi
+          echo "action=open" >> "$GITHUB_OUTPUT"
+
+          {
+            echo "Maintained by \`autofix-watch.yml\` — rewritten after every verify build of \`$BRANCH\`,"
+            echo "closed when a verify build passes with a pull request open."
+            echo
+            if [ "$CONCLUSION" = "failure" ]; then
+              echo "## The autofix verify build failed"
+              echo
+              echo "Run: $RUN_URL"
+              echo
+              echo "| image | first error |"
+              echo "|---|---|"
+              gh run view "$RUN_ID" --json jobs \
+                -q '.jobs[] | select(.conclusion == "failure") | [.databaseId, .name] | @tsv' |
+              while IFS=$'\t' read -r job name; do
+                # The most specific line first: a Go constraint, an invalid version, a
+                # build error, then any error annotation. Lines that echo the step's own
+                # script (GitHub prints them in cyan, ESC[36;1m) are skipped — they contain
+                # "::error::" without being one. One line per job; the rest is in the log.
+                log="$(gh run view "$RUN_ID" --log-failed --job "$job" 2>/dev/null |
+                       grep -v $'\e\[36;1m' || true)"
+                line=""
+                for pat in 'requires [^ ]+@v[^ ]+, not' 'invalid version' 'ERROR: ' '##\[error\]'; do
+                  line="$(grep -m1 -E "$pat" <<<"$log" || true)"
+                  [ -n "$line" ] && break
+                done
+                line="$(sed -E 's/^[^\t]*\t[^\t]*\t[^ ]* //; s/^#[0-9]+ [0-9.]+ //; s/`/'"'"'/g; s/\|/\\|/g' <<<"$line" | cut -c1-240)"
+                echo "| ${name} | \`${line:-(see the run log)}\` |"
+              done
+              echo
+              echo "A \`requires <module>@vX, not @vY\` line is a constraint chain: raise that pin."
+              echo "The procedure is the \`rescan-drift-followup\` skill. Fix it on a branch of your own —"
+              echo "the next rescan force-pushes \`$BRANCH\`."
+            else
+              echo "## The verify build passed, but no pull request is open"
+              echo
+              echo "Run: $RUN_URL"
+              echo
+              echo "The organisation does not let Actions open pull requests, so this step is manual:"
+              echo
+              echo '```sh'
+              echo "gh pr create --repo $GH_REPO --base main --head $BRANCH --fill"
+              echo '```'
+            fi
+          } > body.md
+          cat body.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open, update, or close the tracking issue
+        env:
+          ACTION: ${{ steps.state.outputs.action }}
+        run: |
+          set -euo pipefail
+          gh label create "$LABEL" --color D93F0B \
+            --description "The daily rescan's Go autofix needs a person" 2>/dev/null || true
+          issue="$(gh issue list --label "$LABEL" --state open --json number,title \
+                    -q "[.[] | select(.title == \"$TITLE\")][0].number // empty")"
+          if [ "$ACTION" = "close" ]; then
+            [ -n "$issue" ] && gh issue close "$issue" --comment "$(cat body.md)"
+            exit 0
+          fi
+          if [ -n "$issue" ]; then
+            gh issue edit "$issue" --body-file body.md
+            gh issue comment "$issue" --body "Updated after $RUN_URL ($CONCLUSION)."
+          else
+            gh issue create --title "$TITLE" --label "$LABEL" --body-file body.md
+          fi

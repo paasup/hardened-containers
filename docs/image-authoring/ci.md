@@ -1,4 +1,4 @@
-# CI — `build-image.yml`, `pr-checks.yml`, and `rescan.yml`
+# CI — `build-image.yml`, `pr-checks.yml`, `rescan.yml`, and `autofix-watch.yml`
 
 Detail behind [image-authoring/](README.md). There are three workflows — **only
 `build-image.yml` builds**. `rescan.yml` adds no gate or build logic of its own and just
@@ -208,9 +208,37 @@ the second merely call the first is a relationship worth showing in the file bou
    -f push=false`) — the same `workflow_dispatch` trigger the rebuild call above already
    uses. The branch is rebuilt from the default branch every rescan — never commit to it
    by hand.
-5. **Failure notification** — there is no automatic issue creation. If the gate keeps
-   failing on rebuild, the `build-image.yml` job stays in a failed state and GitHub
-   Actions' default notification (email, per repository watch settings) carries it.
+5. **The verify build's outcome** — `autofix-watch.yml` (`workflow_run` on
+   `build-image.yml`, filtered to `autofix/go-cves`) keeps **one tracking issue**, labelled
+   `autofix`:
+
+   | verify build | open PR for the branch | tracking issue |
+   |---|---|---|
+   | red | — | opened or updated, with the first error line of each failing image |
+   | green | none | opened or updated: open the PR by hand (the command is in the issue) |
+   | green | yes | closed — the PR is where to look now |
+
+   The issue exists because the branch has no pull request until a person opens one — the
+   organisation does not let Actions do it — so the verify build's result is shown
+   nowhere a reviewer looks. From 2026-10-27 that build failed every day for three weeks
+   on an invalid version string, and nobody noticed (issue #9). The workflow only calls
+   the GitHub API and never checks the repository out, so nothing from the bot-owned
+   branch runs with its `issues: write` token.
+
+### What a red rescan job means
+
+Each kind of trouble gets a job of its own. While they shared one, the support-line check
+— which stays red for as long as an EOL pin waits for a person — painted every other
+failure the same colour.
+
+| job | red means | who acts |
+|---|---|---|
+| `rescan (<image>)` | the automation broke: the suggester exited with an error. Drift is **not** a failure — it is routed and acted on | fix the script |
+| `support-line (<image>)` | the image's upstream line is end-of-life (`check-support-line.py`) | move the pin — [support-policy.md](support-policy.md) |
+| `schedule-gap` | the previous **scheduled** run is more than 30 h old: GitHub dropped a day | nothing to fix; know that a day was missed |
+
+GitHub runs the `0 18 * * *` schedule 3–6 h late and occasionally not at all (2026-11-09).
+A dropped run leaves nothing behind, so the next one measures the gap.
 
 ### Why one dispatch and not one per image
 

@@ -47,6 +47,7 @@ Exit codes
 """
 
 import argparse
+import functools
 import glob
 import importlib.util
 import json
@@ -102,6 +103,152 @@ def pick_fixed(raw, installed):
     return min(above, key=version_tuple)
 
 
+# A Go pseudo-version as trivy prints it (the leading 'v' dropped): 'X.Y.Z-0.<ts>-<sha12>'
+# or 'X.Y.Z-<pre>.0.<ts>-<sha12>'. Either way every stable release >= X.Y.Z sorts above it.
+PSEUDO_RE = re.compile(r"^v?(\d+)\.(\d+)\.(\d+)-(?:[0-9A-Za-z.]+\.)?0\.(\d{14})-([0-9a-f]{12})$")
+
+GOPROXY = (os.environ.get("GOPROXY") or "https://proxy.golang.org").split(",")[0].rstrip("/")
+if GOPROXY in ("direct", "off"):
+    GOPROXY = "https://proxy.golang.org"
+
+_proxy_cache = {}
+
+
+def proxy_get(module, suffix):
+    """GET <GOPROXY>/<escaped module>/@v/<suffix> as text, or None on any failure.
+
+    Network failures are never fatal here: every caller falls back to what this script did
+    before it looked anything up — a note for a person."""
+    import urllib.request
+    esc = re.sub(r"[A-Z]", lambda m: "!" + m.group(0).lower(), module)
+    url = f"{GOPROXY}/{esc}/@v/{suffix}"
+    if url not in _proxy_cache:
+        try:
+            with urllib.request.urlopen(url, timeout=20) as r:
+                _proxy_cache[url] = r.read().decode()
+        except Exception:
+            _proxy_cache[url] = None
+    return _proxy_cache[url]
+
+
+@functools.lru_cache(maxsize=None)
+def commit_in_tag(url, tag_hash, sha12):
+    """Is commit `sha12` an ancestor of `tag_hash` in the repository at `url`?
+
+    A partial (blob-less) fetch of just that tag's history — about a second for x/crypto.
+    Returns None when it cannot be determined (no git, fetch refused)."""
+    import subprocess
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        def git(*a):
+            return subprocess.run(["git", "-C", d, *a], capture_output=True, text=True, timeout=180)
+        try:
+            if git("init", "-q", "--bare").returncode:
+                return None
+            if git("fetch", "-q", "--filter=blob:none", "--no-tags", url, tag_hash).returncode:
+                return None
+            if git("rev-parse", "--verify", "-q", f"{sha12}^{{commit}}").returncode:
+                return False  # not in the tag's history at all
+            return git("merge-base", "--is-ancestor", sha12, tag_hash).returncode == 0
+        except (OSError, subprocess.SubprocessError):
+            return None
+
+
+def resolve_pseudo(module, pseudo, installed):
+    """The first stable release of `module` that contains the commit a pseudo-version
+    FixedVersion names — e.g. x/crypto '0.58.1-0.2026…-2f1f834330b2' → '0.59.0'.
+
+    Advisories sometimes record a fix only as the commit that landed it. That commit ships
+    in some later tag, but which one cannot be read off the version string: on a repository
+    with release branches, a patch release cut after the commit can still lack it. So each
+    candidate's tag commit (Origin.Hash from the module proxy) is checked for ancestry with
+    git rather than guessed from dates.
+
+    Returns (version, None) or (None, reason)."""
+    m = PSEUDO_RE.match(pseudo.strip())
+    if not m:
+        return None, "not a pseudo-version"
+    base = tuple(int(x) for x in m.group(1, 2, 3))
+    sha12 = m.group(5)
+    listing = proxy_get(module, "list")
+    if listing is None:
+        return None, "module proxy unreachable"
+    floor = version_tuple(installed) if installed else (0,)
+    cands = sorted((v.lstrip("v") for v in listing.split() if STABLE_RE.match(v)), key=version_tuple)
+    cands = [v for v in cands if version_tuple(v) >= base and version_tuple(v) > floor]
+    for v in cands[:8]:
+        info = proxy_get(module, f"v{v}.info")
+        try:
+            origin = json.loads(info or "{}").get("Origin") or {}
+        except ValueError:
+            origin = {}
+        if not origin.get("URL") or not origin.get("Hash"):
+            return None, f"the proxy gives no origin commit for v{v}"
+        found = commit_in_tag(origin["URL"], origin["Hash"], sha12)
+        if found is None:
+            return None, f"could not check v{v} with git"
+        if found:
+            return v, None
+    return None, f"no stable release yet contains {sha12}"
+
+
+def module_requires(module, version):
+    """{required module: version} from `module`@`version`'s go.mod, via the proxy, or
+    None when it cannot be fetched."""
+    text = proxy_get(module, f"v{version}.mod")
+    if text is None:
+        return None
+    req = {}
+    block = False
+    for line in text.splitlines():
+        line = line.split("//")[0].strip()
+        if line.startswith("require ("):
+            block = True
+            continue
+        if block and line == ")":
+            block = False
+            continue
+        if line.startswith("require "):
+            line = line[len("require "):].strip()
+        elif not block:
+            continue
+        parts = line.split()
+        if len(parts) >= 2:
+            req[parts[0]] = parts[1].lstrip("v")
+    return req
+
+
+def close_constraints(spec):
+    """Raise pins in `spec` ({module: version}) that another pin's go.mod requires higher.
+
+    `go get a@X b@Y` fails outright when a@X requires b at more than Y — it does not raise
+    an explicitly named module on its own ('x/net@v0.62.0 requires x/crypto@v0.58.0, not
+    x/crypto@v0.55.0'). The CVE minimums are chosen per module, so this collision is the
+    ordinary outcome, not an edge case. Iterated to a fixed point, since a raise can bring
+    in a newer requirement of its own (x/crypto v0.59.0 → x/text v0.44.0).
+
+    Returns (spec, notes). Modules that are not pinned are left to `go get`, which raises
+    those by itself."""
+    spec = dict(spec)
+    notes = []
+    for _ in range(10):
+        raised = False
+        for name in sorted(spec):
+            req = module_requires(name, spec[name])
+            if req is None:
+                notes.append(f"could not read {name}@v{spec[name]}'s go.mod — inter-module "
+                             "constraints not checked; the build will say if one is missed")
+                continue
+            for dep, need in req.items():
+                if dep in spec and version_tuple(spec[dep]) < version_tuple(need):
+                    notes.append(f"{dep} v{spec[dep]} → v{need}: required by {name}@v{spec[name]}")
+                    spec[dep] = need
+                    raised = True
+        if not raised:
+            break
+    return spec, notes
+
+
 def source_repos(image):
     """'host/owner/repo' of every git source the image's Dockerfiles fetch (ADD or git
     clone). Used to recognise a binary's own main module, which a `replace` in go.work
@@ -148,14 +295,24 @@ def collect_modules(paths, gate, rank, floor):
                     continue
                 fx = pick_fixed(v.get("FixedVersion"), v.get("InstalledVersion"))
                 e = mods.setdefault(pkg, {"fixed": None, "cves": {}, "installed": set(),
-                                          "unfixable": set()})
+                                          "unfixable": set(), "resolved": []})
                 if v.get("InstalledVersion"):
                     e["installed"].add(v["InstalledVersion"])
                 if not fx:
-                    # Fixed only in a pre-release (or nothing at all above what is installed).
-                    if v.get("FixedVersion"):
-                        e["unfixable"].add(v["VulnerabilityID"])
-                    continue
+                    # No stable alternative above what is installed. If one alternative is a
+                    # pseudo-version (the fix recorded only as a commit), find the release
+                    # that contains it; otherwise it is left to a person.
+                    for alt in re.split(r"[,\s]+", v.get("FixedVersion") or ""):
+                        if PSEUDO_RE.match(alt.strip()):
+                            fx, why = resolve_pseudo(pkg, alt, v.get("InstalledVersion"))
+                            if fx:
+                                e["resolved"].append(f"{v['VulnerabilityID']}: fixed at {alt}, "
+                                                     f"first contained in v{fx}")
+                                break
+                    if not fx:
+                        if v.get("FixedVersion"):
+                            e["unfixable"].add(v["VulnerabilityID"])
+                        continue
                 if e["fixed"] is None or version_tuple(fx) > version_tuple(e["fixed"]):
                     e["fixed"] = fx
                 e["cves"][v["VulnerabilityID"]] = eff
@@ -172,9 +329,12 @@ def split_modules(mods, image):
     for name in sorted(mods):
         e = mods[name]
         inst = ", ".join(sorted(e["installed"])) or "?"
+        for r in e.get("resolved", []):
+            notes.append(f"{name}: {r} (checked with git against the tag's commit)")
         if e["unfixable"]:
             notes.append(f"{name} {inst}: {', '.join(sorted(e['unfixable']))} fixed only in a "
-                         "pre-release — no stable version to pin; see cve-exception-review")
+                         "pre-release, or at a commit no stable tag could be confirmed to contain "
+                         "— nothing to pin yet; see cve-exception-review")
         if e["fixed"] is None:
             continue
         if is_own_module(name, repos):
@@ -348,6 +508,8 @@ def pin_changes(paths, pins, gate, rank, floor, image=""):
             else:
                 merged = dict(cur_mods)
                 merged.update(behind)
+                merged, chain = close_constraints(merged)
+                notes.extend(chain)
                 spec = " ".join(f"{n}@v{merged[n]}" for n in sorted(merged))
                 changes.append({"key": "GO_MODULE_UPGRADES", "current": cur_raw,
                                 "required": spec,
@@ -478,8 +640,9 @@ def main():
         specs = " ".join(f"{n}@v{mods[n]['fixed']}" for n in sorted(mods))
         print(f'GO_MODULE_UPGRADES="{specs}"')
         print()
-        print("# Note — these are the minimum the CVEs require. Inter-module constraints may force them higher.")
-        print("#   If the build fails with 'requires ...@vX, not ...@vY', raise it to that version.")
+        print("# Note — these are the minimum the CVEs require. Merged with the image's existing pins,")
+        print("#   --apply also raises any pin another pin's go.mod requires higher (see its notes).")
+        print("#   If the build still fails with 'requires ...@vX, not ...@vY', raise it to that version.")
 
     if not args.apply:
         return 0
