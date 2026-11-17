@@ -366,6 +366,107 @@ if not bad:
 sys.exit(1 if bad else 0)
 PY
 
+# --- 10. The tag names what is inside ----------------------------------------
+# The published tag is built from APP_VERSION, but nothing ties APP_VERSION to the code that
+# actually goes in: SOURCE_COMMIT (or a package EVR) is a separate value. verify.sh's
+# "version" checks do not close the gap either — Go images inject APP_VERSION through
+# ldflags and then compare it with itself. On 2026-11-17 two images were found shipping
+# something other than their tag: cnpg-postgresql tagged 18.4 held 18.7 (a `zypper update`
+# moved the server), and cloudnative-pg tagged 1.30.0 held a branch head 59 commits later.
+#
+#   a. Source builds — SOURCE_COMMIT fetched as `<repo>.git#${SOURCE_COMMIT}` must be the
+#      commit upstream's tag for APP_VERSION points at (v<ver>, <ver>, or <prefix>/v<ver>).
+#      A deliberate untagged pin declares SOURCE_COMMIT_UNTAGGED="<reason>" and only warns.
+#   b. Package/tarball builds — APP_VERSION_FROM=<VAR> names the build.env value that
+#      really selects the app (PG_VERSION, KEYCLOAK_VERSION, …); APP_VERSION must equal it,
+#      or be its version part before the release suffix (18.7 of 18.7-4200001PGDG…).
+# (a) needs the network (git ls-remote); an unreachable remote warns rather than fails.
+section "tag matches the pinned source"
+python3 - <<'PY' || FAILED=1
+import re, pathlib, subprocess, sys
+
+def read_env(p):
+    kv = {}
+    for line in p.read_text(encoding="utf-8").split("\n"):
+        s = line.strip()
+        if not s or s.startswith("#") or "=" not in s:
+            continue
+        k, v = s.split("=", 1)
+        if re.fullmatch(r"[A-Z_][A-Z0-9_]*", k):
+            kv[k] = v.strip().strip('"').strip("'")
+    return kv
+
+cache = {}
+def tags(url):
+    if url not in cache:
+        try:
+            out = subprocess.run(["git", "ls-remote", "--tags", url], capture_output=True,
+                                 text=True, timeout=60, check=True).stdout
+        except Exception as e:  # network, auth, timeout
+            cache[url] = None
+            print(f"   WARN — could not list tags of {url}: {e.__class__.__name__}")
+            return None
+        m = {}
+        for line in out.splitlines():
+            sha, ref = line.split("\t")
+            name = ref[len("refs/tags/"):]
+            if name.endswith("^{}"):
+                m[name[:-3]] = sha          # peeled commit wins over the tag object
+            else:
+                m.setdefault(name, sha)
+        cache[url] = m
+    return cache[url]
+
+bad, checked = [], 0
+for p in sorted(pathlib.Path("images").glob("*/*.build.env")):
+    kv = read_env(p)
+    app = kv.get("APP_VERSION")
+    if not app:
+        continue
+    bare = app[1:] if app[:1] in "vV" else app
+
+    src = kv.get("APP_VERSION_FROM")
+    if src:
+        val = kv.get(src)
+        vbare = (val or "")[1:] if (val or "")[:1] in "vV" else (val or "")
+        checked += 1
+        if val is None:
+            bad.append(f"{p}: APP_VERSION_FROM={src}, but {src} is not set")
+        elif not (vbare == bare or vbare.startswith(bare + "-")):
+            bad.append(f"{p}: APP_VERSION={app} but {src}={val} — the tag would not name "
+                       "what the image contains")
+
+    sc = kv.get("SOURCE_COMMIT")
+    df = p.parent / kv.get("DOCKERFILE", "")
+    if not sc or not df.is_file():
+        continue
+    m = re.search(r"(https://[^\s\"'#]+?\.git)#\$\{SOURCE_COMMIT\}", df.read_text(encoding="utf-8"))
+    if not m:
+        continue
+    tagmap = tags(m.group(1))
+    if tagmap is None:
+        continue
+    checked += 1
+    wanted = {f"v{bare}", bare}
+    hits = {n: s for n, s in tagmap.items() if n in wanted or n.rsplit("/", 1)[-1] in wanted}
+    if any(s == sc for s in hits.values()):
+        continue
+    why = (f"tag(s) {', '.join(f'{n}→{s[:10]}' for n, s in sorted(hits.items()))}"
+           if hits else "no upstream tag for that version")
+    msg = (f"{p}: SOURCE_COMMIT={sc[:10]} is not the commit of APP_VERSION={app} ({why})")
+    if kv.get("SOURCE_COMMIT_UNTAGGED"):
+        print(f"   WARN — {msg} — declared untagged: {kv['SOURCE_COMMIT_UNTAGGED']}")
+    else:
+        bad.append(msg + " — raise APP_VERSION/SOURCE_COMMIT to a tag, or declare "
+                   'SOURCE_COMMIT_UNTAGGED="<reason>"')
+
+for b in bad:
+    print(f"   FAIL — {b}")
+if not bad:
+    print(f"   OK — {checked} pins name what the image contains")
+sys.exit(1 if bad else 0)
+PY
+
 section "published-images table freshness"
 python3 scripts/build/render-published-images-table.py --check || FAILED=1
 

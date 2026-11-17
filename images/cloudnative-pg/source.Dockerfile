@@ -6,7 +6,7 @@
 # Addresses CVEs in statically linked Go modules — rationale:
 # docs/decisions/0002-cloudnative-pg-operator-self-build.md
 #
-# Correspondence with upstream (against the maintenance branch Dockerfile)
+# Correspondence with upstream (against the Dockerfile at the pinned release tag)
 #   go build (Makefile build-manager)          →  identical (ldflags included)
 #   goreleaser multi-arch (manager_amd64/arm64) →  a single architecture (linux/amd64) COPYed
 #     directly. The symlink is replaced by COPYing the same binary to both paths (see below)
@@ -16,7 +16,7 @@
 #     as-is — it does not affect the compiled output, and what matters for scanning and policy
 #     is only what remains in the final image
 
-ARG GO_BUILDER_TAG=1.26.5-trixie
+ARG GO_BUILDER_TAG=1.26.11-trixie
 # An ARG used in a FROM must be declared before the first FROM (global scope) — declared
 # inside a stage it becomes local to that stage, is not used to resolve the next FROM's image
 # name, and the build fails with an empty image name plus a
@@ -38,10 +38,9 @@ WORKDIR /src
 ADD https://github.com/cloudnative-pg/cloudnative-pg.git#${SOURCE_COMMIT} /src
 
 # Force-upgrade the vulnerable module(s) to their minimum fixed version (see build.env).
-# Normally empty here — this image resolves its CVEs by compiling the maintenance branch
-# HEAD, where upstream has already backported them. The lever exists so that a module CVE
-# upstream has *not* backported can be fixed without editing this Dockerfile, and so
-# suggest-go-upgrades.py --apply can raise the pin on its own.
+# Normally empty here — the pinned release's go.mod usually already carries the fixes. The
+# lever exists so that a module CVE upstream has *not* yet picked up can be fixed without
+# editing this Dockerfile, and so suggest-go-upgrades.py --apply can raise the pin on its own.
 RUN --mount=type=cache,target=/root/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     if [ -n "${GO_MODULE_UPGRADES}" ]; then go get ${GO_MODULE_UPGRADES} && go mod tidy; fi
