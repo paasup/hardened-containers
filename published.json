@@ -43,10 +43,10 @@
       "tag": "1.30.1-security-hardened-20261117"
     },
     "cnpg-postgresql": {
-      "digest": "sha256:91ea960c8240dde9c5c5baff65b73051680795fae50493269ad84b7f773d5fd3",
+      "digest": "sha256:381206b06b14e929fc9f8a93435a4978e1f5bb285bda3cf4ac267926988b8a7c",
       "gate": "pass",
-      "ref": "docker.io/paasup/cnpg-postgresql:18.7-bci15.7-hardened-20261117",
-      "tag": "18.7-bci15.7-hardened-20261117"
+      "ref": "docker.io/paasup/cnpg-postgresql:18.7-bci15.7-hardened-20261118",
+      "tag": "18.7-bci15.7-hardened-20261118"
     },
     "etcd": {
       "digest": "sha256:d1b6602c28da2567cadd23a9724acb71dde20aa2b528cab97bdcd10f36ed999d",
